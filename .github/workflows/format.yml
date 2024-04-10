@@ -1,19 +1,13 @@
 name: Format
 
 on: 
+  push:
   workflow_run: 
     workflows: 
       - Create Prerelease
       - Create Release
-      # - Publish
     types: [requested]
   workflow_dispatch:
-    inputs:
-      save_formatting:
-        description: 'Push styles changes back to branch:'
-        type: boolean
-        required: true
-        default: false
   pull_request:
     types: [opened,edited,synchronize,reopened]
     branches:
@@ -37,15 +31,9 @@ jobs:
         dotnet-version: ${{ env.DOTNET_VERSION }}
 
     - name: Format
-      run: |
-        if [[ ${{ github.event.inputs.save_formatting }} ]]; then
-          dotnet format
-        else
-          dotnet format --verify-no-changes
-        fi
+      run: dotnet format
 
     - name: Update Styles
-      if: ${{ github.event.inputs.save_formatting == 'true' }}
       run: |
         git config --global user.name 'github-actions'
         git config --global user.email 'github-actions@github.com'
