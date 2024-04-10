@@ -21,7 +21,7 @@ public class TemplateParserTests
 
         // act
 
-        var result = parser.Render( template, parseMethod );
+        var result = parser.Render( template, parseMethod );   
 
         // assert
 
