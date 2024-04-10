@@ -65,7 +65,7 @@ public class ReadOnlyDynamicDictionary : DynamicObject, IEquatable<ReadOnlyDynam
     {
         return Equals( obj as ReadOnlyDynamicDictionary );
     }
-    
+
     public override int GetHashCode()
     {
         return _values != null ? _values.GetHashCode() : 0;

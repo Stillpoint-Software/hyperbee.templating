@@ -1,0 +1,54 @@
+name: Test
+
+on: 
+  workflow_run: 
+    workflows: 
+      - Create Prerelease
+      - Create Release
+      # - Publish
+    types: [requested]
+  workflow_dispatch:
+    inputs:
+      save_formatting:
+        description: 'Push styles changes back to branch:'
+        type: boolean
+        required: true
+        default: false
+  pull_request:
+    types: [opened,edited,synchronize,reopened]
+    branches:
+    - main
+    - develop
+
+env:
+  DOTNET_VERSION: '8.0.x'
+    
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v4
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: ${{ env.DOTNET_VERSION }}
+
+    - name: Format
+      run: |
+        if [[ ${{ github.event.inputs.save_formatting }} ]]; then
+          dotnet format
+        else
+          dotnet format --verify-no-changes
+        fi
+
+    - name: Update Styles
+      if: ${{ github.event.inputs.save_formatting }}
+      run: |
+        git config --global user.name 'github-actions'
+        git config --global user.email 'github-actions@github.com'
+        git commit -am "Updated code formatting to match rules in .editorconfig"
+        git push
+

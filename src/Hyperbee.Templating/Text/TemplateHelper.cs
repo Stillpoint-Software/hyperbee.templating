@@ -27,7 +27,7 @@ internal static class TemplateHelper
         return truthy;
     }
 
-    public static bool ValidateKey( string key ) 
+    public static bool ValidateKey( string key )
     {
         // do-not-remove this method
         //
