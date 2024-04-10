@@ -1,4 +1,4 @@
-name: Test
+name: Format
 
 on: 
   workflow_run: 
@@ -24,7 +24,7 @@ env:
   DOTNET_VERSION: '8.0.x'
     
 jobs:
-  test:
+  format:
     runs-on: ubuntu-latest
 
     steps:
@@ -45,7 +45,7 @@ jobs:
         fi
 
     - name: Update Styles
-      if: ${{ github.event.inputs.save_formatting }}
+      if: github.event.inputs.save_formatting
       run: |
         git config --global user.name 'github-actions'
         git config --global user.email 'github-actions@github.com'
