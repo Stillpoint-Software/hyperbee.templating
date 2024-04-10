@@ -9,12 +9,12 @@ namespace Hyperbee.Templating.Tests.Text;
 public class TemplateParserParsingTests
 {
     [DataTestMethod] //BF this is a minimal placeholder. enhance this test.
-    [DataRow( "token", nameof(TokenType.Value), nameof(TokenEvaluation.None) )]
-    [DataRow( " token ", nameof(TokenType.Value), nameof(TokenEvaluation.None) )]
-    [DataRow( "x=>x.token", nameof(TokenType.Value), nameof(TokenEvaluation.Expression) )]
-    [DataRow( "x => x.token", nameof(TokenType.Value), nameof(TokenEvaluation.Expression) )]
-    [DataRow( "token:x => x.token", nameof(TokenType.Define), nameof(TokenEvaluation.None) )]
-    [DataRow( "token: \"x => x.token\" ", nameof(TokenType.Define), nameof(TokenEvaluation.None) )]
+    [DataRow( "token", nameof( TokenType.Value ), nameof( TokenEvaluation.None ) )]
+    [DataRow( " token ", nameof( TokenType.Value ), nameof( TokenEvaluation.None ) )]
+    [DataRow( "x=>x.token", nameof( TokenType.Value ), nameof( TokenEvaluation.Expression ) )]
+    [DataRow( "x => x.token", nameof( TokenType.Value ), nameof( TokenEvaluation.Expression ) )]
+    [DataRow( "token:x => x.token", nameof( TokenType.Define ), nameof( TokenEvaluation.None ) )]
+    [DataRow( "token: \"x => x.token\" ", nameof( TokenType.Define ), nameof( TokenEvaluation.None ) )]
     public void Should_parse_token( string token, string expectedTokenType, string expectedTokenEvaluation )
     {
         // arrange
@@ -25,7 +25,7 @@ public class TemplateParserParsingTests
         var result = parser.TokenParser.ParseToken( token, tokenId );
 
         // assert
-        Assert.AreEqual( Enum.Parse<TokenType>( expectedTokenType), result.TokenType );
+        Assert.AreEqual( Enum.Parse<TokenType>( expectedTokenType ), result.TokenType );
         Assert.AreEqual( Enum.Parse<TokenEvaluation>( expectedTokenEvaluation ), result.TokenEvaluation );
     }
 

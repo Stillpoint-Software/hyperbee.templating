@@ -35,7 +35,7 @@ public class TemplateParserTests
     {
         // arrange
 
-        const string template = 
+        const string template =
             """
             hello.
             this is a multi line template with no tokens.
@@ -254,7 +254,7 @@ public class TemplateParserTests
 
         var parser = new TemplateParser
         {
-            Tokens = 
+            Tokens =
             {
                 ["name"] = "{{first}} {{last_expression}}",
                 ["first"] = "hari",
@@ -282,7 +282,7 @@ public class TemplateParserTests
 
         var parser = new TemplateParser
         {
-            Tokens = 
+            Tokens =
             {
                 ["name"] = "{{first}} {{last_proxy}}",
                 ["first"] = "hari",

@@ -19,11 +19,11 @@ internal class RoslynTokenExpressionProvider : ITokenExpressionProvider
         if ( TokenExpressions.TryGetValue( codeExpression, out var result ) && result.IsValueCreated && result.Value.IsCompletedSuccessfully )
             return result.Value.Result;
 
-    #if _RUNSYNC_CONTEXT_
+#if _RUNSYNC_CONTEXT_
         return AsyncCurrentThreadHelper.RunSync( async () => await GetOrAddTokenExpressionAsync( codeExpression ).ConfigureAwait( false ) );
-    #else
+#else
         return AsyncHelper.RunSync( async () => await GetOrAddTokenExpressionAsync( codeExpression ).ConfigureAwait( false ) );
-    #endif
+#endif
     }
 
     public async Task<TokenExpression> GetTokenExpressionAsync( string codeExpression )
@@ -33,7 +33,7 @@ internal class RoslynTokenExpressionProvider : ITokenExpressionProvider
 
     private static async Task<TokenExpression> GetOrAddTokenExpressionAsync( string codeExpression )
     {
-        var lazyTask = TokenExpressions.GetOrAdd( codeExpression, expr => new(TokenExpressionFactoryAsync( expr )) );
+        var lazyTask = TokenExpressions.GetOrAdd( codeExpression, expr => new( TokenExpressionFactoryAsync( expr ) ) );
         var tokenExpression = await lazyTask.Value.ConfigureAwait( false );
 
         return tokenExpression;
@@ -50,8 +50,8 @@ internal class RoslynTokenExpressionProvider : ITokenExpressionProvider
     {
         var options = ScriptOptions.Default
             .AddReferences( MetadataReferences )
-            .AddReferences( typeof(RoslynTokenExpressionProvider).Assembly )
-            .AddImports( typeof(RoslynTokenExpressionProvider).Namespace );
+            .AddReferences( typeof( RoslynTokenExpressionProvider ).Assembly )
+            .AddImports( typeof( RoslynTokenExpressionProvider ).Namespace );
 
         return await CSharpScript.EvaluateAsync<TokenExpression>( codeExpression, options ).ConfigureAwait( false );
     }

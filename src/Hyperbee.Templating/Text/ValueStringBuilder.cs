@@ -84,7 +84,7 @@ public ref partial struct ValueStringBuilder
         return ref MemoryMarshal.GetReference( _chars );
     }
 
-    public ref char this[ int index ]
+    public ref char this[int index]
     {
         get
         {

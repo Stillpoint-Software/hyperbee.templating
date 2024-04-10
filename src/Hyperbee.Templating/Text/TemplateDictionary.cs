@@ -9,9 +9,9 @@ public class TemplateDictionary : IReadOnlyDictionary<string, string>
     private IDictionary<string, string> Source { get; }
     public KeyValidator Validator { get; }
 
-    public TemplateDictionary( KeyValidator validator, IDictionary<string,string> source = default )
+    public TemplateDictionary( KeyValidator validator, IDictionary<string, string> source = default )
     {
-        Validator = validator ?? throw new ArgumentNullException( nameof(validator) );
+        Validator = validator ?? throw new ArgumentNullException( nameof( validator ) );
         Source = source ?? new Dictionary<string, string>( StringComparer.OrdinalIgnoreCase );
 
         if ( source != null )
@@ -27,11 +27,11 @@ public class TemplateDictionary : IReadOnlyDictionary<string, string>
         foreach ( var key in source.Keys )
         {
             if ( !validator( key ) )
-                throw new ArgumentException( $"Invalid token identifier `{key}`.", nameof(source) );
+                throw new ArgumentException( $"Invalid token identifier `{key}`.", nameof( source ) );
         }
     }
 
-    public string this[ string name ]
+    public string this[string name]
     {
         get => Source[name];
         set => Add( name, value );
@@ -68,7 +68,7 @@ public class TemplateDictionary : IReadOnlyDictionary<string, string>
 
             var valueType = value?.GetType();
 
-            if ( valueType != null && (valueType.IsPrimitive || valueType == typeof(string)) )
+            if ( valueType != null && (valueType.IsPrimitive || valueType == typeof( string )) )
                 Add( member.Name, value.ToString() );
         }
     }
@@ -89,9 +89,9 @@ public class TemplateDictionary : IReadOnlyDictionary<string, string>
         ArgumentNullException.ThrowIfNull( name );
 
         if ( !Validator( name ) )
-            throw new ArgumentException( $"Invalid token identifier `{name}`.", nameof(name) );
+            throw new ArgumentException( $"Invalid token identifier `{name}`.", nameof( name ) );
 
-        Source[name] = value; 
+        Source[name] = value;
     }
 
     public bool ContainsKey( string name )

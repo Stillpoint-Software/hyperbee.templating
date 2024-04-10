@@ -43,7 +43,7 @@ public class TemplateParser
 
     private TokenParser _tokenParser;
 
-    internal TokenParser TokenParser 
+    internal TokenParser TokenParser
     {
         get { return _tokenParser ??= new TokenParser( Tokens.Validator ); }
     }
@@ -53,7 +53,7 @@ public class TemplateParser
     {
     }
 
-    public TemplateParser( IDictionary<string,string> source )
+    public TemplateParser( IDictionary<string, string> source )
         : this( TokenStyle.Default, source, default )
     {
     }
@@ -99,7 +99,7 @@ public class TemplateParser
                 TokenRight = "}";
                 break;
             default:
-                throw new ArgumentOutOfRangeException( nameof(style), style, null );
+                throw new ArgumentOutOfRangeException( nameof( style ), style, null );
         }
     }
 
@@ -161,7 +161,7 @@ public class TemplateParser
         if ( !Tokens.TryGetValue( identifier, out var value ) )
             return string.Empty;
 
-        if ( string.IsNullOrWhiteSpace( value ) || !value.Contains( TokenLeft ) ) 
+        if ( string.IsNullOrWhiteSpace( value ) || !value.Contains( TokenLeft ) )
             return value;
 
         var result = Render( value );
@@ -169,12 +169,12 @@ public class TemplateParser
     }
 
     // Minimal frame management for flow control
-    
+
     private sealed class TemplateStack
     {
         private record Frame( TokenType TokenType, bool Truthy );
         private readonly Stack<Frame> _stack = new();
-        
+
         public void Push( TokenType tokenType, bool truthy ) => _stack.Push( new Frame( tokenType, truthy ) );
         public void Pop() => _stack.Pop();
         public int Depth => _stack.Count;
@@ -220,109 +220,109 @@ public class TemplateParser
             {
                 var read = reader.Read( buffer, padding, BlockSize );
                 var content = buffer.AsSpan( start, read + (padding - start) );
-                
+
                 if ( content.IsEmpty )
                     break;
 
                 while ( !content.IsEmpty )
                 {
                     int pos;
-                    
+
                     switch ( scanner )
                     {
                         case TemplateScanner.Text:
-                        {
-                            pos = content.IndexOf( TokenLeft );
-
-                            // match: write to start of token
-                            if ( pos >= 0 )
                             {
-                                // write content
+                                pos = content.IndexOf( TokenLeft );
+
+                                // match: write to start of token
+                                if ( pos >= 0 )
+                                {
+                                    // write content
+                                    if ( !ignore )
+                                        writer.Write( content[..pos] );
+
+                                    content = content[(pos + TokenLeft.Length)..];
+
+                                    // transition state
+                                    scanner = TemplateScanner.Token;
+                                    start = padding;
+                                    continue;
+                                }
+
+                                // no-match eof: write final content
+                                if ( read < BlockSize )
+                                {
+                                    if ( !ignore )
+                                        writer.Write( content ); // write final content
+                                    return;
+                                }
+
+                                // no-match: write content less remainder
                                 if ( !ignore )
-                                    writer.Write( content[..pos] );
+                                {
+                                    var writeLength = content.Length - TokenLeft.Length;
 
-                                content = content[(pos + TokenLeft.Length)..];
+                                    if ( writeLength > 0 )
+                                        writer.Write( content[..writeLength] );
+                                }
 
-                                // transition state
-                                scanner = TemplateScanner.Token;
-                                start = padding;
-                                continue;
+                                // slide remainder
+                                var remainderLength = Math.Min( TokenLeft.Length, content.Length );
+                                start = padding - remainderLength;
+                                content[^remainderLength..].CopyTo( buffer.AsSpan( start ) );
+                                content = [];
+
+                                break;
                             }
-
-                            // no-match eof: write final content
-                            if ( read < BlockSize )
-                            {
-                                if ( !ignore )
-                                    writer.Write( content ); // write final content
-                                return;
-                            }
-
-                            // no-match: write content less remainder
-                            if ( !ignore )
-                            {
-                                var writeLength = content.Length - TokenLeft.Length;
-
-                                if ( writeLength > 0 )
-                                    writer.Write( content[..writeLength] );
-                            }
-
-                            // slide remainder
-                            var remainderLength = Math.Min( TokenLeft.Length, content.Length );
-                            start = padding - remainderLength;
-                            content[^remainderLength..].CopyTo( buffer.AsSpan( start ) );
-                            content = [];
-
-                            break;
-                        }
 
                         case TemplateScanner.Token:
-                        {
-                            // scan: find closing token pattern
-                            // token may span multiple reads so track search state
-                            pos = IndexOfIgnoreContent( content, TokenRight, ref indexOfState );
-
-                            // match: process completed token
-                            if ( pos >= 0 )
                             {
-                                // save token chars
-                                tokenWriter.Write( content[..pos] );
-                                content = content[(pos + TokenRight.Length)..];
+                                // scan: find closing token pattern
+                                // token may span multiple reads so track search state
+                                pos = IndexOfIgnoreContent( content, TokenRight, ref indexOfState );
 
-                                // process token
-                                var token = TokenParser.ParseToken( tokenWriter.WrittenSpan, state.NextTokenId++ );
-                                var tokenAction = ProcessTokenKind( token, state.Frame, out var tokenValue );
+                                // match: process completed token
+                                if ( pos >= 0 )
+                                {
+                                    // save token chars
+                                    tokenWriter.Write( content[..pos] );
+                                    content = content[(pos + TokenRight.Length)..];
 
-                                if ( tokenAction != TokenAction.Ignore )
-                                    ProcessTokenValue( writer, tokenValue, tokenAction, state );
+                                    // process token
+                                    var token = TokenParser.ParseToken( tokenWriter.WrittenSpan, state.NextTokenId++ );
+                                    var tokenAction = ProcessTokenKind( token, state.Frame, out var tokenValue );
 
-                                ignore = state.Frame.IsFalsy;
+                                    if ( tokenAction != TokenAction.Ignore )
+                                        ProcessTokenValue( writer, tokenValue, tokenAction, state );
 
-                                tokenWriter.Clear();
+                                    ignore = state.Frame.IsFalsy;
 
-                                // transition state
-                                scanner = TemplateScanner.Text;
-                                start = padding;
-                                continue;
+                                    tokenWriter.Clear();
+
+                                    // transition state
+                                    scanner = TemplateScanner.Text;
+                                    start = padding;
+                                    continue;
+                                }
+
+                                // no-match eof: incomplete token
+                                if ( read < BlockSize )
+                                    throw new TemplateException( "Missing right token delimiter." );
+
+                                // no-match: save partial token less remainder
+                                var writeLength = content.Length - TokenRight.Length;
+
+                                if ( writeLength > 0 )
+                                    tokenWriter.Write( content[..writeLength] );
+
+                                // slide remainder
+                                var remainderLength = Math.Min( TokenRight.Length, content.Length );
+                                start = padding - remainderLength;
+                                content[^remainderLength..].CopyTo( buffer.AsSpan( start ) );
+                                content = [];
+
+                                break;
                             }
-
-                            // no-match eof: incomplete token
-                            if ( read < BlockSize )
-                                throw new TemplateException( "Missing right token delimiter." );
-
-                            // no-match: save partial token less remainder
-                            var writeLength = content.Length - TokenRight.Length;
-
-                            if ( writeLength > 0 )
-                                tokenWriter.Write( content[..writeLength] );
-
-                            // slide remainder
-                            var remainderLength = Math.Min( TokenRight.Length, content.Length );
-                            start = padding - remainderLength;
-                            content[^remainderLength..].CopyTo( buffer.AsSpan( start ) );
-                            content = [];
-
-                            break;
-                        }
 
                         default:
                             throw new ArgumentOutOfRangeException( scanner.ToString(), "Is" );
@@ -378,63 +378,63 @@ public class TemplateParser
                     switch ( scanner )
                     {
                         case TemplateScanner.Text:
-                        {
-                            if ( skipIndexOf )
-                                skipIndexOf = false;
-                            else
-                                pos = content.IndexOf( TokenLeft );
-
-                            // match: write to start of token
-                            if ( pos >= 0 )
                             {
-                                // write content
+                                if ( skipIndexOf )
+                                    skipIndexOf = false;
+                                else
+                                    pos = content.IndexOf( TokenLeft );
+
+                                // match: write to start of token
+                                if ( pos >= 0 )
+                                {
+                                    // write content
+                                    if ( !ignore )
+                                        writer.Write( content[..pos] );
+
+                                    content = content[(pos + TokenLeft.Length)..];
+
+                                    // transition state
+                                    scanner = TemplateScanner.Token;
+                                    continue;
+                                }
+
+                                // no-match eof: write final content
                                 if ( !ignore )
-                                    writer.Write( content[..pos] );
-
-                                content = content[(pos + TokenLeft.Length)..];
-
-                                // transition state
-                                scanner = TemplateScanner.Token;
-                                continue;
+                                    writer.Write( content ); // write final content
+                                return;
                             }
 
-                            // no-match eof: write final content
-                            if ( !ignore )
-                                writer.Write( content ); // write final content
-                            return;
-                        }
-
                         case TemplateScanner.Token:
-                        {
-                            // scan: find closing token pattern
-                            // token may span multiple reads so track search state
-                            pos = IndexOfIgnoreContent( content, TokenRight, ref indexOfState );
+                            {
+                                // scan: find closing token pattern
+                                // token may span multiple reads so track search state
+                                pos = IndexOfIgnoreContent( content, TokenRight, ref indexOfState );
 
-                            // no-match eof: incomplete token
-                            if ( pos < 0 )
-                                throw new TemplateException( "Missing right token delimiter." );
+                                // no-match eof: incomplete token
+                                if ( pos < 0 )
+                                    throw new TemplateException( "Missing right token delimiter." );
 
-                            // match: process completed token
+                                // match: process completed token
 
-                            // save token chars
-                            tokenWriter.Write( content[..pos] );
-                            content = content[(pos + TokenRight.Length)..];
+                                // save token chars
+                                tokenWriter.Write( content[..pos] );
+                                content = content[(pos + TokenRight.Length)..];
 
-                            // process token
-                            var token = TokenParser.ParseToken( tokenWriter.WrittenSpan, state.NextTokenId++ );
-                            var tokenAction = ProcessTokenKind( token, state.Frame, out var tokenValue );
+                                // process token
+                                var token = TokenParser.ParseToken( tokenWriter.WrittenSpan, state.NextTokenId++ );
+                                var tokenAction = ProcessTokenKind( token, state.Frame, out var tokenValue );
 
-                            if ( tokenAction != TokenAction.Ignore )
-                                ProcessTokenValue( writer, tokenValue, tokenAction, state );
+                                if ( tokenAction != TokenAction.Ignore )
+                                    ProcessTokenValue( writer, tokenValue, tokenAction, state );
 
-                            ignore = state.Frame.IsFalsy;
+                                ignore = state.Frame.IsFalsy;
 
-                            tokenWriter.Clear();
+                                tokenWriter.Clear();
 
-                            // transition state
-                            scanner = TemplateScanner.Text;
-                            continue;
-                        }
+                                // transition state
+                                scanner = TemplateScanner.Text;
+                                continue;
+                            }
 
                         default:
                             throw new ArgumentOutOfRangeException( scanner.ToString(), "Is" );
@@ -481,7 +481,7 @@ public class TemplateParser
                 return TokenAction.Ignore;
 
             case TokenType.Endif:
-                if ( frame.Depth == 0 || !frame.IsTokenType( TokenType.If ) && !frame.IsTokenType( TokenType.Else ) ) 
+                if ( frame.Depth == 0 || !frame.IsTokenType( TokenType.If ) && !frame.IsTokenType( TokenType.Else ) )
                     throw new TemplateException( "Syntax error. Invalid `/if` without matching `if`." );
 
                 if ( frame.IsTokenType( TokenType.Else ) )
@@ -497,57 +497,57 @@ public class TemplateParser
 
             case TokenType.None:
             default:
-                throw new NotSupportedException( $"{nameof(ProcessTokenKind)}: Invalid {nameof(TokenType)} {token.TokenType}." );
+                throw new NotSupportedException( $"{nameof( ProcessTokenKind )}: Invalid {nameof( TokenType )} {token.TokenType}." );
         }
 
         // resolve value 
 
         var defined = false;
         var ifResult = false;
-        var expressionError = default(string);
+        var expressionError = default( string );
 
         switch ( token.TokenType )
         {
             case TokenType.Value when token.TokenEvaluation != TokenEvaluation.Expression:
             case TokenType.If when token.TokenEvaluation != TokenEvaluation.Expression:
-            {
-                // resolve variable value
-                defined = Tokens.TryGetValue( token.Name, out value );
-
-                if ( !defined && SubstituteEnvironmentVariables )
                 {
-                    // optionally try and replace value from environment variable
-                    // otherwise set token value to null and behavior to error
+                    // resolve variable value
+                    defined = Tokens.TryGetValue( token.Name, out value );
 
-                    value = Environment.GetEnvironmentVariable( token.Name );
-                    defined = value != null;
+                    if ( !defined && SubstituteEnvironmentVariables )
+                    {
+                        // optionally try and replace value from environment variable
+                        // otherwise set token value to null and behavior to error
+
+                        value = Environment.GetEnvironmentVariable( token.Name );
+                        defined = value != null;
+                    }
+
+                    // resolve if truthy result
+                    if ( token.TokenType == TokenType.If )
+                        ifResult = defined && TemplateHelper.Truthy( value );
+                    break;
                 }
-
-                // resolve if truthy result
-                if ( token.TokenType == TokenType.If )
-                    ifResult = defined && TemplateHelper.Truthy( value );
-                break;
-            }
             case TokenType.Value when token.TokenEvaluation == TokenEvaluation.Expression:
-            {
-                // resolve variable expression
-                if ( TryInvokeTokenExpression( token, out var expressionResult, out expressionError ) )
                 {
-                    value = Convert.ToString( expressionResult, CultureInfo.InvariantCulture );
-                    defined = true;
-                }
+                    // resolve variable expression
+                    if ( TryInvokeTokenExpression( token, out var expressionResult, out expressionError ) )
+                    {
+                        value = Convert.ToString( expressionResult, CultureInfo.InvariantCulture );
+                        defined = true;
+                    }
 
-                break;
-            }
+                    break;
+                }
             case TokenType.If when token.TokenEvaluation == TokenEvaluation.Expression:
-            {
-                // resolve if expression result
-                if ( TryInvokeTokenExpression( token, out var expressionResult, out var error ) )
-                    ifResult = Convert.ToBoolean( expressionResult );
-                else
-                    throw new TemplateException( $"{TokenLeft}Error ({token.Id}):{error ?? "Error in if condition."}{TokenRight}" );
-                break;
-            }
+                {
+                    // resolve if expression result
+                    if ( TryInvokeTokenExpression( token, out var expressionResult, out var error ) )
+                        ifResult = Convert.ToBoolean( expressionResult );
+                    else
+                        throw new TemplateException( $"{TokenLeft}Error ({token.Id}):{error ?? "Error in if condition."}{TokenRight}" );
+                    break;
+                }
         }
 
         // `if` frame handling
@@ -586,7 +586,7 @@ public class TemplateParser
             // the token handler may have modified token properties
             // get any potentially updated values
 
-            value = eventArgs.Value; 
+            value = eventArgs.Value;
             tokenAction = eventArgs.Action;
         }
 
@@ -605,7 +605,7 @@ public class TemplateParser
                 return TokenAction.Replace;
 
             default:
-                throw new NotSupportedException( $"{nameof(ProcessTokenKind)}: Invalid {nameof(TokenAction)} {tokenAction}." );
+                throw new NotSupportedException( $"{nameof( ProcessTokenKind )}: Invalid {nameof( TokenAction )} {tokenAction}." );
         }
     }
 
@@ -652,7 +652,7 @@ public class TemplateParser
         }
 
         var start = value.IndexOfIgnoreEscaped( TokenLeft );
-        
+
         if ( start == -1 ) // token is literal
         {
             writer.Write( value );
@@ -689,7 +689,7 @@ public class TemplateParser
                 ProcessTokenValue( writer, tokenValue, tokenAction, state, recursionCount );
 
             // find next token start
-            
+
             start = !value.IsEmpty ? value.IndexOfIgnoreEscaped( TokenLeft ) : -1;
 
             if ( start == -1 && !value.IsEmpty && state.Frame.IsTruthy )
@@ -741,7 +741,7 @@ public class TemplateParser
             {
                 state.BraceCount++;
             }
-            else if ( c == '}' && state.BraceCount > 0 )   
+            else if ( c == '}' && state.BraceCount > 0 )
             {
                 state.BraceCount--;
             }

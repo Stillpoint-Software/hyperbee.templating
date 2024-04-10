@@ -8,7 +8,7 @@ public static class ResourceProviderExtensions
     public static string GetParameterizedResource( this IResourceProvider provider, string name, ResourceOptions options = default )
     {
         if ( string.IsNullOrWhiteSpace( name ) )
-            throw new ArgumentException( "Invalid name parameter.", nameof(name) );
+            throw new ArgumentException( "Invalid name parameter.", nameof( name ) );
 
         options ??= ResourceOptions.Create();
 

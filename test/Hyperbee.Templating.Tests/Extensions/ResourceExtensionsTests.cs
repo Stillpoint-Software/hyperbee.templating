@@ -16,7 +16,7 @@ public class ResourceExtensionsTests
         const string input = "BASE";
 
         // act
-        var result = resourceProvider.GetParameterizedResource( "TextFile1.txt", 
+        var result = resourceProvider.GetParameterizedResource( "TextFile1.txt",
             ResourceOptions.Create()
                 .Parameter( "TOKEN_VALUE", input )
         );

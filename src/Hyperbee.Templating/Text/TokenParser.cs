@@ -13,10 +13,10 @@ internal enum TokenType
     Endif
 }
 
-internal enum TokenEvaluation 
+internal enum TokenEvaluation
 {
     None,
-    Truthy, 
+    Truthy,
     Falsy,
     Expression
 }
@@ -27,7 +27,7 @@ internal class TokenParser
 
     internal TokenParser( KeyValidator validator )
     {
-        ValidateKey = validator ?? throw new ArgumentNullException( nameof(validator) );
+        ValidateKey = validator ?? throw new ArgumentNullException( nameof( validator ) );
     }
 
     public TokenDefinition ParseToken( ReadOnlySpan<char> token, int tokenId )
@@ -61,7 +61,7 @@ internal class TokenParser
             {
                 tokenType = TokenType.If;
                 content = content[2..].Trim(); // eat the 'if'
-                
+
                 // parse for bang
                 var bang = false;
 
@@ -124,7 +124,7 @@ internal class TokenParser
 
         // value handling
 
-        if ( tokenType == TokenType.None ) 
+        if ( tokenType == TokenType.None )
         {
             var defineTokenPos = content.IndexOfIgnoreDelimitedRanges( ":", "\"" );
             var fatArrowPos = content.IndexOfIgnoreDelimitedRanges( "=>", "\"" );
@@ -200,6 +200,6 @@ internal class TokenParser
             break;
         }
 
-        return span[(start+1)..end];
+        return span[(start + 1)..end];
     }
 }

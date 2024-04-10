@@ -9,8 +9,8 @@ public static class ResourceHelper
         where TLocator : IResourceLocator
     {
         if ( name == null )
-            throw new ArgumentNullException( nameof(name) );
-                
+            throw new ArgumentNullException( nameof( name ) );
+
         var locator = Activator.CreateInstance<TLocator>();
         return GetResource( locator, name );
     }
@@ -25,10 +25,10 @@ public static class ResourceHelper
     public static Stream GetResourceStream( IResourceLocator locator, string name )
     {
         if ( locator == null )
-            throw new ArgumentNullException( nameof(locator) );
+            throw new ArgumentNullException( nameof( locator ) );
 
         if ( name == null )
-            throw new ArgumentNullException( nameof(name) );
+            throw new ArgumentNullException( nameof( name ) );
 
         var resourceName = GetResourceName( locator, name );
 
@@ -43,10 +43,10 @@ public static class ResourceHelper
     public static string GetResourceName( IResourceLocator locator, string name )
     {
         if ( locator == null )
-            throw new ArgumentNullException( nameof(locator) );
+            throw new ArgumentNullException( nameof( locator ) );
 
         if ( name == null )
-            throw new ArgumentNullException( nameof(name) );
+            throw new ArgumentNullException( nameof( name ) );
 
         var sanitizedName = SanitizeName( name );
         return $"{locator.Namespace}.{sanitizedName}";
