@@ -45,7 +45,7 @@ jobs:
         fi
 
     - name: Update Styles
-      if: "${{ github.event.inputs.save_formatting == true }}"
+      if: ${{ github.event.inputs.save_formatting == 'true' }}
       run: |
         git config --global user.name 'github-actions'
         git config --global user.email 'github-actions@github.com'
