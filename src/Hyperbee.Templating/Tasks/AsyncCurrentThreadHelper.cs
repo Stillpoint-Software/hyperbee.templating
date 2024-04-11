@@ -51,7 +51,7 @@ public static class AsyncCurrentThreadHelper
 
     private sealed class SingleThreadSynchronizationContext : SynchronizationContext
     {
-        private readonly BlockingCollection<(SendOrPostCallback callback, object state)> _items = new();
+        private readonly BlockingCollection<(SendOrPostCallback callback, object state)> _items = [];
 
         public void InternalRunSync( Func<Task> func )
         {
