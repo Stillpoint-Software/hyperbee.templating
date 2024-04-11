@@ -1,4 +1,4 @@
-﻿// FIX: Pulled from Hyperbee.Extensions which is not OpenSource yet.
+﻿// FIX: Pulled from Hyperbee.Text.Extensions which is not OpenSource yet.
 // (WARNING: only subset of helpers)
 namespace Hyperbee.Templating.Extensions;
 
@@ -11,9 +11,11 @@ public static class ReadOnlySpanExtensions
 
     public static int IndexOfIgnoreEscaped( this ReadOnlySpan<char> span, ReadOnlySpan<char> value, StringComparison comparisonType )
     {
+#pragma warning disable IDE0302
         var quick = !ComparisonHelper.HasIgnoreCase( comparisonType )
             ? stackalloc char[] { '\\', value[0] }
             : stackalloc char[] { '\\', char.ToLowerInvariant( value[0] ), char.ToUpperInvariant( value[0] ) };
+#pragma warning restore IDE0302
 
         var search = span;
         var pos = 0;

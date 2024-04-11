@@ -1,5 +1,5 @@
-﻿using Hyperbee.Templating.Extensions;
-using Hyperbee.Templating.Resources;
+﻿using Hyperbee.Resources;
+using Hyperbee.Templating.Extensions;
 using Hyperbee.Templating.Tests.TestSupport.Resources;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
