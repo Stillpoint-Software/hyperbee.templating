@@ -1,4 +1,4 @@
-﻿using Hyperbee.Templating.Resources;
+﻿using Hyperbee.Resources;
 
 // ReSharper disable once CheckNamespace
 namespace Hyperbee.Templating.Tests.TestSupport.Resources;

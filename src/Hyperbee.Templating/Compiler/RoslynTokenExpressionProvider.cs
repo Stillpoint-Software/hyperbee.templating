@@ -39,12 +39,12 @@ internal class RoslynTokenExpressionProvider : ITokenExpressionProvider
         return tokenExpression;
     }
 
-    private static readonly IList<MetadataReference> MetadataReferences = new List<MetadataReference>
-    {
+    private static readonly IList<MetadataReference> MetadataReferences =
+    [
         // add references for dynamic.
-        MetadataReference.CreateFromFile( typeof(Microsoft.CSharp.RuntimeBinder.RuntimeBinderException).GetTypeInfo().Assembly.Location ),
-        MetadataReference.CreateFromFile( typeof(System.Runtime.CompilerServices.DynamicAttribute).GetTypeInfo().Assembly.Location )
-    };
+        MetadataReference.CreateFromFile( typeof( Microsoft.CSharp.RuntimeBinder.RuntimeBinderException ).GetTypeInfo().Assembly.Location ),
+        MetadataReference.CreateFromFile( typeof( System.Runtime.CompilerServices.DynamicAttribute ).GetTypeInfo().Assembly.Location )
+    ];
 
     private static async Task<TokenExpression> TokenExpressionFactoryAsync( string codeExpression )
     {
