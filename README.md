@@ -90,3 +90,6 @@ hello {{identity}}.
 {{identity:{{x=> "me"}} }}
 hello {{identity}}.
 ```
+
+# Help
+ See [Todo](https://github.com/Stillpoint-Software/Hyperbee.Templating/blob/main/docs/todo.md)
