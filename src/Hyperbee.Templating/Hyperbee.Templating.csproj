@@ -34,6 +34,9 @@
   </ItemGroup>
   <ItemGroup>
     <None Update="$(MSBuildProjectName).csproj.DotSettings" Visible="false" />
+    <None Update="README.md">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
   <ItemGroup>
 	  <None Include="..\..\assets\icon.png" Pack="true" Visible="false" PackagePath="/" />

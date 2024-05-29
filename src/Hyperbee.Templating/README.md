@@ -1,8 +1,5 @@
 ﻿# Hyperbee.Templating
 
-A simple templating engine supporting value replacements, code expressions, token nesting, 
-in-line definitions, and `if` `else` conditions.
-
 ## Syntax
 The templating engine supports a simple syntax. 
 
@@ -90,14 +87,4 @@ hello {{identity}}.
 {{identity:{{x=> "me"}} }}
 hello {{identity}}.
 ```
-# Status
 
-| Branch     | Action                                                                                                                                                                                                                      |
-|------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `develop`  | [![Build status](https://github.com/Stillpoint-Software/Hyperbee.Templating/actions/workflows/publish.yml/badge.svg?branch=develop)](https://github.com/Stillpoint-Software/Hyperbee.Templating/actions/workflows/publish.yml)  |
-| `main`     | [![Build status](https://github.com/Stillpoint-Software/Hyperbee.Templating/actions/workflows/publish.yml/badge.svg)](https://github.com/Stillpoint-Software/Hyperbee.Templating/actions/workflows/publish.yml)                 |
-
-
-[![Hyperbee.Templating](https://github.com/Stillpoint-Software/Hyperbee.Templating/blob/main/assets/hyperbee.svg?raw=true)](https://github.com/Stillpoint-Software/HyperbeeTemplating)
-# Help
- See [Todo](https://github.com/Stillpoint-Software/Hyperbee.Templating/blob/main/docs/todo.md)
