@@ -99,7 +99,10 @@ hello {{identity}}.
 | `main`     | [![Build status](https://github.com/Stillpoint-Software/hyperbee.templating/actions/workflows/publish.yml/badge.svg)](https://github.com/Stillpoint-Software/hyperbee.templating/actions/workflows/publish.yml)                 |
 
 
-
+# Benchmarks
+ See [Benchmarks](https://github.com/Stillpoint-Software/Hyperbee.Templating/test/Hyperbee.Templating.Benchmark/benchmark/results/Hyperbee.Templating.Benchmark.TemplateBenchmarks-report-github.md)
+ 
+ 
 # Help
  See [Todo](https://github.com/Stillpoint-Software/Hyperbee.Templating/blob/main/docs/todo.md)
 
