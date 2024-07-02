@@ -30,7 +30,7 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Hyperbee.Resources" Version="1.0.0" />
-    <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Scripting" Version="4.9.2" />
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Scripting" Version="4.10.0" />
   </ItemGroup>
   <ItemGroup>
     <None Update="$(MSBuildProjectName).csproj.DotSettings" Visible="false" />
