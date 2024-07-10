@@ -1,8 +1,5 @@
 ﻿# Hyperbee.Templating
 
-A simple templating engine supporting value replacements, code expressions, token nesting, 
-in-line definitions, and `if` `else` conditions.
-
 ## Syntax
 The templating engine supports a simple syntax. 
 
@@ -91,16 +88,3 @@ hello {{identity}}.
 hello {{identity}}.
 ```
 
-
-## TODO
-It would be useful to support simple enumerations.
-
-```
-{{each regex}}
-    {{@value}} {{@index}}
-{{/each}}
-
-{{each x => IEnumeration<string>}}
-    {{ x => x().value + x().index }}
-{{/each}}
-```

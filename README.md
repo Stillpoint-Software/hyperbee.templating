@@ -3,29 +3,18 @@
 A simple templating engine supporting value replacements, code expressions, token nesting, 
 in-line definitions, and `if` `else` conditions.
 
-## Syntax
-The templating engine supports a simple syntax. 
+## Features
 
-### Token Values
-Token values are either simple substitutions or expression results:
+* Supports simple syntax.
+* Token values are either simple substitutions or expression results.
+* The templating engine supports two kinds of method evaluations.
+    * Strongly typed CLR class methods through the Roslyn compiler
+    * Dynamic methods in the form of Func expressions that are runtime bound to the expression argument context.
+* Token nesting
+* Inline Token Definitions
+    * You can define tokens, inline, within a template.
 
-* `{{token}}`
-* `{{context => context.token}}`
-* `{{context => context.token.ToUpper()}}`
-
-### Token Conditions
-Token conditions are either simple truthy tokens or expression results:
-
-* `{{if token}} _truthy_content_ {{/if}}`
-* `{{if !token}} _falsy_content_ {{/if}}`
-* `{{if token}} _true_content_ {{else}} _false_content_ {{/if}}`
-* `{{if context => context.token == "test"}} _true_content_ {{/if}}`
-* `{{if context => context.token == "test"}} _true_content_ {{else}} _false_content_ {{/if}}`
-
-## Methods
-The templating engine supports two kinds of method evaluations; strongly typed CLR class 
-methods through the Roslyn compiler, and dynamic methods in the form of Func expressions
-that are runtime bound to the expression argument context.
+## Example
 
 ```csharp
 \\ example of CLR String.ToUpper
@@ -59,7 +48,7 @@ var parser = new TemplateParser
 var result = parser.Render( $"hello {{x => x.MyUpper( x.name )}}." );
 ```
 
-## Token Nesting
+## Example Token Nesting
 Token values can contain tokens.
 
 ```csharp
@@ -78,7 +67,7 @@ var parser = new TemplateParser
 var result = parser.Render( $"hello {{fullname}}." );
 ```
 
-## Inline Token Definitions
+## Example Inline Token Definitions
 You can define tokens, inline, within a template. Inline tokens must be defined before they are referenced.
 
 ```csharp
@@ -92,15 +81,29 @@ hello {{identity}}.
 ```
 
 
-## TODO
-It would be useful to support simple enumerations.
+# Build Requirements
 
-```
-{{each regex}}
-    {{@value}} {{@index}}
-{{/each}}
+* To build and run this project, **.NET 8 SDK** is required.
+* Ensure your development tools are compatible with .NET 8.
 
-{{each x => IEnumeration<string>}}
-    {{ x => x().value + x().index }}
-{{/each}}
-```
+## Building the Solution
+
+* With .NET 8 SDK installed, you can build the solution using the standard `dotnet build` command.
+
+
+# Status
+
+| Branch     | Action                                                                                                                                                                                                                      |
+|------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `develop`  | [![Build status](https://github.com/Stillpoint-Software/hyperbee.templating/actions/workflows/publish.yml/badge.svg?branch=develop)](https://github.com/Stillpoint-Software/hyperbee.templating/actions/workflows/publish.yml)  |
+| `main`     | [![Build status](https://github.com/Stillpoint-Software/hyperbee.templating/actions/workflows/publish.yml/badge.svg)](https://github.com/Stillpoint-Software/hyperbee.templating/actions/workflows/publish.yml)                 |
+
+
+# Benchmarks
+ See [Benchmarks](https://github.com/Stillpoint-Software/Hyperbee.Templating/test/Hyperbee.Templating.Benchmark/benchmark/results/Hyperbee.Templating.Benchmark.TemplateBenchmarks-report-github.md)
+ 
+ 
+# Help
+ See [Todo](https://github.com/Stillpoint-Software/Hyperbee.Templating/blob/main/docs/todo.md)
+
+ [![Hyperbee.Templating](https://github.com/Stillpoint-Software/Hyperbee.Templating/blob/main/assets/hyperbee.svg?raw=true)](https://github.com/Stillpoint-Software/Hyperbee.Templating)
