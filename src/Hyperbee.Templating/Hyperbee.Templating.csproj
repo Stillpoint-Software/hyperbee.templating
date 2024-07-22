@@ -6,7 +6,7 @@
 
 	<Authors>Stillpoint Software, Inc.</Authors>
 	<PackageReadmeFile>README.md</PackageReadmeFile>
-	<PackageTags>Templating;NET</PackageTags>
+	<PackageTags>templating;NET;template engine</PackageTags>
 	<PackageIcon>icon.png</PackageIcon>
 	<PackageProjectUrl>https://github.com/Stillpoint-Software/Hyperbee.Templating/</PackageProjectUrl>
 	<TargetFrameworks>net8.0</TargetFrameworks>
