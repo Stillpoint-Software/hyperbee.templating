@@ -29,6 +29,7 @@
     </AssemblyAttribute>
   </ItemGroup>
   <ItemGroup>
+    <PackageReference Include="Hyperbee.Core" Version="2.3.21" />
     <PackageReference Include="Hyperbee.Resources" Version="1.0.0" />
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Scripting" Version="4.10.0" />
   </ItemGroup>

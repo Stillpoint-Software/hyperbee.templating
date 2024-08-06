@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿
+using System.Collections.Generic;
 using Hyperbee.Collections;
 using Hyperbee.Templating.Tests.TestSupport;
 using Hyperbee.Templating.Text;
@@ -213,6 +214,32 @@ public class TemplateParserExpressionTests
         // assert
 
         var expected = template.Replace( expression, "ME TOO" );
+
+        Assert.AreEqual( expected, result );
+    }
+
+    [DataTestMethod]
+
+    [DataRow( ParseTemplateMethod.Buffered )]
+    //[DataRow( ParseTemplateMethod.InMemory )]
+    public void Should_honor_each_expression( ParseTemplateMethod parseMethod )
+    {
+        // arrange
+        const string expression = "{{each x=>x.list}}World {{i}},{{/each}}";
+        const string template = $"hello {expression}.";
+
+        var parser = new TemplateParser
+        {
+            Tokens = {
+                ["list"] = "1,2,3"
+            }
+        };
+
+        // act
+        var result = parser.Render( template, parseMethod );
+
+        // assert
+        var expected = "hello World 1,World 2,World 3,.";
 
         Assert.AreEqual( expected, result );
     }
