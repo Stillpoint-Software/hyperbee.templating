@@ -221,7 +221,7 @@ public class TemplateParserExpressionTests
     [DataTestMethod]
 
     [DataRow( ParseTemplateMethod.Buffered )]
-    //[DataRow( ParseTemplateMethod.InMemory )]
+    [DataRow( ParseTemplateMethod.InMemory )]
     public void Should_honor_each_expression( ParseTemplateMethod parseMethod )
     {
         // arrange
