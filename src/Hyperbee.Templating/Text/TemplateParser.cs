@@ -187,8 +187,8 @@ public class TemplateParser
         public int Depth => _stack.Count;
         public bool IsTokenType( TokenType compare ) => _stack.Count > 0 && _stack.Peek().TokenType == compare;
         public bool IsTruthy => _stack.Count > 0 && _stack.Peek() is ConditionalFrame { Truthy: true };
-        public bool IsFalsy => !IsTruthy;
         public bool IsIterationFrame => _stack.Count > 0 && _stack.Peek() is IterationFrame;
+        public bool IsConditionalFrame => _stack.Count > 0 && _stack.Peek() is ConditionalFrame;
     }
 
     // Parse template
@@ -338,9 +338,14 @@ public class TemplateParser
 
                                         ignore = true;
                                     }
+                                    else if ( state.Frame._stack.Count > 0 && state.Frame._stack.Peek() is ConditionalFrame conditionalFrame )
+                                    {
+
+                                        ignore = state.Frame.IsTruthy;
+                                    }
                                     else
                                     {
-                                        ignore = state.Frame.IsFalsy;
+                                        ignore = state.Frame.IsTruthy;
                                     }
 
                                     tokenWriter.Clear();
@@ -505,9 +510,14 @@ public class TemplateParser
 
                                     ignore = true;
                                 }
+                                else if ( state.Frame._stack.Count > 0 && state.Frame._stack.Peek() is ConditionalFrame conditionalFrame )
+                                {
+
+                                    ignore = state.Frame.IsTruthy;
+                                }
                                 else
                                 {
-                                    ignore = state.Frame.IsFalsy;
+                                    ignore = state.Frame.IsTruthy;
                                 }
 
                                 tokenWriter.Clear();
@@ -537,7 +547,7 @@ public class TemplateParser
     }
 
     // Process Token Kind
-    private TokenAction ProcessTokenKind( TokenDefinition token, TemplateStack frame, out string value )//ReadOnlySpan<char> body )
+    private TokenAction ProcessTokenKind( TokenDefinition token, TemplateStack frame, out string value )
     {
         value = default;
 
@@ -546,7 +556,7 @@ public class TemplateParser
         switch ( token.TokenType )
         {
             case TokenType.Value: //TODO AF Here
-                if ( frame.IsFalsy && !frame.IsIterationFrame )
+                if ( frame.IsTruthy && !frame.IsIterationFrame )
                     return TokenAction.Ignore;
                 break;
 
@@ -728,7 +738,7 @@ public class TemplateParser
     {
         try
         {
-            var tokenExpression = TokenExpressionProvider.GetTokenExpression( token.TokenExpression ); //TODO AF each errors
+            var tokenExpression = TokenExpressionProvider.GetTokenExpression( token.TokenExpression );
             var dynamicReadOnlyTokens = new ReadOnlyDynamicDictionary( Tokens, (IReadOnlyDictionary<string, DynamicMethod>) Methods );
 
             result = tokenExpression( dynamicReadOnlyTokens );
