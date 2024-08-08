@@ -236,7 +236,6 @@ public class TemplateParser
         try
         {
             var ignore = false;
-
             var padding = Math.Max( TokenLeft.Length, TokenRight.Length );
             var start = padding;
 
@@ -248,17 +247,15 @@ public class TemplateParser
             IndexOfState indexOfState = default;    // index-of for right token delimiter could span buffer reads
             state ??= new TemplateState();    // template state for this parsing session
 
-            var read = reader.Read( buffer, padding, BlockSize );
-            var content = buffer.AsSpan( start, read + (padding - start) );
-
-            var sourceContent = content;
             var sourcePos = 0;
             var iterationCount = 0;
 
             while ( true )
             {
-                //var read = reader.Read( buffer, padding, BlockSize );
-                //var content = buffer.AsSpan( start, read + (padding - start) );
+                var read = reader.Read( buffer, padding, BlockSize );
+                var content = buffer.AsSpan( start, read + (padding - start) );
+
+                var sourceContent = content;
 
                 if ( content.IsEmpty )
                     break;
