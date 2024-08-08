@@ -364,6 +364,11 @@ public class TemplateParser
 
                                         ignore = !state.Frame.IsTruthy;
                                     }
+                                    else if ( state.Frame._stack.Count == 0 && state.Frame.IsComplete )
+                                    {
+
+                                        ignore = !state.Frame.IsTruthy;
+                                    }
                                     else if ( state.Frame._stack.Count == 0 )
                                     {
 
@@ -537,6 +542,11 @@ public class TemplateParser
                                     }
                                     else
                                         ignore = !state.Frame.IsTruthy;
+                                }
+                                else if ( state.Frame._stack.Count == 0 && state.Frame.IsComplete )
+                                {
+
+                                    ignore = !state.Frame.IsTruthy;
                                 }
                                 else if ( state.Frame._stack.Count == 0 )
                                 {

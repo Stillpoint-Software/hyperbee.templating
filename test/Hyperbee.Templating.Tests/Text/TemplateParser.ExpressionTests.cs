@@ -259,7 +259,7 @@ public class TemplateParserExpressionTests
             {
                 ["name"] = "{{first}} {{last_condition}}",
                 ["first"] = "hari",
-                ["last"] = "seldon",
+                ["last"] = " seldon",
 
                 ["last_condition"] = "{{if upper}}{{last_upper}}{{else}}{{last}}{{/if}}",
                 ["last_upper"] = "{{x=>x.last.ToUpper()}}",
@@ -293,7 +293,7 @@ public class TemplateParserExpressionTests
         {
             ["name"] = "{{first}} {{last_condition}}",
             ["first"] = "not-hari",
-            ["last"] = "seldon",
+            ["last"] = " seldon",
             ["last_upper"] = "{{x=>x.last.ToUpper()}}",
         } );
 
