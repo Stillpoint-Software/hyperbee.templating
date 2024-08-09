@@ -258,7 +258,7 @@ public class TemplateParserTests
             {
                 ["name"] = "{{first}} {{last_expression}}",
                 ["first"] = "hari",
-                ["last"] = "seldon",
+                ["last"] = " seldon",
                 ["last_expression"] = "{{last}}"
             }
         };

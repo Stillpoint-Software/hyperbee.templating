@@ -3,14 +3,16 @@ using Hyperbee.Templating.Extensions;
 
 namespace Hyperbee.Templating.Text;
 
-internal enum TokenType
+public enum TokenType
 {
     None,
     Define,
     Value,
     If,
     Else,
-    Endif
+    Endif,
+    Each,
+    EndEach//TODO: AF
 }
 
 internal enum TokenEvaluation
@@ -44,13 +46,15 @@ internal class TokenParser
         //
         // {{else}
         // {{/if}}
+        //
+        // {{each}}
+        // {{/each}}
 
         var content = token.Trim();
 
         var tokenType = TokenType.None;
         var tokenConditional = TokenEvaluation.None;
         var tokenExpression = ReadOnlySpan<char>.Empty;
-
         var name = ReadOnlySpan<char>.Empty;
 
         // if handling
@@ -121,6 +125,45 @@ internal class TokenParser
 
             tokenType = TokenType.Endif;
         }
+        else if ( content.StartsWith( "each", StringComparison.OrdinalIgnoreCase ) )
+        {
+            //TODO: AF
+
+            tokenType = TokenType.Each;
+            content = content[4..].Trim(); // eat the 'each'
+
+            if ( content.Length >= 4 )
+            {
+                // detect expression syntax
+                var isFatArrow = content.IndexOfIgnoreDelimitedRanges( "=>", "\"" ) != -1;
+
+                // validate
+                if ( content.IsEmpty )
+                    throw new TemplateException( "Invalid `each` statement. Missing identifier." );
+
+                if ( !isFatArrow && !ValidateKey( content ) )
+                    throw new TemplateException( "Invalid `each` statement. Invalid identifier in truthy expression." );
+
+                // results
+                if ( isFatArrow )
+                {
+                    tokenConditional = TokenEvaluation.Expression;
+                    tokenExpression = content; //x=>x.list
+                }
+                else
+                {
+                    tokenConditional = TokenEvaluation.Falsy;
+                    name = content;
+                }
+            }
+        }
+        else if ( content.StartsWith( "/each", StringComparison.OrdinalIgnoreCase ) )
+        {
+
+            tokenType = TokenType.EndEach;
+
+        }
+
 
         // value handling
 
