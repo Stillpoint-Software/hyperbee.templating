@@ -190,30 +190,7 @@ public class TemplateParser
         public bool IsTruthy => _stack.Count > 0 && _stack.Peek() is ConditionalFrame { Truthy: true };
         public bool IsIterationFrame => _stack.Count > 0 && _stack.Peek() is IterationFrame;
         public bool IsConditionalFrame => _stack.Count > 0 && _stack.Peek() is ConditionalFrame;
-
-        public bool? IsFalsy()
-        {
-            if ( _stack == null )
-            {
-                return null;
-            }
-
-            foreach ( var frame in _stack.Reverse() )
-            {
-                if ( frame is ConditionalFrame conditionalFrame )
-                {
-                    return conditionalFrame.Truthy;
-                }
-            }
-
-            return null;
-        }
-
-        public bool IsComplete
-        {
-            get;
-            set;
-        }
+        public bool IsComplete { get; set; }
     }
 
     // Parse template
@@ -349,31 +326,30 @@ public class TemplateParser
                                     if ( tokenAction != TokenAction.Ignore )
                                         ProcessTokenValue( writer, tokenValue, tokenAction, state );
 
-                                    if ( state.Frame._stack.Count > 0 && state.Frame._stack.Peek() is IterationFrame iterationFrame2 )
+                                    switch ( state.Frame._stack.Count )
                                     {
-                                        content = sourceContent[iterationFrame2.SourcePos..];
+                                        case > 0 when state.Frame._stack.Peek() is IterationFrame iterationFrame2:
+                                            {
+                                                content = sourceContent[iterationFrame2.SourcePos..];
 
-                                        if ( iterationCount == iterationFrame2.LoopResult.Length )
-                                        {
-                                            state.Frame.Pop();
-                                            state.Frame.IsComplete = true;
-                                        }
+                                                if ( iterationCount == iterationFrame2.LoopResult.Length )
+                                                {
+                                                    state.Frame.Pop();
+                                                    state.Frame.IsComplete = true;
+                                                }
 
-                                        ignore = !state.Frame.IsTruthy;
-                                    }
-                                    else if ( state.Frame._stack.Count == 0 && state.Frame.IsComplete )
-                                    {
-
-                                        ignore = !state.Frame.IsTruthy;
-                                    }
-                                    else if ( state.Frame._stack.Count == 0 )
-                                    {
-
-                                        ignore = state.Frame.IsTruthy;
-                                    }
-                                    else
-                                    {
-                                        ignore = !state.Frame.IsTruthy;
+                                                ignore = !state.Frame.IsTruthy;
+                                                break;
+                                            }
+                                        case 0 when state.Frame.IsComplete:
+                                            ignore = !state.Frame.IsTruthy;
+                                            break;
+                                        case 0:
+                                            ignore = state.Frame.IsTruthy;
+                                            break;
+                                        default:
+                                            ignore = !state.Frame.IsTruthy;
+                                            break;
                                     }
 
                                     tokenWriter.Clear();
@@ -528,31 +504,31 @@ public class TemplateParser
                                 if ( tokenAction != TokenAction.Ignore )
                                     ProcessTokenValue( writer, tokenValue, tokenAction, state );
 
-                                if ( state.Frame._stack.Count > 0 && state.Frame._stack.Peek() is IterationFrame iterationFrame2 )
+                                switch ( state.Frame._stack.Count )
                                 {
-                                    content = sourceContent[iterationFrame2.SourcePos..];
+                                    case > 0 when state.Frame._stack.Peek() is IterationFrame iterationFrame2:
+                                        {
+                                            content = sourceContent[iterationFrame2.SourcePos..];
 
-                                    if ( iterationCount == iterationFrame2.LoopResult.Length )
-                                    {
-                                        state.Frame.Pop();
-                                        state.Frame.IsComplete = true;
-                                    }
-                                    else
+                                            if ( iterationCount == iterationFrame2.LoopResult.Length )
+                                            {
+                                                state.Frame.Pop();
+                                                state.Frame.IsComplete = true;
+                                            }
+                                            else
+                                                ignore = !state.Frame.IsTruthy;
+
+                                            break;
+                                        }
+                                    case 0 when state.Frame.IsComplete:
                                         ignore = !state.Frame.IsTruthy;
-                                }
-                                else if ( state.Frame._stack.Count == 0 && state.Frame.IsComplete )
-                                {
-
-                                    ignore = !state.Frame.IsTruthy;
-                                }
-                                else if ( state.Frame._stack.Count == 0 )
-                                {
-
-                                    ignore = state.Frame.IsTruthy;
-                                }
-                                else
-                                {
-                                    ignore = !state.Frame.IsTruthy;
+                                        break;
+                                    case 0:
+                                        ignore = state.Frame.IsTruthy;
+                                        break;
+                                    default:
+                                        ignore = !state.Frame.IsTruthy;
+                                        break;
                                 }
 
 
@@ -592,12 +568,13 @@ public class TemplateParser
         switch ( token.TokenType )
         {
             case TokenType.Value: //TODO AF Here
-                if ( (frame._stack.Count == 0 && frame.IsTruthy) || (frame._stack.Count == 0 && frame.IsComplete) )
-                    return TokenAction.Ignore;
-                if ( frame._stack.Count > 0 && frame.IsIterationFrame && frame.IsComplete )
-                    return TokenAction.Ignore;
-                if ( (frame._stack.Count > 0 && frame.IsConditionalFrame && !frame.IsTruthy) || (frame._stack.Count > 0 && frame.IsIterationFrame && frame.IsComplete) )
-                    return TokenAction.Ignore;
+                switch ( frame._stack.Count )
+                {
+                    case 0 when (frame.IsTruthy || frame.IsComplete):
+                    case > 0 when (frame.IsConditionalFrame && !frame.IsTruthy || frame.IsIterationFrame && frame.IsComplete):
+                        return TokenAction.Ignore;
+                }
+
                 break;
 
             case TokenType.If:
@@ -628,7 +605,6 @@ public class TemplateParser
 
             case TokenType.Each:
                 //ToDo AF
-
                 //Delay processing until we can evaluate the token value.
                 break;
             case TokenType.EndEach:
@@ -861,6 +837,7 @@ public class TemplateParser
 
         } while ( start != -1 );
     }
+
 
     // IndexOf helper
 
