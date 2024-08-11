@@ -40,12 +40,11 @@ public class TemplateParser
     private string TokenRight { get; }
 
     private TokenParser _tokenParser;
+    internal TokenParser TokenParser => _tokenParser ??= new TokenParser( Tokens.Validator, TokenLeft, TokenRight );
 
-    internal TokenParser TokenParser
-    {
-        get { return _tokenParser ??= new TokenParser( Tokens.Validator, TokenLeft, TokenRight ); }
-    }
-
+    private readonly Lazy<TokenProcessor> _lazyTokenProcessor;
+    private TokenProcessor TokenProcessor => _lazyTokenProcessor.Value;
+  
     public TemplateParser()
         : this( TokenStyle.Default )
     {
@@ -77,6 +76,17 @@ public class TemplateParser
 
         Tokens = source;
 
+        _lazyTokenProcessor = new Lazy<TokenProcessor>( () => new TokenProcessor(
+            Tokens,
+            Methods,
+            TokenHandler,
+            TokenExpressionProvider,
+            IgnoreMissingTokens,
+            SubstituteEnvironmentVariables,
+            TokenLeft,
+            TokenRight
+        ) );
+    
         switch ( style )
         {
             case TokenStyle.Default:
@@ -177,17 +187,6 @@ public class TemplateParser
     // parse template that spans multiple read buffers
     private void ParseTemplate( TextReader reader, TextWriter writer )
     {
-        var tokenProcessor = new TokenProcessor(
-            Tokens,
-            Methods,
-            TokenHandler,
-            TokenExpressionProvider,
-            IgnoreMissingTokens,
-            SubstituteEnvironmentVariables,
-            TokenLeft,
-            TokenRight
-        );
-
         try
         {
             var ignore = false;
@@ -277,10 +276,10 @@ public class TemplateParser
 
                                     // process token
                                     var token = TokenParser.ParseToken( tokenWriter.WrittenSpan, state.NextTokenId++ );
-                                    var tokenAction = tokenProcessor.ProcessTokenType( token, state, out var tokenValue );
+                                    var tokenAction = TokenProcessor.ProcessTokenType( token, state, out var tokenValue );
 
                                     if ( tokenAction != TokenAction.Ignore )
-                                        WriteTokenValue( writer, tokenProcessor, tokenValue, tokenAction, state );
+                                        WriteTokenValue( writer, tokenValue, tokenAction, state );
 
                                     ignore = state.Frame.IsFalsy;
 
@@ -333,17 +332,6 @@ public class TemplateParser
     // parse template that is in memory
     private void ParseTemplate( ReadOnlySpan<char> content, TextWriter writer, int pos = int.MinValue )
     {
-        var tokenProcessor = new TokenProcessor(
-            Tokens,
-            Methods,
-            TokenHandler,
-            TokenExpressionProvider,
-            IgnoreMissingTokens,
-            SubstituteEnvironmentVariables,
-            TokenLeft,
-            TokenRight
-        );
-
         try
         {
             // find first token starting position
@@ -427,7 +415,7 @@ public class TemplateParser
 
                                 // process token
                                 var token = TokenParser.ParseToken( tokenWriter.WrittenSpan, state.NextTokenId++ );
-                                var tokenAction = tokenProcessor.ProcessTokenType( token, state, out var tokenValue );
+                                var tokenAction = TokenProcessor.ProcessTokenType( token, state, out var tokenValue );
 
                                 if ( tokenAction == TokenAction.Replay )
                                 {
@@ -439,7 +427,7 @@ public class TemplateParser
                                 }
 
                                 if ( tokenAction != TokenAction.Ignore )
-                                    WriteTokenValue( writer, tokenProcessor, tokenValue, tokenAction, state );
+                                    WriteTokenValue( writer, tokenValue, tokenAction, state );
 
                                 ignore = state.Frame.IsFalsy;
 
@@ -469,7 +457,7 @@ public class TemplateParser
         }
     }
 
-    private void WriteTokenValue( TextWriter writer, TokenProcessor tokenProcessor, ReadOnlySpan<char> value, TokenAction tokenAction, TemplateState state, int recursionCount = 0 )
+    private void WriteTokenValue( TextWriter writer, ReadOnlySpan<char> value, TokenAction tokenAction, TemplateState state, int recursionCount = 0 )
     {
         // infinite recursion guard
 
@@ -520,10 +508,10 @@ public class TemplateParser
             // process token
 
             var innerToken = TokenParser.ParseToken( innerValue, state.NextTokenId++ );
-            tokenAction = tokenProcessor.ProcessTokenType( innerToken, state, out var tokenValue );
+            tokenAction = TokenProcessor.ProcessTokenType( innerToken, state, out var tokenValue );
 
             if ( tokenAction != TokenAction.Ignore )
-                WriteTokenValue( writer, tokenProcessor, tokenValue, tokenAction, state, recursionCount );
+                WriteTokenValue( writer, tokenValue, tokenAction, state, recursionCount );
 
             // find next token start
 
