@@ -5,5 +5,6 @@ public enum TokenAction
 {
     Replace,
     Error,
-    Ignore
+    Ignore,
+    Loop
 }
