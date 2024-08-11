@@ -13,7 +13,7 @@ public class TemplateParserParsingTests
     [DataRow( " token ", nameof( TokenType.Value ), nameof( TokenEvaluation.None ) )]
     [DataRow( "x=>x.token", nameof( TokenType.Value ), nameof( TokenEvaluation.Expression ) )]
     [DataRow( "x => x.token", nameof( TokenType.Value ), nameof( TokenEvaluation.Expression ) )]
-    [DataRow( "token:x => x.token", nameof( TokenType.Define ), nameof( TokenEvaluation.None ) )]
+    [DataRow( "token:x => x.token", nameof( TokenType.Define ), nameof( TokenEvaluation.Expression ) )]
     [DataRow( "token: \"x => x.token\" ", nameof( TokenType.Define ), nameof( TokenEvaluation.None ) )]
     public void Should_parse_token( string token, string expectedTokenType, string expectedTokenEvaluation )
     {

@@ -1,5 +1,4 @@
 ﻿using System.Buffers;
-using System.Globalization;
 using Hyperbee.Templating.Collections;
 using Hyperbee.Templating.Compiler;
 using Hyperbee.Templating.Extensions;
@@ -40,12 +39,11 @@ public class TemplateParser
     private string TokenLeft { get; }
     private string TokenRight { get; }
 
-
     private TokenParser _tokenParser;
 
     internal TokenParser TokenParser
     {
-        get { return _tokenParser ??= new TokenParser( Tokens.Validator ); }
+        get { return _tokenParser ??= new TokenParser( Tokens.Validator, TokenLeft, TokenRight ); }
     }
 
     public TemplateParser()
@@ -168,22 +166,6 @@ public class TemplateParser
         return result;
     }
 
-    // Minimal frame management for flow control
-
-    private sealed class TemplateStack
-    {
-        private record Frame( TokenType TokenType, bool Truthy );
-        private readonly Stack<Frame> _stack = new();
-
-        public void Push( TokenType tokenType, bool truthy ) => _stack.Push( new Frame( tokenType, truthy ) );
-        public void Pop() => _stack.Pop();
-        public int Depth => _stack.Count;
-
-        public bool IsTokenType( TokenType compare ) => _stack.Count > 0 && _stack.Peek().TokenType == compare;
-        public bool IsTruthy => _stack.Count == 0 || _stack.Peek().Truthy;
-        public bool IsFalsy => !IsTruthy;
-    }
-
     // Parse template
 
     private enum TemplateScanner
@@ -192,15 +174,20 @@ public class TemplateParser
         Token
     }
 
-    private sealed class TemplateState
-    {
-        public TemplateStack Frame { get; } = new();
-        public int NextTokenId { get; set; } = 1;
-    }
-
     // parse template that spans multiple read buffers
     private void ParseTemplate( TextReader reader, TextWriter writer )
     {
+        var tokenProcessor = new TokenProcessor(
+            Tokens,
+            Methods,
+            TokenHandler,
+            TokenExpressionProvider,
+            IgnoreMissingTokens,
+            SubstituteEnvironmentVariables,
+            TokenLeft,
+            TokenRight
+        );
+
         try
         {
             var ignore = false;
@@ -290,10 +277,10 @@ public class TemplateParser
 
                                     // process token
                                     var token = TokenParser.ParseToken( tokenWriter.WrittenSpan, state.NextTokenId++ );
-                                    var tokenAction = ProcessTokenKind( token, state.Frame, out var tokenValue );
+                                    var tokenAction = tokenProcessor.ProcessTokenType( token, state, out var tokenValue );
 
                                     if ( tokenAction != TokenAction.Ignore )
-                                        ProcessTokenValue( writer, tokenValue, tokenAction, state );
+                                        WriteTokenValue( writer, tokenProcessor, tokenValue, tokenAction, state );
 
                                     ignore = state.Frame.IsFalsy;
 
@@ -346,6 +333,17 @@ public class TemplateParser
     // parse template that is in memory
     private void ParseTemplate( ReadOnlySpan<char> content, TextWriter writer, int pos = int.MinValue )
     {
+        var tokenProcessor = new TokenProcessor(
+            Tokens,
+            Methods,
+            TokenHandler,
+            TokenExpressionProvider,
+            IgnoreMissingTokens,
+            SubstituteEnvironmentVariables,
+            TokenLeft,
+            TokenRight
+        );
+
         try
         {
             // find first token starting position
@@ -368,6 +366,8 @@ public class TemplateParser
             IndexOfState indexOfState = default;    // index-of for right token delimiter could span buffer reads
             var state = new TemplateState();    // template state for this parsing session
 
+            var originalSpan = content; // Keep the original content span for resetting the position
+
             while ( true )
             {
                 if ( content.IsEmpty )
@@ -375,6 +375,8 @@ public class TemplateParser
 
                 while ( !content.IsEmpty )
                 {
+                    state.CurrentPos = originalSpan.Length - content.Length; // Track the current position
+
                     switch ( scanner )
                     {
                         case TemplateScanner.Text:
@@ -416,16 +418,28 @@ public class TemplateParser
 
                                 // match: process completed token
 
+                                // update CurrentPos to point to the first character after the token
+                                state.CurrentPos = originalSpan.Length - content.Length + pos + TokenRight.Length;
+
                                 // save token chars
                                 tokenWriter.Write( content[..pos] );
                                 content = content[(pos + TokenRight.Length)..];
 
                                 // process token
                                 var token = TokenParser.ParseToken( tokenWriter.WrittenSpan, state.NextTokenId++ );
-                                var tokenAction = ProcessTokenKind( token, state.Frame, out var tokenValue );
+                                var tokenAction = tokenProcessor.ProcessTokenType( token, state, out var tokenValue );
+
+                                if ( tokenAction == TokenAction.Replay )
+                                {
+                                    // Reset the position to start of while block
+                                    content = originalSpan[state.Frame.Peek().StartPos..]; // Reset position to StartPos
+                                    scanner = TemplateScanner.Text;
+                                    tokenWriter.Clear();
+                                    continue;
+                                }
 
                                 if ( tokenAction != TokenAction.Ignore )
-                                    ProcessTokenValue( writer, tokenValue, tokenAction, state );
+                                    WriteTokenValue( writer, tokenProcessor, tokenValue, tokenAction, state );
 
                                 ignore = state.Frame.IsFalsy;
 
@@ -454,185 +468,8 @@ public class TemplateParser
             writer.Flush();
         }
     }
-    // Process Token Kind
 
-    private TokenAction ProcessTokenKind( TokenDefinition token, TemplateStack frame, out string value )
-    {
-        value = default;
-
-        // flow control
-
-        switch ( token.TokenType )
-        {
-            case TokenType.Value:
-                if ( frame.IsFalsy )
-                    return TokenAction.Ignore;
-                break;
-
-            case TokenType.If:
-                // ifs are truthy. delay processing until we can evaluate the token value.
-                break;
-
-            case TokenType.Else:
-                if ( !frame.IsTokenType( TokenType.If ) )
-                    throw new TemplateException( "Syntax error. Invalid `else` without matching `if`." );
-
-                frame.Push( TokenType.Else, !frame.IsTruthy );
-                return TokenAction.Ignore;
-
-            case TokenType.Endif:
-                if ( frame.Depth == 0 || !frame.IsTokenType( TokenType.If ) && !frame.IsTokenType( TokenType.Else ) )
-                    throw new TemplateException( "Syntax error. Invalid `/if` without matching `if`." );
-
-                if ( frame.IsTokenType( TokenType.Else ) )
-                    frame.Pop(); // pop the else
-
-                frame.Pop(); // pop the if
-
-                return TokenAction.Ignore;
-
-            case TokenType.Define:
-                Tokens.Add( token.Name, token.TokenExpression );
-                return TokenAction.Ignore;
-
-            case TokenType.None:
-            default:
-                throw new NotSupportedException( $"{nameof( ProcessTokenKind )}: Invalid {nameof( TokenType )} {token.TokenType}." );
-        }
-
-        // resolve value 
-
-        var defined = false;
-        var ifResult = false;
-        var expressionError = default( string );
-
-        switch ( token.TokenType )
-        {
-            case TokenType.Value when token.TokenEvaluation != TokenEvaluation.Expression:
-            case TokenType.If when token.TokenEvaluation != TokenEvaluation.Expression:
-                {
-                    // resolve variable value
-                    defined = Tokens.TryGetValue( token.Name, out value );
-
-                    if ( !defined && SubstituteEnvironmentVariables )
-                    {
-                        // optionally try and replace value from environment variable
-                        // otherwise set token value to null and behavior to error
-
-                        value = Environment.GetEnvironmentVariable( token.Name );
-                        defined = value != null;
-                    }
-
-                    // resolve if truthy result
-                    if ( token.TokenType == TokenType.If )
-                        ifResult = defined && TemplateHelper.Truthy( value );
-                    break;
-                }
-            case TokenType.Value when token.TokenEvaluation == TokenEvaluation.Expression:
-                {
-                    // resolve variable expression
-                    if ( TryInvokeTokenExpression( token, out var expressionResult, out expressionError ) )
-                    {
-                        value = Convert.ToString( expressionResult, CultureInfo.InvariantCulture );
-                        defined = true;
-                    }
-
-                    break;
-                }
-            case TokenType.If when token.TokenEvaluation == TokenEvaluation.Expression:
-                {
-                    // resolve if expression result
-                    if ( TryInvokeTokenExpression( token, out var expressionResult, out var error ) )
-                        ifResult = Convert.ToBoolean( expressionResult );
-                    else
-                        throw new TemplateException( $"{TokenLeft}Error ({token.Id}):{error ?? "Error in if condition."}{TokenRight}" );
-                    break;
-                }
-        }
-
-        // `if` frame handling
-
-        if ( token.TokenType == TokenType.If )
-        {
-            var frameIsTruthy = token.TokenEvaluation == TokenEvaluation.Falsy ? !ifResult : ifResult;
-
-            frame.Push( token.TokenType, frameIsTruthy );
-            return TokenAction.Ignore;
-        }
-
-        // set token action
-
-        var tokenAction = defined
-            ? TokenAction.Replace
-            : IgnoreMissingTokens
-                ? TokenAction.Ignore
-                : TokenAction.Error;
-
-        // invoke any token handler
-
-        if ( TokenHandler != null )
-        {
-            var eventArgs = new TemplateEventArgs
-            {
-                Id = token.Id,
-                Name = token.Name,
-                Value = value,
-                Action = tokenAction,
-                UnknownToken = !defined
-            };
-
-            TokenHandler( this, eventArgs );
-
-            // the token handler may have modified token properties
-            // get any potentially updated values
-
-            value = eventArgs.Value;
-            tokenAction = eventArgs.Action;
-        }
-
-        // handle token action
-
-        switch ( tokenAction )
-        {
-            case TokenAction.Ignore:
-                return TokenAction.Ignore;
-
-            case TokenAction.Error:
-                value = $"{TokenLeft}Error ({token.Id}):{expressionError ?? token.Name}{TokenRight}";
-                return TokenAction.Error;
-
-            case TokenAction.Replace:
-                return TokenAction.Replace;
-
-            default:
-                throw new NotSupportedException( $"{nameof( ProcessTokenKind )}: Invalid {nameof( TokenAction )} {tokenAction}." );
-        }
-    }
-
-    private bool TryInvokeTokenExpression( TokenDefinition token, out object result, out string error )
-    {
-        try
-        {
-            var tokenExpression = TokenExpressionProvider.GetTokenExpression( token.TokenExpression );
-            var dynamicReadOnlyTokens = new ReadOnlyDynamicDictionary( Tokens, (IReadOnlyDictionary<string, DynamicMethod>) Methods );
-
-            result = tokenExpression( dynamicReadOnlyTokens );
-            error = default;
-
-            return true;
-        }
-        catch ( Exception ex )
-        {
-            error = ex.Message;
-        }
-
-        result = default;
-        return false;
-    }
-
-    // Process Template Value (recursive)
-
-    private void ProcessTokenValue( TextWriter writer, ReadOnlySpan<char> value, TokenAction tokenAction, TemplateState state, int recursionCount = 0 )
+    private void WriteTokenValue( TextWriter writer, TokenProcessor tokenProcessor, ReadOnlySpan<char> value, TokenAction tokenAction, TemplateState state, int recursionCount = 0 )
     {
         // infinite recursion guard
 
@@ -683,10 +520,10 @@ public class TemplateParser
             // process token
 
             var innerToken = TokenParser.ParseToken( innerValue, state.NextTokenId++ );
-            tokenAction = ProcessTokenKind( innerToken, state.Frame, out var tokenValue );
+            tokenAction = tokenProcessor.ProcessTokenType( innerToken, state, out var tokenValue );
 
             if ( tokenAction != TokenAction.Ignore )
-                ProcessTokenValue( writer, tokenValue, tokenAction, state, recursionCount );
+                WriteTokenValue( writer, tokenProcessor, tokenValue, tokenAction, state, recursionCount );
 
             // find next token start
 
@@ -753,4 +590,31 @@ public class TemplateParser
 
         return -1;
     }
+}
+
+// Minimal frame management for flow control
+
+internal sealed class TemplateStack
+{
+    public record Frame( TokenDefinition Token, bool Truthy, int StartPos = -1 );
+
+    private readonly Stack<Frame> _stack = new();
+
+    public void Push( TokenDefinition token, bool truthy, int startPos = -1 )
+        => _stack.Push( new Frame( token, truthy, startPos ) );
+
+    public Frame Peek() => _stack.Peek();
+    public void Pop() => _stack.Pop();
+    public int Depth => _stack.Count;
+
+    public bool IsTokenType( TokenType compare ) => _stack.Count > 0 && _stack.Peek().Token.TokenType == compare;
+    public bool IsTruthy => _stack.Count == 0 || _stack.Peek().Truthy;
+    public bool IsFalsy => !IsTruthy;
+}
+
+internal sealed class TemplateState
+{
+    public TemplateStack Frame { get; } = new();
+    public int NextTokenId { get; set; } = 1;
+    public int CurrentPos { get; set; }
 }

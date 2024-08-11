@@ -10,6 +10,27 @@ namespace Hyperbee.Templating.Tests.Text;
 public class TemplateParserExpressionTests
 {
     [DataTestMethod]
+    //[DataRow( ParseTemplateMethod.Buffered )]
+    [DataRow( ParseTemplateMethod.InMemory )]
+    public void Should_honor_while_condition( ParseTemplateMethod parseMethod )
+    {
+        // arrange
+        const string expression = "{{while x => int.Parse(x.counter) < 3}}{{counter}}{{counter:{{x => int.Parse(x.counter) + 1}}}}{{/while}}";
+        const string template = $"count: {expression}.";
+
+        var parser = new TemplateParser { Tokens = { ["counter"] = "0" } };
+
+        // act
+        var result = parser.Render( template, parseMethod );
+
+        // assert
+        var expected = "count: 012.";
+
+        Assert.AreEqual( expected, result );
+    }
+
+
+    [DataTestMethod]
     [DataRow( ParseTemplateMethod.Buffered )]
     [DataRow( ParseTemplateMethod.InMemory )]
     public void Should_honor_if_when_truthy( ParseTemplateMethod parseMethod )
