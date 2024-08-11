@@ -10,8 +10,8 @@ namespace Hyperbee.Templating.Tests.Text;
 public class TemplateParserExpressionTests
 {
     [DataTestMethod]
-    //[DataRow( ParseTemplateMethod.Buffered )]
-    [DataRow( ParseTemplateMethod.InMemory )]
+    [DataRow( ParseTemplateMethod.Buffered )]
+    //[DataRow( ParseTemplateMethod.InMemory )]
     public void Should_honor_while_condition( ParseTemplateMethod parseMethod )
     {
         // arrange

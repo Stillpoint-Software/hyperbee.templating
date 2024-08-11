@@ -34,7 +34,7 @@ internal class TokenProcessor
         _tokenRight = tokenRight;
     }
 
-    public TokenAction ProcessTokenType( TokenDefinition token, TemplateState state, out string value )
+    public TokenAction ProcessToken( TokenDefinition token, TemplateState state, out string value )
     {
         value = default;
         var frame = state.Frame;
@@ -69,7 +69,7 @@ internal class TokenProcessor
 
             case TokenType.None:
             default:
-                throw new NotSupportedException( $"{nameof(ProcessTokenType)}: Invalid {nameof(TokenType)} {token.TokenType}." );
+                throw new NotSupportedException( $"{nameof(ProcessToken)}: Invalid {nameof(TokenType)} {token.TokenType}." );
         }
 
         // Resolve value
@@ -109,7 +109,7 @@ internal class TokenProcessor
                 break;
 
             default:
-                throw new NotSupportedException( $"{nameof(ProcessTokenType)}: Invalid {nameof(TokenAction)} {tokenAction}." );
+                throw new NotSupportedException( $"{nameof(ProcessToken)}: Invalid {nameof(TokenAction)} {tokenAction}." );
         }
 
         return tokenAction;
@@ -155,7 +155,7 @@ internal class TokenProcessor
         };
 
         if ( conditionIsTrue ) // If the condition is true, replay the while block
-            return TokenAction.Replay;
+            return TokenAction.Loop;
 
         // Otherwise, pop the frame and exit the loop
         frame.Pop();

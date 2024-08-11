@@ -184,80 +184,61 @@ public class TemplateParser
         Token
     }
 
-    // parse template that spans multiple read buffers
+    // parse incremental template
     private void ParseTemplate( TextReader reader, TextWriter writer )
     {
+        var padding = Math.Max( TokenLeft.Length, TokenRight.Length );
+        var bufferManager = new BufferManager( BlockSize, padding ); // Instantiate BufferManager here
+
+        var tokenWriter = new ArrayBufferWriter<char>(); // defaults to 256
+        var scanner = TemplateScanner.Text;
+        var ignore = false;
+        var whileDepth = 0;
+
+        IndexOfState indexOfState = default; // index-of for right token delimiter could span buffer reads
+        var state = new TemplateState(); // template state for this parsing session
+
         try
         {
-            var ignore = false;
-
-            var padding = Math.Max( TokenLeft.Length, TokenRight.Length );
-            var start = padding;
-
-            var buffer = new char[padding + BlockSize]; // padding is used to manage delimiters that `span` reads
-            var tokenWriter = new ArrayBufferWriter<char>(); // defaults to 256
-
-            var scanner = TemplateScanner.Text;
-
-            IndexOfState indexOfState = default;    // index-of for right token delimiter could span buffer reads
-            var state = new TemplateState();    // template state for this parsing session
-
             while ( true )
             {
-                var read = reader.Read( buffer, padding, BlockSize );
-                var content = buffer.AsSpan( start, read + (padding - start) );
+                var span = bufferManager.ReadSpan( reader );
 
-                if ( content.IsEmpty )
+                if ( span.IsEmpty )
                     break;
 
-                while ( !content.IsEmpty )
+                while ( !span.IsEmpty )
                 {
+                    state.CurrentPos = bufferManager.CurrentPosition;
                     int pos;
 
                     switch ( scanner )
                     {
                         case TemplateScanner.Text:
                             {
-                                pos = content.IndexOf( TokenLeft );
+                                pos = span.IndexOf( TokenLeft );
 
                                 // match: write to start of token
                                 if ( pos >= 0 )
                                 {
                                     // write content
                                     if ( !ignore )
-                                        writer.Write( content[..pos] );
+                                        writer.Write( span[..pos] );
 
-                                    content = content[(pos + TokenLeft.Length)..];
+                                    //span = span[(pos + TokenLeft.Length)..];
+
+                                    span = bufferManager.GetCurrentSpan( pos + TokenLeft.Length );
 
                                     // transition state
                                     scanner = TemplateScanner.Token;
-                                    start = padding;
                                     continue;
                                 }
 
-                                // no-match eof: write final content
-                                if ( read < BlockSize )
-                                {
-                                    if ( !ignore )
-                                        writer.Write( content ); // write final content
-                                    return;
-                                }
-
-                                // no-match: write content less remainder
+                                // no-match and eof: write final content
                                 if ( !ignore )
-                                {
-                                    var writeLength = content.Length - TokenLeft.Length;
+                                    writer.Write( span );
 
-                                    if ( writeLength > 0 )
-                                        writer.Write( content[..writeLength] );
-                                }
-
-                                // slide remainder
-                                var remainderLength = Math.Min( TokenLeft.Length, content.Length );
-                                start = padding - remainderLength;
-                                content[^remainderLength..].CopyTo( buffer.AsSpan( start ) );
-                                content = [];
-
+                                span = [];
                                 break;
                             }
 
@@ -265,19 +246,49 @@ public class TemplateParser
                             {
                                 // scan: find closing token pattern
                                 // token may span multiple reads so track search state
-                                pos = IndexOfIgnoreContent( content, TokenRight, ref indexOfState );
+                                pos = IndexOfIgnoreContent( span, TokenRight, ref indexOfState );
 
                                 // match: process completed token
                                 if ( pos >= 0 )
                                 {
+                                    // update CurrentPos to point to the first character after the token
+                                    state.CurrentPos += pos + TokenRight.Length;
+
                                     // save token chars
-                                    tokenWriter.Write( content[..pos] );
-                                    content = content[(pos + TokenRight.Length)..];
+                                    tokenWriter.Write( span[..pos] );
+                                    span = bufferManager.GetCurrentSpan( pos + TokenRight.Length );
 
                                     // process token
                                     var token = TokenParser.ParseToken( tokenWriter.WrittenSpan, state.NextTokenId++ );
-                                    var tokenAction = TokenProcessor.ProcessTokenType( token, state, out var tokenValue );
+                                    var tokenAction = TokenProcessor.ProcessToken( token, state, out var tokenValue );
 
+                                    // loop handling
+                                    if ( tokenAction == TokenAction.Loop )
+                                    {
+                                        // Reset the position to the start of the while block
+                                        bufferManager.Position( state.Frame.Peek().StartPos );
+                                        span = bufferManager.GetCurrentSpan();
+                                        scanner = TemplateScanner.Text;
+                                        tokenWriter.Clear();
+                                        continue;
+                                    }
+
+                                    // loop buffer management
+                                    if ( token.TokenType == TokenType.While )
+                                    {
+                                        if ( whileDepth++ == 0 )
+                                            bufferManager.SetGrow( true );
+                                    }
+                                    else if ( token.TokenType == TokenType.EndWhile )
+                                    {
+                                        if ( --whileDepth == 0 )
+                                        {
+                                            bufferManager.SetGrow( false );
+                                            bufferManager.TrimBuffers();
+                                        }
+                                    }
+
+                                    // write value
                                     if ( tokenAction != TokenAction.Ignore )
                                         WriteTokenValue( writer, tokenValue, tokenAction, state );
 
@@ -287,37 +298,21 @@ public class TemplateParser
 
                                     // transition state
                                     scanner = TemplateScanner.Text;
-                                    start = padding;
                                     continue;
                                 }
 
-                                // no-match eof: incomplete token
-                                if ( read < BlockSize )
-                                    throw new TemplateException( "Missing right token delimiter." );
-
-                                // no-match: save partial token less remainder
-                                var writeLength = content.Length - TokenRight.Length;
-
-                                if ( writeLength > 0 )
-                                    tokenWriter.Write( content[..writeLength] );
-
-                                // slide remainder
-                                var remainderLength = Math.Min( TokenRight.Length, content.Length );
-                                start = padding - remainderLength;
-                                content[^remainderLength..].CopyTo( buffer.AsSpan( start ) );
-                                content = [];
-
+                                span = [];
                                 break;
                             }
 
                         default:
-                            throw new ArgumentOutOfRangeException( scanner.ToString(), "Is" );
+                            throw new ArgumentOutOfRangeException( scanner.ToString(), $"Invalid scanner state: {scanner}." );
                     }
                 }
             }
 
             if ( state.Frame.Depth != 0 )
-                throw new TemplateException( "Mismatched if else /if." );
+                throw new TemplateException( "Missing end if, or end while." );
         }
         catch ( Exception ex )
         {
@@ -326,44 +321,45 @@ public class TemplateParser
         finally
         {
             writer.Flush();
+            bufferManager.ReleaseBuffers();
         }
     }
 
-    // parse template that is in memory
-    private void ParseTemplate( ReadOnlySpan<char> content, TextWriter writer, int pos = int.MinValue )
+    // parse in-memory template
+    private void ParseTemplate( ReadOnlySpan<char> templateSpan, TextWriter writer, int pos = int.MinValue )
     {
+        // find: first token start
+
+        if ( pos == int.MinValue )
+            pos = templateSpan.IndexOf( TokenLeft );
+
+        if ( pos < 0 ) // no-match: quick out
+        {
+            writer.Write( templateSpan );
+            return;
+        }
+
+        // match: process template
+
+        var skipIndexOf = true;
+        var tokenWriter = new ArrayBufferWriter<char>(); // defaults to 256
+        var scanner = TemplateScanner.Text;
+        var ignore = false;
+
+        IndexOfState indexOfState = default; // index-of for right token delimiter could span buffer reads
+        var state = new TemplateState(); // template state for this parsing session
+        var span = templateSpan; // Keep the original template span for resetting the position
+
         try
         {
-            // find first token starting position
-            if ( pos == int.MinValue )
-                pos = content.IndexOf( TokenLeft );
-
-            if ( pos < 0 ) // no-match eof: write final content
-            {
-                writer.Write( content );
-                return;
-            }
-
-            var skipIndexOf = true;
-
-            // set up for token processing
-            var tokenWriter = new ArrayBufferWriter<char>(); // defaults to 256
-            var scanner = TemplateScanner.Text;
-            var ignore = false;
-
-            IndexOfState indexOfState = default;    // index-of for right token delimiter could span buffer reads
-            var state = new TemplateState();    // template state for this parsing session
-
-            var originalSpan = content; // Keep the original content span for resetting the position
-
             while ( true )
             {
-                if ( content.IsEmpty )
+                if ( span.IsEmpty )
                     break;
 
-                while ( !content.IsEmpty )
+                while ( !span.IsEmpty )
                 {
-                    state.CurrentPos = originalSpan.Length - content.Length; // Track the current position
+                    state.CurrentPos = templateSpan.Length - span.Length; // Track the current position
 
                     switch ( scanner )
                     {
@@ -372,16 +368,16 @@ public class TemplateParser
                                 if ( skipIndexOf )
                                     skipIndexOf = false;
                                 else
-                                    pos = content.IndexOf( TokenLeft );
+                                    pos = span.IndexOf( TokenLeft );
 
                                 // match: write to start of token
                                 if ( pos >= 0 )
                                 {
                                     // write content
                                     if ( !ignore )
-                                        writer.Write( content[..pos] );
+                                        writer.Write( span[..pos] );
 
-                                    content = content[(pos + TokenLeft.Length)..];
+                                    span = span[(pos + TokenLeft.Length)..];
 
                                     // transition state
                                     scanner = TemplateScanner.Token;
@@ -390,7 +386,7 @@ public class TemplateParser
 
                                 // no-match eof: write final content
                                 if ( !ignore )
-                                    writer.Write( content ); // write final content
+                                    writer.Write( span ); // write final content
                                 return;
                             }
 
@@ -398,7 +394,7 @@ public class TemplateParser
                             {
                                 // scan: find closing token pattern
                                 // token may span multiple reads so track search state
-                                pos = IndexOfIgnoreContent( content, TokenRight, ref indexOfState );
+                                pos = IndexOfIgnoreContent( span, TokenRight, ref indexOfState );
 
                                 // no-match eof: incomplete token
                                 if ( pos < 0 )
@@ -407,20 +403,20 @@ public class TemplateParser
                                 // match: process completed token
 
                                 // update CurrentPos to point to the first character after the token
-                                state.CurrentPos = originalSpan.Length - content.Length + pos + TokenRight.Length;
+                                state.CurrentPos = templateSpan.Length - span.Length + pos + TokenRight.Length;
 
                                 // save token chars
-                                tokenWriter.Write( content[..pos] );
-                                content = content[(pos + TokenRight.Length)..];
+                                tokenWriter.Write( span[..pos] );
+                                span = span[(pos + TokenRight.Length)..];
 
                                 // process token
                                 var token = TokenParser.ParseToken( tokenWriter.WrittenSpan, state.NextTokenId++ );
-                                var tokenAction = TokenProcessor.ProcessTokenType( token, state, out var tokenValue );
+                                var tokenAction = TokenProcessor.ProcessToken( token, state, out var tokenValue );
 
-                                if ( tokenAction == TokenAction.Replay )
+                                if ( tokenAction == TokenAction.Loop )
                                 {
                                     // Reset the position to start of while block
-                                    content = originalSpan[state.Frame.Peek().StartPos..]; // Reset position to StartPos
+                                    span = templateSpan[state.Frame.Peek().StartPos..]; // Reset position to StartPos
                                     scanner = TemplateScanner.Text;
                                     tokenWriter.Clear();
                                     continue;
@@ -439,13 +435,13 @@ public class TemplateParser
                             }
 
                         default:
-                            throw new ArgumentOutOfRangeException( scanner.ToString(), "Is" );
+                            throw new ArgumentOutOfRangeException( scanner.ToString(), $"Invalid scanner state: {scanner}." );
                     }
                 }
             }
 
             if ( state.Frame.Depth != 0 )
-                throw new TemplateException( "Mismatched if else /if." );
+                throw new TemplateException( "Missing end if or end while." );
         }
         catch ( Exception ex )
         {
@@ -508,7 +504,7 @@ public class TemplateParser
             // process token
 
             var innerToken = TokenParser.ParseToken( innerValue, state.NextTokenId++ );
-            tokenAction = TokenProcessor.ProcessTokenType( innerToken, state, out var tokenValue );
+            tokenAction = TokenProcessor.ProcessToken( innerToken, state, out var tokenValue );
 
             if ( tokenAction != TokenAction.Ignore )
                 WriteTokenValue( writer, tokenValue, tokenAction, state, recursionCount );
