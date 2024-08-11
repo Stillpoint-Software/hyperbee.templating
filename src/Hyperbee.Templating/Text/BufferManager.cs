@@ -93,10 +93,10 @@ internal sealed class BufferManager : IDisposable
         {
             // Rent a new buffer and add to the list
             var buffer = _arrayPool.Rent( _bufferSize + _padding );
-            
-            bufferState = new BufferState( buffer ) 
-            { 
-                IncludePadding = _buffers.Count != 0 
+
+            bufferState = new BufferState( buffer )
+            {
+                IncludePadding = _buffers.Count != 0
             };
 
             _buffers.Add( bufferState );

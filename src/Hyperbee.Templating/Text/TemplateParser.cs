@@ -44,7 +44,7 @@ public class TemplateParser
 
     private readonly Lazy<TokenProcessor> _lazyTokenProcessor;
     private TokenProcessor TokenProcessor => _lazyTokenProcessor.Value;
-  
+
     public TemplateParser()
         : this( TokenStyle.Default )
     {
@@ -86,7 +86,7 @@ public class TemplateParser
             TokenLeft,
             TokenRight
         ) );
-    
+
         switch ( style )
         {
             case TokenStyle.Default:

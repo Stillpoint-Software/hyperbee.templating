@@ -31,9 +31,9 @@ internal class TokenParser
 
     internal TokenParser( KeyValidator validator, string tokenLeft, string tokenRight )
     {
-        ValidateKey = validator ?? throw new ArgumentNullException( nameof(validator) );
-        TokenLeft = tokenLeft ?? throw new ArgumentNullException( nameof(tokenLeft) );
-        TokenRight = tokenRight ?? throw new ArgumentNullException( nameof(tokenRight) );
+        ValidateKey = validator ?? throw new ArgumentNullException( nameof( validator ) );
+        TokenLeft = tokenLeft ?? throw new ArgumentNullException( nameof( tokenLeft ) );
+        TokenRight = tokenRight ?? throw new ArgumentNullException( nameof( tokenRight ) );
     }
 
     public TokenDefinition ParseToken( ReadOnlySpan<char> token, int tokenId )

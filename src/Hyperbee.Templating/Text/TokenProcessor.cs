@@ -24,10 +24,10 @@ internal class TokenProcessor
         string tokenLeft,
         string tokenRight )
     {
-        _tokens = tokens ?? throw new ArgumentNullException( nameof(tokens) );
-        _methods = methods ?? throw new ArgumentNullException( nameof(methods) );
+        _tokens = tokens ?? throw new ArgumentNullException( nameof( tokens ) );
+        _methods = methods ?? throw new ArgumentNullException( nameof( methods ) );
         _tokenHandler = tokenHandler;
-        _tokenExpressionProvider = tokenExpressionProvider ?? throw new ArgumentNullException( nameof(tokenExpressionProvider) );
+        _tokenExpressionProvider = tokenExpressionProvider ?? throw new ArgumentNullException( nameof( tokenExpressionProvider ) );
         _ignoreMissingTokens = ignoreMissingTokens;
         _substituteEnvironmentVariables = substituteEnvironmentVariables;
         _tokenLeft = tokenLeft;
@@ -69,27 +69,27 @@ internal class TokenProcessor
 
             case TokenType.None:
             default:
-                throw new NotSupportedException( $"{nameof(ProcessToken)}: Invalid {nameof(TokenType)} {token.TokenType}." );
+                throw new NotSupportedException( $"{nameof( ProcessToken )}: Invalid {nameof( TokenType )} {token.TokenType}." );
         }
 
         // Resolve value
-            
+
         ResolveValue( token, out value, out var defined, out var ifResult, out var expressionError );
 
         // Frame handling: post-value processing
-            
+
         switch ( token.TokenType )
         {
             case TokenType.If:
             case TokenType.While:
-            {
-                var frameIsTruthy = token.TokenEvaluation == TokenEvaluation.Falsy ? !ifResult : ifResult;
-                var startPos = token.TokenType == TokenType.While ? state.CurrentPos : -1;
+                {
+                    var frameIsTruthy = token.TokenEvaluation == TokenEvaluation.Falsy ? !ifResult : ifResult;
+                    var startPos = token.TokenType == TokenType.While ? state.CurrentPos : -1;
 
-                frame.Push( token, frameIsTruthy, startPos );
+                    frame.Push( token, frameIsTruthy, startPos );
 
-                return TokenAction.Ignore;
-            }
+                    return TokenAction.Ignore;
+                }
         }
 
         // Token handling: user-defined token action
@@ -109,7 +109,7 @@ internal class TokenProcessor
                 break;
 
             default:
-                throw new NotSupportedException( $"{nameof(ProcessToken)}: Invalid {nameof(TokenAction)} {tokenAction}." );
+                throw new NotSupportedException( $"{nameof( ProcessToken )}: Invalid {nameof( TokenAction )} {tokenAction}." );
         }
 
         return tokenAction;
