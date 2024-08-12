@@ -4,152 +4,89 @@ namespace Hyperbee.Templating.Text;
 
 internal sealed class BufferManager : IDisposable
 {
-    /*
-     * BufferManager Class Overview:
-     *
-     * The BufferManager class manages a series of buffers to facilitate reading and processing
-     * data in chunks. It supports both growing the buffer list (to handle large or complex data
-     * streams) and efficiently managing data within a single buffer when growth is not needed.
-     *
-     * Key Concepts and Variables:
-     *
-     * 1. _padding:
-     *    - Represents additional space at the start of each buffer.
-     *    - Used to manage scenarios where data spans across buffer boundaries.
-     *    - When new data is read into a buffer, any unprocessed data from the previous read
-     *      is moved (slid) into the padding area to maintain data continuity.
-     *
-     * 2. _currentBufferPos:
-     *    - Tracks the user's current position within the buffer.
-     *    - Indicates where the next read or operation should occur within the buffer.
-     *    - If padding is included, _currentBufferPos starts at 0; otherwise, it starts after the padding.
-     *
-     * 3. TotalCharacters:
-     *    - Represents the total number of characters read into a buffer, including padding if relevant.
-     *    - Reflects the full extent of usable data within the buffer.
-     *    - Used to calculate the correct span to return to the user.
-     *
-     * 4. IncludePadding (within BufferState):
-     *    - Indicates whether the padding area is part of the usable span.
-     *    - If true, _currentBufferPos is set to 0 and TotalCharacters includes padding.
-     *    - If false, _currentBufferPos starts after the padding, and TotalCharacters excludes it.
-     *
-     * 5. Buffer Management:
-     *    - Buffers are managed as a list of BufferState objects.
-     *    - Buffers can grow as needed or be reused if growth is disabled.
-     *    - Sliding the remainder of a buffer ensures that unprocessed data is carried over to the next read.
-     *
-     * Purpose:
-     * The BufferManager is designed to handle both simple and complex data streams efficiently.
-     * It ensures that data spanning multiple buffers is managed without loss or corruption,
-     * making it suitable for scenarios where templates or other data streams are processed in chunks.
-     */
-
     private readonly ArrayPool<char> _arrayPool;
     private readonly List<BufferState> _buffers = [];
     private int _currentBufferIndex;
     private int _currentBufferPos;
     private readonly int _bufferSize;
-    private readonly int _padding;
     private bool _grow;
 
-    public BufferManager( int bufferSize, int padding )
+    public BufferManager( int bufferSize )
     {
         _arrayPool = ArrayPool<char>.Shared;
         _bufferSize = bufferSize;
-        _padding = padding;
     }
 
     public void SetGrow( bool grow ) => _grow = grow;
+    
+    public void AdvanceCurrentSpan( int advanceBy ) => _currentBufferPos += advanceBy;
 
     public Span<char> GetCurrentSpan()
     {
         var bufferState = _buffers[_currentBufferIndex];
-        var length = bufferState.TotalCharacters - _currentBufferPos + (bufferState.IncludePadding ? 0 : _padding);
-        return bufferState.Buffer.AsSpan( _currentBufferPos, length );
+        return bufferState.Buffer.AsSpan( _currentBufferPos, bufferState.TotalCharacters - _currentBufferPos );
     }
 
-    public Span<char> GetCurrentSpan( int moveBy )
+    public Span<char> GetCurrentSpan( int advanceBy )
     {
-        _currentBufferPos += moveBy;
+        AdvanceCurrentSpan( advanceBy );
         return GetCurrentSpan();
     }
 
     public Span<char> ReadSpan( TextReader reader )
     {
-        // Return an existing buffer if we have it
-        if ( _currentBufferIndex < _buffers.Count - 1 )
-        {
-            _currentBufferIndex++;
-            _currentBufferPos = _padding;
-            return GetCurrentSpan();
-        }
+        var first = _buffers.Count == 0;
+        var rent = _grow || first;
 
-        // Determine if we need to rent a new buffer
-        var rent = _grow || _buffers.Count == 0;
         BufferState bufferState;
 
         if ( rent )
         {
             // Rent a new buffer and add to the list
-            var buffer = _arrayPool.Rent( _bufferSize + _padding );
-
-            bufferState = new BufferState( buffer )
-            {
-                IncludePadding = _buffers.Count != 0
-            };
-
+            bufferState = new BufferState( _arrayPool.Rent( _bufferSize ) );
             _buffers.Add( bufferState );
             _currentBufferIndex = _buffers.Count - 1;
-            _currentBufferPos = _padding;
         }
         else
         {
-            // Use the existing buffer and adjust position based on padding
+            // Use the existing buffer
             bufferState = _buffers[_currentBufferIndex];
-            _currentBufferPos = bufferState.IncludePadding ? 0 : _padding;
         }
 
-        // Slide the remainder of the current buffer in place if necessary
-        if ( _buffers.Count > 0 )
+        // Slide remainder of the current buffer if necessary
+        var remainder = 0;
+
+        if ( !first )
         {
-            SlideRemainderToFront();
+            remainder = bufferState.TotalCharacters - _currentBufferPos;
+
+            if ( remainder > 0 )
+                Array.Copy( bufferState.Buffer, _currentBufferPos, bufferState.Buffer, 0, remainder );
         }
 
-        // Read from the reader
-        var span = bufferState.Buffer.AsSpan( _padding, _bufferSize );
+        // Read new data into the buffer
+        _currentBufferPos = 0;
+
+        var span = bufferState.Buffer.AsSpan( remainder, _bufferSize - remainder );
         var read = reader.Read( span );
 
-        // Calculate total characters based on whether padding is included
-        bufferState.TotalCharacters = read + (bufferState.IncludePadding ? _padding : 0);
+        bufferState.TotalCharacters = read + remainder;
 
-        return read == 0
-            ? []
-            : bufferState.Buffer.AsSpan( _currentBufferPos, bufferState.TotalCharacters );
+        return bufferState.TotalCharacters == 0 ? [] : bufferState.Buffer.AsSpan( 0, bufferState.TotalCharacters );
     }
 
-    private void SlideRemainderToFront()
-    {
-        if ( _currentBufferPos >= _bufferSize )
-            return;
-
-        var remainingSize = _bufferSize - _currentBufferPos;
-        Array.Copy( _buffers[_currentBufferIndex].Buffer, _padding, _buffers[_currentBufferIndex].Buffer, 0, remainingSize );
-    }
-
-    public int CurrentPosition => _currentBufferIndex * _bufferSize + (_currentBufferPos - _padding);
+    public int CurrentPosition => _currentBufferIndex * _bufferSize + _currentBufferPos;
 
     public void Position( int position )
     {
         var remainingPosition = position;
 
-        // Iterate over buffers to find the correct position
         for ( var i = 0; i < _buffers.Count; i++ )
         {
             if ( remainingPosition < _bufferSize )
             {
                 _currentBufferIndex = i;
-                _currentBufferPos = remainingPosition + _padding;
+                _currentBufferPos = remainingPosition;
                 return;
             }
 
@@ -167,7 +104,7 @@ internal sealed class BufferManager : IDisposable
             _buffers.RemoveAt( 0 );
         }
 
-        _currentBufferPos = _padding;
+        _currentBufferPos = 0;
         _currentBufferIndex = 0;
     }
 
@@ -186,17 +123,9 @@ internal sealed class BufferManager : IDisposable
         ReleaseBuffers();
     }
 
-    private class BufferState
+    private class BufferState( char[] buffer )
     {
-        public char[] Buffer { get; }
+        public char[] Buffer { get; } = buffer;
         public int TotalCharacters { get; set; }
-        public bool IncludePadding { get; set; }
-
-        public BufferState( char[] buffer )
-        {
-            Buffer = buffer;
-            TotalCharacters = 0;
-            IncludePadding = false;
-        }
     }
 }

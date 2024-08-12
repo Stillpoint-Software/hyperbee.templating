@@ -24,7 +24,7 @@ public enum TokenStyle
 
 public class TemplateParser
 {
-    internal static int BlockSize = 1024;
+    internal static int BufferSize = 1024;
     public bool IgnoreMissingTokens { get; init; } = false;
     public bool SubstituteEnvironmentVariables { get; init; } = false;
 
@@ -187,8 +187,8 @@ public class TemplateParser
     // parse incremental template
     private void ParseTemplate( TextReader reader, TextWriter writer )
     {
-        var padding = Math.Max( TokenLeft.Length, TokenRight.Length );
-        var bufferManager = new BufferManager( BlockSize, padding ); // Instantiate BufferManager here
+        var bufferSize = GetScopedBufferSize( BufferSize, TokenLeft.Length, TokenRight.Length ); // min buffer size is max token delimiter plus 1
+        var bufferManager = new BufferManager( bufferSize ); 
 
         var tokenWriter = new ArrayBufferWriter<char>(); // defaults to 256
         var scanner = TemplateScanner.Text;
@@ -203,6 +203,7 @@ public class TemplateParser
             while ( true )
             {
                 var span = bufferManager.ReadSpan( reader );
+                var lastReadBytes = span.Length;
 
                 if ( span.IsEmpty )
                     break;
@@ -225,8 +226,6 @@ public class TemplateParser
                                     if ( !ignore )
                                         writer.Write( span[..pos] );
 
-                                    //span = span[(pos + TokenLeft.Length)..];
-
                                     span = bufferManager.GetCurrentSpan( pos + TokenLeft.Length );
 
                                     // transition state
@@ -234,9 +233,25 @@ public class TemplateParser
                                     continue;
                                 }
 
-                                // no-match and eof: write final content
+                                // no-match eof: write final content
+                                if ( lastReadBytes < bufferSize )
+                                {
+                                    if ( !ignore )
+                                        writer.Write( span ); // write final content
+                                    return;
+                                }
+
+                                // no-match: write content less remainder
                                 if ( !ignore )
-                                    writer.Write( span );
+                                {
+                                    var writeLength = span.Length - TokenLeft.Length;
+
+                                    if ( writeLength > 0 )
+                                    {
+                                        writer.Write( span[..writeLength] );
+                                        bufferManager.AdvanceCurrentSpan( writeLength );
+                                    }
+                                }
 
                                 span = [];
                                 break;
@@ -301,6 +316,19 @@ public class TemplateParser
                                     continue;
                                 }
 
+                                // no-match eof: incomplete token
+                                if (  lastReadBytes < bufferSize )
+                                    throw new TemplateException( "Missing right token delimiter." );
+
+                                // no-match: save partial token less remainder
+                                var writeLength = span.Length - TokenRight.Length;
+
+                                if ( writeLength > 0 )
+                                {
+                                    tokenWriter.Write( span[..writeLength] );
+                                    bufferManager.AdvanceCurrentSpan( writeLength );
+                                }
+
                                 span = [];
                                 break;
                             }
@@ -322,6 +350,17 @@ public class TemplateParser
         {
             writer.Flush();
             bufferManager.ReleaseBuffers();
+        }
+
+        return;
+
+        static int GetScopedBufferSize( int bufferSize, int tokenLeftSize, int tokenRightSize )
+        {
+            // because of the way we read the buffer, we need to ensure that the buffer size
+            // is at least the size of the longest token delimiter plus one character.
+
+            var maxDelimiter = Math.Max( tokenLeftSize, tokenRightSize );
+            return Math.Max( bufferSize, maxDelimiter + 1 ); 
         }
     }
 
