@@ -296,7 +296,7 @@ public class TemplateParser
 
                                     var token = TokenParser.ParseToken( tokenWriter.WrittenSpan, state.NextTokenId++ );
                                     var tokenAction = TokenProcessor.ProcessToken( token, state, out var tokenValue );
-                                    
+
                                     tokenWriter.Clear();
                                     scanner = TemplateScanner.Text;
 
