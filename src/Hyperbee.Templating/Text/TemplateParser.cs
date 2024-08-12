@@ -1,11 +1,9 @@
-﻿using System.Buffers;
+using System.Buffers;
 using Hyperbee.Templating.Collections;
 using Hyperbee.Templating.Compiler;
 using Hyperbee.Templating.Extensions;
 
 namespace Hyperbee.Templating.Text;
-
-//public delegate string TemplateMethod( string value, params string[] args );
 
 public enum TokenStyle
 {
@@ -25,14 +23,13 @@ public enum TokenStyle
 public class TemplateParser
 {
     internal static int BufferSize = 1024;
+
     public bool IgnoreMissingTokens { get; init; } = false;
     public bool SubstituteEnvironmentVariables { get; init; } = false;
-
     public int MaxTokenDepth { get; init; } = 20;
 
     public ITokenExpressionProvider TokenExpressionProvider { get; init; } = new RoslynTokenExpressionProvider();
     public IDictionary<string, DynamicMethod> Methods { get; init; } = new Dictionary<string, DynamicMethod>( StringComparer.OrdinalIgnoreCase );
-
     public TemplateDictionary Tokens { get; init; }
     public Action<TemplateParser, TemplateEventArgs> TokenHandler { get; init; }
 
@@ -135,7 +132,9 @@ public class TemplateParser
             return template.ToString();
 
         using var writer = new StringWriter();
-        ParseTemplate( template, writer, pos );
+        writer.Write( template[..pos] );
+
+        ParseTemplate( template[pos..], writer );
         return writer.ToString();
     }
 
@@ -184,13 +183,35 @@ public class TemplateParser
         Token
     }
 
-    // parse incremental template
+    private void ParseTemplate( ReadOnlySpan<char> templateSpan, TextWriter writer )
+    {
+        var bufferManager = new BufferManager( templateSpan );
+        ParseTemplate( ref bufferManager, null, writer );
+    }
+
     private void ParseTemplate( TextReader reader, TextWriter writer )
     {
-        var bufferSize = GetScopedBufferSize( BufferSize, TokenLeft.Length, TokenRight.Length ); // min buffer size is max token delimiter plus 1
+        var bufferSize = GetScopedBufferSize( BufferSize, TokenLeft.Length, TokenRight.Length ); 
         var bufferManager = new BufferManager( bufferSize );
 
-        var tokenWriter = new ArrayBufferWriter<char>(); // defaults to 256
+        ParseTemplate( ref bufferManager, reader, writer );
+
+        return;
+
+        static int GetScopedBufferSize( int bufferSize, int tokenLeftSize, int tokenRightSize )
+        {
+            // because of the way we read the buffer, we need to ensure that the buffer size
+            // is at least the size of the longest token delimiter plus one character.
+
+            var maxDelimiter = Math.Max( tokenLeftSize, tokenRightSize );
+            return Math.Max( bufferSize, maxDelimiter + 1 );
+        }
+    }
+
+    // parse incremental template
+    private void ParseTemplate( ref BufferManager bufferManager, TextReader reader, TextWriter writer )
+    {
+        var tokenWriter = new ArrayBufferWriter<char>(); // defaults to 256  
         var scanner = TemplateScanner.Text;
         var ignore = false;
         var whileDepth = 0;
@@ -234,7 +255,7 @@ public class TemplateParser
                                 }
 
                                 // no-match eof: write final content
-                                if ( lastReadBytes < bufferSize )
+                                if ( bufferManager.IsFixed || lastReadBytes < bufferManager.BufferSize )
                                 {
                                     if ( !ignore )
                                         writer.Write( span ); // write final content
@@ -289,17 +310,20 @@ public class TemplateParser
                                     }
 
                                     // loop buffer management
-                                    if ( token.TokenType == TokenType.While )
+                                    if ( !bufferManager.IsFixed )
                                     {
-                                        if ( whileDepth++ == 0 )
-                                            bufferManager.SetGrow( true );
-                                    }
-                                    else if ( token.TokenType == TokenType.EndWhile )
-                                    {
-                                        if ( --whileDepth == 0 )
+                                        if ( token.TokenType == TokenType.While )
                                         {
-                                            bufferManager.SetGrow( false );
-                                            bufferManager.TrimBuffers();
+                                            if ( whileDepth++ == 0 )
+                                                bufferManager.SetGrow( true );
+                                        }
+                                        else if ( token.TokenType == TokenType.EndWhile )
+                                        {
+                                            if ( --whileDepth == 0 )
+                                            {
+                                                bufferManager.SetGrow( false );
+                                                bufferManager.TrimBuffers();
+                                            }
                                         }
                                     }
 
@@ -317,7 +341,7 @@ public class TemplateParser
                                 }
 
                                 // no-match eof: incomplete token
-                                if ( lastReadBytes < bufferSize )
+                                if (  bufferManager.IsFixed || lastReadBytes < bufferManager.BufferSize )
                                     throw new TemplateException( "Missing right token delimiter." );
 
                                 // no-match: save partial token less remainder
@@ -337,6 +361,9 @@ public class TemplateParser
                             throw new ArgumentOutOfRangeException( scanner.ToString(), $"Invalid scanner state: {scanner}." );
                     }
                 }
+
+                if ( bufferManager.IsFixed || lastReadBytes < bufferManager.BufferSize )
+                    break;
             }
 
             if ( state.Frame.Depth != 0 )
@@ -350,145 +377,6 @@ public class TemplateParser
         {
             writer.Flush();
             bufferManager.ReleaseBuffers();
-        }
-
-        return;
-
-        static int GetScopedBufferSize( int bufferSize, int tokenLeftSize, int tokenRightSize )
-        {
-            // because of the way we read the buffer, we need to ensure that the buffer size
-            // is at least the size of the longest token delimiter plus one character.
-
-            var maxDelimiter = Math.Max( tokenLeftSize, tokenRightSize );
-            return Math.Max( bufferSize, maxDelimiter + 1 );
-        }
-    }
-
-    // parse in-memory template
-    private void ParseTemplate( ReadOnlySpan<char> templateSpan, TextWriter writer, int pos = int.MinValue )
-    {
-        // find: first token start
-
-        if ( pos == int.MinValue )
-            pos = templateSpan.IndexOf( TokenLeft );
-
-        if ( pos < 0 ) // no-match: quick out
-        {
-            writer.Write( templateSpan );
-            return;
-        }
-
-        // match: process template
-
-        var skipIndexOf = true;
-        var tokenWriter = new ArrayBufferWriter<char>(); // defaults to 256
-        var scanner = TemplateScanner.Text;
-        var ignore = false;
-
-        IndexOfState indexOfState = default; // index-of for right token delimiter could span buffer reads
-        var state = new TemplateState(); // template state for this parsing session
-        var span = templateSpan; // Keep the original template span for resetting the position
-
-        try
-        {
-            while ( true )
-            {
-                if ( span.IsEmpty )
-                    break;
-
-                while ( !span.IsEmpty )
-                {
-                    state.CurrentPos = templateSpan.Length - span.Length; // Track the current position
-
-                    switch ( scanner )
-                    {
-                        case TemplateScanner.Text:
-                            {
-                                if ( skipIndexOf )
-                                    skipIndexOf = false;
-                                else
-                                    pos = span.IndexOf( TokenLeft );
-
-                                // match: write to start of token
-                                if ( pos >= 0 )
-                                {
-                                    // write content
-                                    if ( !ignore )
-                                        writer.Write( span[..pos] );
-
-                                    span = span[(pos + TokenLeft.Length)..];
-
-                                    // transition state
-                                    scanner = TemplateScanner.Token;
-                                    continue;
-                                }
-
-                                // no-match eof: write final content
-                                if ( !ignore )
-                                    writer.Write( span ); // write final content
-                                return;
-                            }
-
-                        case TemplateScanner.Token:
-                            {
-                                // scan: find closing token pattern
-                                // token may span multiple reads so track search state
-                                pos = IndexOfIgnoreContent( span, TokenRight, ref indexOfState );
-
-                                // no-match eof: incomplete token
-                                if ( pos < 0 )
-                                    throw new TemplateException( "Missing right token delimiter." );
-
-                                // match: process completed token
-
-                                // update CurrentPos to point to the first character after the token
-                                state.CurrentPos = templateSpan.Length - span.Length + pos + TokenRight.Length;
-
-                                // save token chars
-                                tokenWriter.Write( span[..pos] );
-                                span = span[(pos + TokenRight.Length)..];
-
-                                // process token
-                                var token = TokenParser.ParseToken( tokenWriter.WrittenSpan, state.NextTokenId++ );
-                                var tokenAction = TokenProcessor.ProcessToken( token, state, out var tokenValue );
-
-                                if ( tokenAction == TokenAction.Loop )
-                                {
-                                    // Reset the position to start of while block
-                                    span = templateSpan[state.Frame.Peek().StartPos..]; // Reset position to StartPos
-                                    scanner = TemplateScanner.Text;
-                                    tokenWriter.Clear();
-                                    continue;
-                                }
-
-                                if ( tokenAction != TokenAction.Ignore )
-                                    WriteTokenValue( writer, tokenValue, tokenAction, state );
-
-                                ignore = state.Frame.IsFalsy;
-
-                                tokenWriter.Clear();
-
-                                // transition state
-                                scanner = TemplateScanner.Text;
-                                continue;
-                            }
-
-                        default:
-                            throw new ArgumentOutOfRangeException( scanner.ToString(), $"Invalid scanner state: {scanner}." );
-                    }
-                }
-            }
-
-            if ( state.Frame.Depth != 0 )
-                throw new TemplateException( "Missing end if or end while." );
-        }
-        catch ( Exception ex )
-        {
-            throw new TemplateException( "Error processing template.", ex );
-        }
-        finally
-        {
-            writer.Flush();
         }
     }
 

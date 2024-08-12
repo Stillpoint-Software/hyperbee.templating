@@ -1,40 +1,71 @@
-﻿using System.Buffers;
+using System.Buffers;
+using System.Runtime.CompilerServices;
 
 namespace Hyperbee.Templating.Text;
 
-internal sealed class BufferManager : IDisposable
+internal ref struct BufferManager
 {
     private readonly ArrayPool<char> _arrayPool;
-    private readonly List<BufferState> _buffers = [];
+    private readonly List<BufferState> _buffers;
     private int _currentBufferIndex;
     private int _currentBufferPos;
     private readonly int _bufferSize;
     private bool _grow;
 
+    private readonly ReadOnlySpan<char> _fixedSpan;
+
     public BufferManager( int bufferSize )
     {
         _arrayPool = ArrayPool<char>.Shared;
+        _buffers = [];
         _bufferSize = bufferSize;
     }
 
-    public void SetGrow( bool grow ) => _grow = grow;
+    public BufferManager( ReadOnlySpan<char> span )
+    {
+        _bufferSize = span.Length;
+        _fixedSpan = span;
+    }
 
+    public readonly int BufferSize => _bufferSize;
+    public readonly bool IsFixed => _fixedSpan.Length > 0;
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public void AdvanceCurrentSpan( int advanceBy ) => _currentBufferPos += advanceBy;
 
-    public Span<char> GetCurrentSpan()
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public readonly ReadOnlySpan<char> GetCurrentSpan()
     {
+        if ( IsFixed )
+            return _fixedSpan[_currentBufferPos..];
+
         var bufferState = _buffers[_currentBufferIndex];
         return bufferState.Buffer.AsSpan( _currentBufferPos, bufferState.TotalCharacters - _currentBufferPos );
     }
 
-    public Span<char> GetCurrentSpan( int advanceBy )
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public ReadOnlySpan<char> GetCurrentSpan( int advanceBy )
     {
         AdvanceCurrentSpan( advanceBy );
         return GetCurrentSpan();
     }
 
-    public Span<char> ReadSpan( TextReader reader )
+    public void SetGrow( bool grow )
     {
+        if ( IsFixed )
+            throw new InvalidOperationException( "Cannot set grow on a fixed span." );
+
+        _grow = grow;
+    }
+
+    public ReadOnlySpan<char> ReadSpan( TextReader reader )
+    {
+        if ( IsFixed && reader == null )
+        {
+            _currentBufferPos = 0;
+            return _fixedSpan;
+        }
+
         var first = _buffers.Count == 0;
         var rent = _grow || first;
 
@@ -75,10 +106,18 @@ internal sealed class BufferManager : IDisposable
         return bufferState.TotalCharacters == 0 ? [] : bufferState.Buffer.AsSpan( 0, bufferState.TotalCharacters );
     }
 
-    public int CurrentPosition => _currentBufferIndex * _bufferSize + _currentBufferPos;
+    public readonly int CurrentPosition => IsFixed ? _currentBufferPos : _currentBufferIndex * _bufferSize + _currentBufferPos;
 
     public void Position( int position )
     {
+        ArgumentOutOfRangeException.ThrowIfNegative( position, nameof( position ) );
+
+        if ( IsFixed )
+        {
+            _currentBufferPos = position;
+            return;
+        }
+
         var remainingPosition = position;
 
         for ( var i = 0; i < _buffers.Count; i++ )
@@ -98,29 +137,33 @@ internal sealed class BufferManager : IDisposable
 
     public void TrimBuffers()
     {
+        _currentBufferPos = 0;
+        _currentBufferIndex = 0;
+
+        if ( IsFixed )
+            return;
+
         while ( _buffers.Count > 1 )
         {
             _arrayPool.Return( _buffers[0].Buffer );
             _buffers.RemoveAt( 0 );
         }
-
-        _currentBufferPos = 0;
-        _currentBufferIndex = 0;
     }
 
     public void ReleaseBuffers()
     {
+        _currentBufferPos = 0;
+        _currentBufferIndex = 0;
+
+        if ( IsFixed )
+            return;
+
         foreach ( var buffer in _buffers )
         {
             _arrayPool.Return( buffer.Buffer );
         }
 
         _buffers.Clear();
-    }
-
-    public void Dispose()
-    {
-        ReleaseBuffers();
     }
 
     private class BufferState( char[] buffer )
