@@ -1,4 +1,4 @@
-using System.Buffers;
+﻿using System.Buffers;
 using Hyperbee.Templating.Collections;
 using Hyperbee.Templating.Compiler;
 using Hyperbee.Templating.Extensions;
@@ -191,7 +191,7 @@ public class TemplateParser
 
     private void ParseTemplate( TextReader reader, TextWriter writer )
     {
-        var bufferSize = GetScopedBufferSize( BufferSize, TokenLeft.Length, TokenRight.Length ); 
+        var bufferSize = GetScopedBufferSize( BufferSize, TokenLeft.Length, TokenRight.Length );
         var bufferManager = new BufferManager( bufferSize );
 
         ParseTemplate( ref bufferManager, reader, writer );
@@ -341,7 +341,7 @@ public class TemplateParser
                                 }
 
                                 // no-match eof: incomplete token
-                                if (  bufferManager.IsFixed || lastReadBytes < bufferManager.BufferSize )
+                                if ( bufferManager.IsFixed || lastReadBytes < bufferManager.BufferSize )
                                     throw new TemplateException( "Missing right token delimiter." );
 
                                 // no-match: save partial token less remainder
