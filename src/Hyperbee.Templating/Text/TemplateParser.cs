@@ -214,7 +214,7 @@ public class TemplateParser
         var tokenWriter = new ArrayBufferWriter<char>(); // defaults to 256  
         var scanner = TemplateScanner.Text;
         var ignore = false;
-        var whileDepth = 0;
+        var loopDepth = 0;
 
         IndexOfState indexOfState = default; // index-of for right token delimiter could span buffer reads
         var state = new TemplateState(); // template state for this parsing session
@@ -290,53 +290,25 @@ public class TemplateParser
                                     // update CurrentPos to point to the first character after the token
                                     state.CurrentPos += pos + TokenRight.Length;
 
-                                    // save token chars
+                                    // process token
                                     tokenWriter.Write( span[..pos] );
                                     span = bufferManager.GetCurrentSpan( pos + TokenRight.Length );
 
-                                    // process token
                                     var token = TokenParser.ParseToken( tokenWriter.WrittenSpan, state.NextTokenId++ );
                                     var tokenAction = TokenProcessor.ProcessToken( token, state, out var tokenValue );
+                                    
+                                    tokenWriter.Clear();
+                                    scanner = TemplateScanner.Text;
 
                                     // loop handling
-                                    if ( tokenAction == TokenAction.Loop )
-                                    {
-                                        // Reset the position to the start of the while block
-                                        bufferManager.Position( state.Frame.Peek().StartPos );
-                                        span = bufferManager.GetCurrentSpan();
-                                        scanner = TemplateScanner.Text;
-                                        tokenWriter.Clear();
+                                    if ( ProcessLoop( tokenAction, token, state, ref span, ref bufferManager, ref loopDepth ) )
                                         continue;
-                                    }
-
-                                    // loop buffer management
-                                    if ( !bufferManager.IsFixed )
-                                    {
-                                        if ( token.TokenType == TokenType.While )
-                                        {
-                                            if ( whileDepth++ == 0 )
-                                                bufferManager.SetGrow( true );
-                                        }
-                                        else if ( token.TokenType == TokenType.EndWhile )
-                                        {
-                                            if ( --whileDepth == 0 )
-                                            {
-                                                bufferManager.SetGrow( false );
-                                                bufferManager.TrimBuffers();
-                                            }
-                                        }
-                                    }
 
                                     // write value
                                     if ( tokenAction != TokenAction.Ignore )
                                         WriteTokenValue( writer, tokenValue, tokenAction, state );
 
-                                    ignore = state.Frame.IsFalsy;
-
-                                    tokenWriter.Clear();
-
-                                    // transition state
-                                    scanner = TemplateScanner.Text;
+                                    ignore = state.Frames.IsFalsy;
                                     continue;
                                 }
 
@@ -366,7 +338,7 @@ public class TemplateParser
                     break;
             }
 
-            if ( state.Frame.Depth != 0 )
+            if ( state.Frames.Depth != 0 )
                 throw new TemplateException( "Missing end if, or end while." );
         }
         catch ( Exception ex )
@@ -377,6 +349,42 @@ public class TemplateParser
         {
             writer.Flush();
             bufferManager.ReleaseBuffers();
+        }
+
+        return;
+
+        static bool ProcessLoop( TokenAction tokenAction, TokenDefinition token, TemplateState state, ref ReadOnlySpan<char> span, ref BufferManager bufferManager, ref int loopDepth )
+        {
+            // loop handling
+
+            if ( tokenAction == TokenAction.Loop )
+            {
+                // Reset position to the start of the loop block
+                bufferManager.Position( state.CurrentFrame().StartPos );
+                span = bufferManager.GetCurrentSpan();
+                return true;
+            }
+
+            // loop buffer management
+
+            if ( bufferManager.IsFixed )
+                return false;
+
+            if ( token.TokenType.HasFlag( TokenType.LoopStart ) )
+            {
+                if ( loopDepth++ == 0 )
+                    bufferManager.SetGrow( true );
+            }
+            else if ( token.TokenType.HasFlag( TokenType.LoopEnd ) )
+            {
+                if ( --loopDepth != 0 )
+                    return false;
+
+                bufferManager.SetGrow( false );
+                bufferManager.TrimBuffers();
+            }
+
+            return false;
         }
     }
 
@@ -413,7 +421,7 @@ public class TemplateParser
         {
             // write any leading literal
 
-            if ( start > 0 && state.Frame.IsTruthy )
+            if ( start > 0 && state.Frames.IsTruthy )
                 writer.Write( value[..start] );
 
             value = value[(start + TokenLeft.Length)..];
@@ -440,7 +448,7 @@ public class TemplateParser
 
             start = !value.IsEmpty ? value.IndexOfIgnoreEscaped( TokenLeft ) : -1;
 
-            if ( start == -1 && !value.IsEmpty && state.Frame.IsTruthy )
+            if ( start == -1 && !value.IsEmpty && state.Frames.IsTruthy )
                 writer.Write( value );
 
         } while ( start != -1 );
@@ -525,7 +533,8 @@ internal sealed class TemplateStack
 
 internal sealed class TemplateState
 {
-    public TemplateStack Frame { get; } = new();
+    public TemplateStack Frames { get; } = new();
     public int NextTokenId { get; set; } = 1;
     public int CurrentPos { get; set; }
+    public TemplateStack.Frame CurrentFrame() => Frames.Peek();
 }

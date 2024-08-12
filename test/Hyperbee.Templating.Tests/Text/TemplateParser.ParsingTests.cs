@@ -30,17 +30,17 @@ public class TemplateParserParsingTests
     }
 
     [DataTestMethod]
-    [DataRow( 2 )] //f
-    //[DataRow( 9 )] 
-    //[DataRow( 10 )] 
-    //[DataRow( 11 )]
-    //[DataRow( 12 )]
-    //[DataRow( 15 )] 
-    //[DataRow( 16 )]
-    //[DataRow( 17 )] 
-    //[DataRow( 18 )]
-    //[DataRow( 19 )]
-    //[DataRow( 50 )]
+    [DataRow( 2 )]
+    [DataRow( 9 )] 
+    [DataRow( 10 )] 
+    [DataRow( 11 )]
+    [DataRow( 12 )]
+    [DataRow( 15 )] 
+    [DataRow( 16 )]
+    [DataRow( 17 )] 
+    [DataRow( 18 )]
+    [DataRow( 19 )]
+    [DataRow( 50 )]
     public void Should_parse_tokens_with_buffer_wraps( int size )
     {
         // arrange

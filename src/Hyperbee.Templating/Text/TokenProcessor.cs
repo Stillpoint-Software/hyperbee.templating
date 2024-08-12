@@ -37,13 +37,13 @@ internal class TokenProcessor
     public TokenAction ProcessToken( TokenDefinition token, TemplateState state, out string value )
     {
         value = default;
-        var frame = state.Frame;
+        var frames = state.Frames;
 
         // Frame handling: pre-value processing
         switch ( token.TokenType )
         {
             case TokenType.Value:
-                if ( frame.IsFalsy )
+                if ( frames.IsFalsy )
                     return TokenAction.Ignore;
                 break;
 
@@ -52,17 +52,17 @@ internal class TokenProcessor
                 break;
 
             case TokenType.Else:
-                return ProcessElseToken( frame, token );
+                return ProcessElseToken( frames, token );
 
             case TokenType.Endif:
-                return ProcessEndIfToken( frame );
+                return ProcessEndIfToken( frames );
 
             case TokenType.While:
                 // Fall through to resolve value.
                 break;
 
             case TokenType.EndWhile:
-                return ProcessEndWhileToken( frame );
+                return ProcessEndWhileToken( frames );
 
             case TokenType.Define:
                 return ProcessDefineToken( token );
@@ -86,7 +86,7 @@ internal class TokenProcessor
                     var frameIsTruthy = token.TokenEvaluation == TokenEvaluation.Falsy ? !ifResult : ifResult;
                     var startPos = token.TokenType == TokenType.While ? state.CurrentPos : -1;
 
-                    frame.Push( token, frameIsTruthy, startPos );
+                    frames.Push( token, frameIsTruthy, startPos );
 
                     return TokenAction.Ignore;
                 }
@@ -115,35 +115,34 @@ internal class TokenProcessor
         return tokenAction;
     }
 
-    private static TokenAction ProcessElseToken( TemplateStack frame, TokenDefinition token )
+    private static TokenAction ProcessElseToken( TemplateStack frames, TokenDefinition token )
     {
-        if ( !frame.IsTokenType( TokenType.If ) )
+        if ( !frames.IsTokenType( TokenType.If ) )
             throw new TemplateException( "Syntax error. Invalid `else` without matching `if`." );
 
-        frame.Push( token, !frame.IsTruthy );
+        frames.Push( token, !frames.IsTruthy );
         return TokenAction.Ignore;
     }
 
-    private static TokenAction ProcessEndIfToken( TemplateStack frame )
+    private static TokenAction ProcessEndIfToken( TemplateStack frames )
     {
-        if ( frame.Depth == 0 || !frame.IsTokenType( TokenType.If ) && !frame.IsTokenType( TokenType.Else ) )
+        if ( frames.Depth == 0 || !frames.IsTokenType( TokenType.If ) && !frames.IsTokenType( TokenType.Else ) )
             throw new TemplateException( "Syntax error. Invalid `/if` without matching `if`." );
 
-        if ( frame.IsTokenType( TokenType.Else ) )
-            frame.Pop(); // pop the else
+        if ( frames.IsTokenType( TokenType.Else ) )
+            frames.Pop(); // pop the else
 
-        frame.Pop(); // pop the if
+        frames.Pop(); // pop the if
 
         return TokenAction.Ignore;
     }
 
-    private TokenAction ProcessEndWhileToken( TemplateStack frame )
+    private TokenAction ProcessEndWhileToken( TemplateStack frames )
     {
-        if ( frame.Depth == 0 || !frame.IsTokenType( TokenType.While ) )
+        if ( frames.Depth == 0 || !frames.IsTokenType( TokenType.While ) )
             throw new TemplateException( "Syntax error. Invalid `/while` without matching `while`." );
 
-        var whileFrame = frame.Peek();
-        var whileToken = whileFrame.Token;
+        var whileToken = frames.Peek().Token;
 
         string expressionError = null;
 
@@ -158,7 +157,7 @@ internal class TokenProcessor
             return TokenAction.Loop;
 
         // Otherwise, pop the frame and exit the loop
-        frame.Pop();
+        frames.Pop();
         return TokenAction.Ignore;
     }
 
