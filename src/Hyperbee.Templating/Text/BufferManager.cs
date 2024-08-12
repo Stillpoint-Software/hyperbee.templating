@@ -18,7 +18,7 @@ internal sealed class BufferManager : IDisposable
     }
 
     public void SetGrow( bool grow ) => _grow = grow;
-    
+
     public void AdvanceCurrentSpan( int advanceBy ) => _currentBufferPos += advanceBy;
 
     public Span<char> GetCurrentSpan()

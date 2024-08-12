@@ -188,7 +188,7 @@ public class TemplateParser
     private void ParseTemplate( TextReader reader, TextWriter writer )
     {
         var bufferSize = GetScopedBufferSize( BufferSize, TokenLeft.Length, TokenRight.Length ); // min buffer size is max token delimiter plus 1
-        var bufferManager = new BufferManager( bufferSize ); 
+        var bufferManager = new BufferManager( bufferSize );
 
         var tokenWriter = new ArrayBufferWriter<char>(); // defaults to 256
         var scanner = TemplateScanner.Text;
@@ -317,7 +317,7 @@ public class TemplateParser
                                 }
 
                                 // no-match eof: incomplete token
-                                if (  lastReadBytes < bufferSize )
+                                if ( lastReadBytes < bufferSize )
                                     throw new TemplateException( "Missing right token delimiter." );
 
                                 // no-match: save partial token less remainder
@@ -360,7 +360,7 @@ public class TemplateParser
             // is at least the size of the longest token delimiter plus one character.
 
             var maxDelimiter = Math.Max( tokenLeftSize, tokenRightSize );
-            return Math.Max( bufferSize, maxDelimiter + 1 ); 
+            return Math.Max( bufferSize, maxDelimiter + 1 );
         }
     }
 
