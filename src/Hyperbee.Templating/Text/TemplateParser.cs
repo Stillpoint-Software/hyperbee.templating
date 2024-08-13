@@ -568,8 +568,8 @@ internal sealed class TemplateState
     public int CurrentPos { get; set; }
     public TemplateStack.Frame CurrentFrame()
     {
-        return Frames.Depth > 0 
-            ? Frames.Peek() 
+        return Frames.Depth > 0
+            ? Frames.Peek()
             : default;
     }
 }
