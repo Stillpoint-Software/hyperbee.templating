@@ -1,4 +1,4 @@
-using Hyperbee.Templating.Collections;
+﻿using Hyperbee.Templating.Collections;
 using Hyperbee.Templating.Extensions;
 
 namespace Hyperbee.Templating.Text;
@@ -136,9 +136,7 @@ internal class TokenParser
 
             tokenType = TokenType.Endif;
         }
-        else if ( content.StartsWith( "each", StringComparison.OrdinalIgnoreCase ) )
-        {
-            //TODO: AF
+
 
         // while handling
 
@@ -192,7 +190,22 @@ internal class TokenParser
             tokenType = TokenType.EndWhile;
         }
 
-        // value handling
+        // each handling
+        if ( span.StartsWith( "each", StringComparison.OrdinalIgnoreCase ) )
+        {
+            //TODO: AF
+
+            // value handling
+        }
+        else if ( span.StartsWith( "/each", StringComparison.OrdinalIgnoreCase ) )
+        {
+            if ( span.Length != 5 )
+                throw new TemplateException( "Invalid `/each` statement. Invalid characters." );
+
+            tokenType = TokenType.EndEach;
+        }
+
+
 
         if ( tokenType == TokenType.None )
         {

@@ -1,4 +1,4 @@
-using System.Buffers;
+﻿using System.Buffers;
 using Hyperbee.Templating.Collections;
 using Hyperbee.Templating.Compiler;
 using Hyperbee.Templating.Extensions;
@@ -247,9 +247,6 @@ public class TemplateParser
 
                                     span = bufferManager.GetCurrentSpan( pos + TokenLeft.Length );
 
-                                    if ( !state.Frame.IsIterationFrame )
-                                        sourcePos = pos + sourcePos + TokenLeft.Length;
-
                                     // transition state
                                     scanner = TemplateScanner.Token;
                                     continue;
@@ -264,7 +261,7 @@ public class TemplateParser
                                 }
 
                                 // no-match: write content less remainder
-                                if ( !ignore || state.Frame._stack.Count == 0 )
+                                if ( !ignore )
                                 {
                                     var writeLength = span.Length - TokenLeft.Length;
 
@@ -290,9 +287,6 @@ public class TemplateParser
                                 {
                                     // update CurrentPos to point to the first character after the token
                                     state.CurrentPos += pos + TokenRight.Length;
-
-                                    if ( !state.Frame.IsIterationFrame )
-                                        sourcePos = pos + sourcePos + TokenRight.Length;
 
                                     // process token
                                     tokenWriter.Write( span[..pos] );
@@ -422,11 +416,11 @@ public class TemplateParser
         // nested token processing
         do
         {
-            if ( start > 0 && (state.Frame.IsIterationFrame || state.Frame.IsTruthy) )
-            {
-                writer.Write( value[..start] );
+            //if ( start > 0 && (state.Frame.IsIterationFrame || state.Frame.IsTruthy) )
+            //{
+            //    writer.Write( value[..start] );
 
-            }
+            //}
             // write any leading literal
 
             if ( start > 0 && state.Frames.IsTruthy )
@@ -537,6 +531,8 @@ internal sealed class TemplateStack
     public bool IsTokenType( TokenType compare ) => _stack.Count > 0 && _stack.Peek().Token.TokenType == compare;
     public bool IsTruthy => _stack.Count == 0 || _stack.Peek().Truthy;
     public bool IsFalsy => !IsTruthy;
+    public IEnumerable<string> Enumerable { get; set; }
+
 }
 
 internal sealed class TemplateState

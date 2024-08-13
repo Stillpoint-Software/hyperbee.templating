@@ -64,6 +64,13 @@ internal class TokenProcessor
             case TokenType.EndWhile:
                 return ProcessEndWhileToken( frames );
 
+            case TokenType.Each:
+                // Fall through to resolve value.
+                break;
+
+            case TokenType.EndEach:
+                return ProcessEndEachToken( frames );
+
             case TokenType.Define:
                 return ProcessDefineToken( token );
 
@@ -161,6 +168,39 @@ internal class TokenProcessor
         return TokenAction.Ignore;
     }
 
+    private TokenAction ProcessEndEachToken( TemplateStack frames )
+    {
+        if ( frames.Depth == 0 || !frames.IsTokenType( TokenType.Each ) )
+            throw new TemplateException( "Syntax error. Invalid `/each` without matching `each`." );
+
+        var eachToken = frames.Peek().Token;
+
+        string expressionError = null;
+
+        var conditionIsTrue = eachToken.TokenEvaluation switch
+        {
+            TokenEvaluation.Expression when TryInvokeTokenExpression( eachToken, out var expressionResult, out expressionError ) =>
+                frames.Enumerable = expressionResult.GetType().GetProperties().Select( prop => prop.GetValue( expressionResult )?.ToString() ).ToList(),
+
+
+            // frames.Enumerable = expressionResult.GetType()
+            //    .GetProperties()
+            //    .Select( prop => prop.GetValue( expressionResult )?.ToString() ) ,
+
+            ////Convert.ToBoolean( expressionResult ),
+
+            TokenEvaluation.Expression => throw new TemplateException( $"{_tokenLeft}Error ({eachToken.Id}):{expressionError ?? "Error in each condition."}{_tokenRight}" ),
+            _ => TemplateHelper.Truthy( _tokens[eachToken.Name] ) // Re-evaluate the condition
+        };
+
+        if ( conditionIsTrue ) // If the condition is true, replay the while block
+            return TokenAction.Loop;
+
+        // Otherwise, pop the frame and exit the loop
+        frames.Pop();
+        return TokenAction.Ignore;
+    }
+
     private TokenAction ProcessDefineToken( TokenDefinition token )
     {
         string expressionError = null;
@@ -186,6 +226,7 @@ internal class TokenProcessor
             case TokenType.Value when token.TokenEvaluation != TokenEvaluation.Expression:
             case TokenType.If when token.TokenEvaluation != TokenEvaluation.Expression:
             case TokenType.While when token.TokenEvaluation != TokenEvaluation.Expression:
+            case TokenType.Each when token.TokenEvaluation != TokenEvaluation.Expression:
                 defined = _tokens.TryGetValue( token.Name, out value );
 
                 if ( !defined && _substituteEnvironmentVariables )
@@ -213,6 +254,15 @@ internal class TokenProcessor
                     ifResult = Convert.ToBoolean( condExprResult );
                 else
                     throw new TemplateException( $"{_tokenLeft}Error ({token.Id}):{error ?? "Error in if condition."}{_tokenRight}" );
+                break;
+            case TokenType.Each when token.TokenEvaluation == TokenEvaluation.Expression:
+                if ( TryInvokeTokenExpression( token, out var eachExprResult, out var errorEach ) )
+                {
+                    var eachResult = eachExprResult;
+                    ifResult = true;
+                }
+                else
+                    throw new TemplateException( $"{_tokenLeft}Error ({token.Id}):{errorEach ?? "Error in each condition."}{_tokenRight}" );
                 break;
         }
     }
@@ -263,4 +313,5 @@ internal class TokenProcessor
         result = default;
         return false;
     }
+
 }
