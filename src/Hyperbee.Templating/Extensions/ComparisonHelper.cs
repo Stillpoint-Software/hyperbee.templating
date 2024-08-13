@@ -1,5 +1,5 @@
 ﻿// FIX: Pulled from Hyperbee.Extensions which is not OpenSource yet.
-// (WARNING: only subset of helpers)
+// WARNING: only subset of helpers.
 using System.Globalization;
 
 namespace Hyperbee.Templating.Extensions;

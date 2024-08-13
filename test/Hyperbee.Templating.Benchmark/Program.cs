@@ -1,14 +1,6 @@
-﻿using BenchmarkDotNet.Running;
-using static Hyperbee.Templating.Benchmark.BenchmarkConfig;
+﻿//NOTE: Should be run with `dotnet run -c release` in the project folder
 
-namespace Hyperbee.Templating.Benchmark;
+using BenchmarkDotNet.Running;
+using Hyperbee.Templating.Benchmark;
 
-public class Program
-{
-    public static void Main( string[] args )
-    {
-        BenchmarkSwitcher.FromAssembly( typeof( Program ).Assembly ).Run( args, new Config() );
-    }
-}
-
-
+BenchmarkSwitcher.FromAssembly( typeof( Program ).Assembly ).Run( args, new BenchmarkConfig.Config() );
