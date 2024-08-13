@@ -1,5 +1,5 @@
 ﻿// FIX: Pulled from Hyperbee.Text.Extensions which is not OpenSource yet.
-// (WARNING: only subset of helpers)
+// WARNING: only subset of helpers.
 namespace Hyperbee.Templating.Extensions;
 
 public static class ReadOnlySpanExtensions

@@ -7,4 +7,5 @@ internal record TokenDefinition
     public TokenType TokenType { get; init; }
     public TokenEvaluation TokenEvaluation { get; init; }
     public string TokenExpression { get; init; }
+    public int TokenLength { get; init; }
 }

@@ -19,11 +19,7 @@ internal class RoslynTokenExpressionProvider : ITokenExpressionProvider
         if ( TokenExpressions.TryGetValue( codeExpression, out var result ) && result.IsValueCreated && result.Value.IsCompletedSuccessfully )
             return result.Value.Result;
 
-#if _RUNSYNC_CONTEXT_
         return AsyncCurrentThreadHelper.RunSync( async () => await GetOrAddTokenExpressionAsync( codeExpression ).ConfigureAwait( false ) );
-#else
-        return AsyncHelper.RunSync( async () => await GetOrAddTokenExpressionAsync( codeExpression ).ConfigureAwait( false ) );
-#endif
     }
 
     public async Task<TokenExpression> GetTokenExpressionAsync( string codeExpression )
