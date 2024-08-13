@@ -1,4 +1,4 @@
-# Hyperbee.Templating
+# Hyperbee Templating
 
 Hyperbee Templating is a lightweight templating and variable substitution syntax engine. The library supports value replacements, 
 code expressions, token nesting, in-line definitions, conditional flow, and looping. It is designed to be lightweight and fast, 
