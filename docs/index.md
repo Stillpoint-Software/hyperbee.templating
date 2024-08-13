@@ -1,6 +1,7 @@
 ---
 layout: default
 title: Hyperbee Templating
+render_with_liquid: false
 nav_order: 1
 ---
 # Hyperbee Templating
@@ -51,6 +52,7 @@ var template = "hello {{name}}.";
 var result = parser.Render(template);
 Console.WriteLine(result); // Output: hello me.
 ```
+
 
 ### Token Nesting
 
