@@ -368,7 +368,7 @@ public class TemplateParser
 
             // no loop buffer management required for fixed buffer
 
-            if ( bufferManager.IsFixed ) 
+            if ( bufferManager.IsFixed )
                 return false;
 
             // loop buffer management
