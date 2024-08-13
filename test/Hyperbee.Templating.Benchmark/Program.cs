@@ -3,4 +3,4 @@
 using BenchmarkDotNet.Running;
 using Hyperbee.Templating.Benchmark;
 
-BenchmarkSwitcher.FromAssembly( typeof(Program).Assembly ).Run( args, new BenchmarkConfig.Config() );
+BenchmarkSwitcher.FromAssembly( typeof( Program ).Assembly ).Run( args, new BenchmarkConfig.Config() );
