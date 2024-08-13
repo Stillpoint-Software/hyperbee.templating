@@ -1,24 +1,38 @@
 ﻿# Hyperbee.Templating
 
-A simple templating engine supporting value replacements, code expressions, token nesting, 
-in-line definitions, and `if` `else` conditions.
+Hyperbee Templating is a lightweight templating and variable substitution syntax engine. The library supports value replacements, 
+code expressions, token nesting, in-line definitions, conditional flow, and looping. It is designed to be lightweight and fast, 
+and does not rely on any external dependencies.
 
 ## Features
 
-* Supports simple syntax.
-* Token values are either simple substitutions or expression results.
-* The templating engine supports two kinds of method evaluations.
-    * Strongly typed CLR class methods through the Roslyn compiler
-    * Dynamic methods in the form of Func expressions that are runtime bound to the expression argument context.
+* Variable substitution syntax engine
+* Value replacements
+* Expression replacements
 * Token nesting
-* Inline Token Definitions
-    * You can define tokens, inline, within a template.
+* Conditional tokens
+* Conditional flow
+* Iterators
+* User-defined methods
 
-## Example
+## Getting Started
+
+To get started with Hyperbee.Json, refer to the [documentation](https://stillpoint-software.github.io/hyperbee.template) for 
+detailed instructions and examples. 
+
+Install via NuGet:
+
+```bash
+dotnet add package Hyperbee.Template
+```
+
+## Usage
+
+### Basic Variable Substitution
+
+You can use the `TemplateParser` to perform basic variable substitutions.
 
 ```csharp
-\\ example of CLR String.ToUpper
-
 var parser = new TemplateParser
 {
     Tokens =
@@ -27,12 +41,140 @@ var parser = new TemplateParser
     }
 };
 
-var result = parser.Render( $"hello {{x => x.name.ToUpper()}}." );
+var template = "hello {{name}}.";
+
+var result = parser.Render(template);
+Console.WriteLine(result); // Output: hello me.
+```
+
+### Token Nesting
+
+Token values can contain other tokens.
+
+```csharp
+var parser = new TemplateParser
+{
+    Tokens =
+    {
+        ["fullname"] = "{{first}} {{last}}",
+        ["first"] = "Hari",
+        ["last"] = "Seldon"
+    }
+};
+
+var template = "hello {{fullname}}.";
+
+var result = parser.Render(template);
+Console.WriteLine(result); // Output: hello Hari Seldon.
+```
+
+### Inline Token Definitions
+
+You can define tokens inline within a template. Inline tokens must be defined before they are referenced.
+
+```csharp
+var template = """{{identity:"me"}} hello {{identity}}.""";
+
+var result = parser.Render(template);
+Console.WriteLine(result); // Output: hello me.
+```
+
+### Conditional Tokens
+
+You can use conditional tokens to control the flow based on conditions.
+
+```csharp
+var parser = new TemplateParser
+{
+    Tokens =
+    {
+        ["condition"] = "true",
+        ["name"] = "me"
+    }
+};
+
+var template = "{{#if condition}}hello {{name}}.{{/if}}";
+
+var result = parser.Render(template);
+Console.WriteLine(result); // Output: hello me.
 ```
 
 ```csharp
-\\ example of a Func expression MyUpper
+var parser = new TemplateParser
+{
+    Tokens =
+    {
+        ["condition"] = "false",
+        ["name1"] = "me",
+        ["name2"] = "you",
+    }
+};
 
+var template = "hello {{#if condition}}{{name1}}{{else}}{{name2}}{{/if}}.";
+
+var result = parser.Render(template);
+Console.WriteLine(result); // Output: hello you.
+```
+
+### Inline Token Definitions
+
+```csharp
+var template = """{{identity:"me"}} hello {{identity}}.""";
+
+var result = parser.Render(template);
+Console.WriteLine(result); // Output: hello me.
+```
+
+```csharp
+var template = """{{identity:{{x => "me"}} }} hello {{identity}}.""";
+
+var result = parser.Render(template);
+Console.WriteLine(result); // Output: hello me.
+```
+
+### While Loop
+
+You can use a while loop to repeat a block of text while a condition is true.
+
+```csharp
+var parser = new TemplateParser
+{
+    Tokens =
+    {
+        ["counter"] = 0
+    }
+};
+
+var template = "{{while x => int.Parse(x.counter) < 3}}{{counter}}{{counter:{{x => int.Parse(x.counter) + 1}}}}{{/while}}";
+
+var result = parser.Render(template);
+Console.WriteLine(result); // Output: 012. 
+```
+
+### CLR Method Invocation
+
+You can invoke CLR methods within the template.
+
+```csharp
+var parser = new TemplateParser
+{
+    Tokens =
+    {
+        ["name"] = "me"
+    }
+};
+
+var template = "hello {{x => x.name.ToUpper()}}.";
+
+var result = parser.Render(template);
+Console.WriteLine(result); // Output: hello ME.
+```
+
+### User-Defined Methods
+
+You can define custom methods and use them within the template.
+
+```csharp
 var parser = new TemplateParser
 {
     Methods =
@@ -45,65 +187,18 @@ var parser = new TemplateParser
     }
 };
 
-var result = parser.Render( $"hello {{x => x.MyUpper( x.name )}}." );
+var template = "hello {{x => x.name.MyUpper()}}.";
+
+var result = parser.Render(template);
+Console.WriteLine(result); // Output: hello ME.
 ```
 
-## Example Token Nesting
-Token values can contain tokens.
+## Credits
 
-```csharp
-\\ example of token nesting
+Special thanks to:
 
-var parser = new TemplateParser
-{
-    Tokens =
-    {
-        ["fullname"] = "{{first}} {{last}}",
-        ["first"] = "Hari",
-        ["last"] = "Seldon"
-    }
-};
+- [Just The Docs](https://github.com/just-the-docs/just-the-docs) for the documentation theme.
 
-var result = parser.Render( $"hello {{fullname}}." );
-```
+## Contributing
 
-## Example Inline Token Definitions
-You can define tokens, inline, within a template. Inline tokens must be defined before they are referenced.
-
-```csharp
-{{identity:"me"}}
-hello {{identity}}.
-```
-
-```csharp
-{{identity:{{x=> "me"}} }}
-hello {{identity}}.
-```
-
-
-# Build Requirements
-
-* To build and run this project, **.NET 8 SDK** is required.
-* Ensure your development tools are compatible with .NET 8.
-
-## Building the Solution
-
-* With .NET 8 SDK installed, you can build the solution using the standard `dotnet build` command.
-
-
-# Status
-
-| Branch     | Action                                                                                                                                                                                                                      |
-|------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `develop`  | [![Build status](https://github.com/Stillpoint-Software/hyperbee.templating/actions/workflows/publish.yml/badge.svg?branch=develop)](https://github.com/Stillpoint-Software/hyperbee.templating/actions/workflows/publish.yml)  |
-| `main`     | [![Build status](https://github.com/Stillpoint-Software/hyperbee.templating/actions/workflows/publish.yml/badge.svg)](https://github.com/Stillpoint-Software/hyperbee.templating/actions/workflows/publish.yml)                 |
-
-
-# Benchmarks
- See [Benchmarks](https://github.com/Stillpoint-Software/Hyperbee.Templating/test/Hyperbee.Templating.Benchmark/benchmark/results/Hyperbee.Templating.Benchmark.TemplateBenchmarks-report-github.md)
- 
- 
-# Help
- See [Todo](https://github.com/Stillpoint-Software/Hyperbee.Templating/blob/main/docs/todo.md)
-
- [![Hyperbee.Templating](https://github.com/Stillpoint-Software/Hyperbee.Templating/blob/main/assets/hyperbee.svg?raw=true)](https://github.com/Stillpoint-Software/Hyperbee.Templating)
+We welcome contributions! Please see our [Contributing Guide](https://github.com/Stillpoint-Software/.github/blob/main/.github/CONTRIBUTING.md) for more details.
