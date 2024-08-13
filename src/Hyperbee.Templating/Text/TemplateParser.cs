@@ -416,13 +416,6 @@ public class TemplateParser
         // nested token processing
         do
         {
-            //if ( start > 0 && (state.Frame.IsIterationFrame || state.Frame.IsTruthy) )
-            //{
-            //    writer.Write( value[..start] );
-
-            //}
-            // write any leading literal
-
             if ( start > 0 && state.Frames.IsTruthy )
                 writer.Write( value[..start] );
 
@@ -517,12 +510,12 @@ public class TemplateParser
 
 internal sealed class TemplateStack
 {
-    public record Frame( TokenDefinition Token, bool Truthy, int StartPos = -1 );
+    public record Frame( TokenDefinition Token, bool Truthy, IEnumerable<string> Iterator = null, int StartPos = -1 );
 
     private readonly Stack<Frame> _stack = new();
 
-    public void Push( TokenDefinition token, bool truthy, int startPos = -1 )
-        => _stack.Push( new Frame( token, truthy, startPos ) );
+    public void Push( TokenDefinition token, bool truthy, IEnumerable<string> iterator = null, int startPos = -1 )
+        => _stack.Push( new Frame( token, truthy, iterator, startPos ) );
 
     public Frame Peek() => _stack.Peek();
     public void Pop() => _stack.Pop();
@@ -531,7 +524,7 @@ internal sealed class TemplateStack
     public bool IsTokenType( TokenType compare ) => _stack.Count > 0 && _stack.Peek().Token.TokenType == compare;
     public bool IsTruthy => _stack.Count == 0 || _stack.Peek().Truthy;
     public bool IsFalsy => !IsTruthy;
-    public IEnumerable<string> Enumerable { get; set; }
+    public IEnumerable<string> Iterator { get; set; }
 
 }
 

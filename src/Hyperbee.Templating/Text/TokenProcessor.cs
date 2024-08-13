@@ -81,7 +81,7 @@ internal class TokenProcessor
 
         // Resolve value
 
-        ResolveValue( token, out value, out var defined, out var ifResult, out var expressionError );
+        ResolveValue( token, out value, out var defined, out var ifResult, out var iterator, out var expressionError );
 
         // Frame handling: post-value processing
 
@@ -93,7 +93,7 @@ internal class TokenProcessor
                     var frameIsTruthy = token.TokenEvaluation == TokenEvaluation.Falsy ? !ifResult : ifResult;
                     var startPos = token.TokenType == TokenType.While ? state.CurrentPos : -1;
 
-                    frames.Push( token, frameIsTruthy, startPos );
+                    frames.Push( token, frameIsTruthy, null, startPos );
 
                     return TokenAction.Ignore;
                 }
@@ -101,7 +101,7 @@ internal class TokenProcessor
 
         // Token handling: user-defined token action
 
-        _ = TryInvokeTokenHandler( token, defined, ref value, out var tokenAction );
+        _ = TryInvokeTokenHandler( token, defined, ref value, ref iterator, out var tokenAction );
 
         // Handle final token action
 
@@ -180,18 +180,13 @@ internal class TokenProcessor
         var conditionIsTrue = eachToken.TokenEvaluation switch
         {
             TokenEvaluation.Expression when TryInvokeTokenExpression( eachToken, out var expressionResult, out expressionError ) =>
-                frames.Enumerable = expressionResult.GetType().GetProperties().Select( prop => prop.GetValue( expressionResult )?.ToString() ).ToList(),
+                 frames.Iterator = expressionResult.GetType().GetProperties().Select( prop => prop.GetValue( expressionResult )?.ToString() ).ToList(),
 
-
-            // frames.Enumerable = expressionResult.GetType()
-            //    .GetProperties()
-            //    .Select( prop => prop.GetValue( expressionResult )?.ToString() ) ,
-
-            ////Convert.ToBoolean( expressionResult ),
 
             TokenEvaluation.Expression => throw new TemplateException( $"{_tokenLeft}Error ({eachToken.Id}):{expressionError ?? "Error in each condition."}{_tokenRight}" ),
             _ => TemplateHelper.Truthy( _tokens[eachToken.Name] ) // Re-evaluate the condition
         };
+
 
         if ( conditionIsTrue ) // If the condition is true, replay the while block
             return TokenAction.Loop;
@@ -199,6 +194,7 @@ internal class TokenProcessor
         // Otherwise, pop the frame and exit the loop
         frames.Pop();
         return TokenAction.Ignore;
+
     }
 
     private TokenAction ProcessDefineToken( TokenDefinition token )
@@ -214,12 +210,13 @@ internal class TokenProcessor
         return TokenAction.Ignore;
     }
 
-    private void ResolveValue( TokenDefinition token, out string value, out bool defined, out bool ifResult, out string expressionError )
+    private void ResolveValue( TokenDefinition token, out string value, out bool defined, out bool ifResult, out IEnumerable<string> iterator, out string expressionError )
     {
         value = default;
         defined = false;
         ifResult = false;
         expressionError = null;
+        iterator = null;
 
         switch ( token.TokenType )
         {
@@ -258,8 +255,8 @@ internal class TokenProcessor
             case TokenType.Each when token.TokenEvaluation == TokenEvaluation.Expression:
                 if ( TryInvokeTokenExpression( token, out var eachExprResult, out var errorEach ) )
                 {
-                    var eachResult = eachExprResult;
-                    ifResult = true;
+                    var results = (string) eachExprResult;
+                    iterator = results.Split( ',' ).Select( v => v.Trim() );
                 }
                 else
                     throw new TemplateException( $"{_tokenLeft}Error ({token.Id}):{errorEach ?? "Error in each condition."}{_tokenRight}" );
@@ -267,7 +264,7 @@ internal class TokenProcessor
         }
     }
 
-    private bool TryInvokeTokenHandler( TokenDefinition token, bool defined, ref string value, out TokenAction tokenAction )
+    private bool TryInvokeTokenHandler( TokenDefinition token, bool defined, ref string value, ref IEnumerable<string> iterator, out TokenAction tokenAction )
     {
         tokenAction = defined ? TokenAction.Replace : (_ignoreMissingTokens ? TokenAction.Ignore : TokenAction.Error);
 

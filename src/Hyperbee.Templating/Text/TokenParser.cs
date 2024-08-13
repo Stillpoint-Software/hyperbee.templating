@@ -195,7 +195,33 @@ internal class TokenParser
         {
             //TODO: AF
 
-            // value handling
+            tokenType = TokenType.Each;
+            span = span[4..].Trim(); // eat the 'each'
+
+            if ( span.Length >= 4 )
+            {
+                // detect expression syntax
+                var isFatArrow = span.IndexOfIgnoreDelimitedRanges( "=>", "\"" ) != -1;
+
+                // validate
+                if ( span.IsEmpty )
+                    throw new TemplateException( "Invalid `each` statement. Missing identifier." );
+
+                if ( !isFatArrow && !ValidateKey( span ) )
+                    throw new TemplateException( "Invalid `each` statement. Invalid identifier in truthy expression." );
+
+                // results
+                if ( isFatArrow )
+                {
+                    tokenEvaluation = TokenEvaluation.Expression;
+                    tokenExpression = span; //x=>x.list
+                }
+                else
+                {
+                    tokenEvaluation = TokenEvaluation.Falsy;
+                    name = span;
+                }
+            }
         }
         else if ( span.StartsWith( "/each", StringComparison.OrdinalIgnoreCase ) )
         {
