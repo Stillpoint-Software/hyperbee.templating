@@ -17,13 +17,13 @@ and does not rely on any external dependencies.
 
 ## Getting Started
 
-To get started with Hyperbee.Json, refer to the [documentation](https://stillpoint-software.github.io/hyperbee.template) for 
+To get started with Hyperbee.Templating, refer to the [documentation](https://stillpoint-software.github.io/hyperbee.templating) for 
 detailed instructions and examples. 
 
 Install via NuGet:
 
 ```bash
-dotnet add package Hyperbee.Template
+dotnet add package Hyperbee.Templating
 ```
 
 ## Usage
