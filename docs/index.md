@@ -1,3 +1,8 @@
+---
+layout: default
+title: Hyperbee Templating
+nav_order: 1
+---
 # Hyperbee Templating
 
 Hyperbee Templating is a lightweight templating and variable substitution syntax engine. The library supports value replacements, 
