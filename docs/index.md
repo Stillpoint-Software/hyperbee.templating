@@ -1,9 +1,9 @@
 ---
 layout: default
 title: Hyperbee Templating
-render_with_liquid: false
 nav_order: 1
 ---
+{% raw %}
 # Hyperbee Templating
 
 Hyperbee Templating is a lightweight templating and variable substitution syntax engine. The library supports value replacements, 
@@ -52,7 +52,6 @@ var template = "hello {{name}}.";
 var result = parser.Render(template);
 Console.WriteLine(result); // Output: hello me.
 ```
-
 
 ### Token Nesting
 
@@ -209,3 +208,4 @@ Special thanks to:
 ## Contributing
 
 We welcome contributions! Please see our [Contributing Guide](https://github.com/Stillpoint-Software/.github/blob/main/.github/CONTRIBUTING.md) for more details.
+{% endraw %}
