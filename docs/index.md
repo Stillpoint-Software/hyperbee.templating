@@ -1,4 +1,4 @@
-# Hyperbee.Templating
+# Hyperbee Templating
 
 Hyperbee Templating is a lightweight templating and variable substitution syntax engine. The library supports value replacements, 
 code expressions, token nesting, in-line definitions, conditional flow, and looping. It is designed to be lightweight and fast, 
@@ -17,13 +17,13 @@ and does not rely on any external dependencies.
 
 ## Getting Started
 
-To get started with Hyperbee.Json, refer to the [documentation](https://stillpoint-software.github.io/hyperbee.template) for 
+To get started with Hyperbee.Templating, refer to the [documentation](https://stillpoint-software.github.io/hyperbee.templating) for 
 detailed instructions and examples. 
 
 Install via NuGet:
 
 ```bash
-dotnet add package Hyperbee.Template
+dotnet add package Hyperbee.Templating
 ```
 
 ## Usage
