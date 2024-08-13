@@ -145,7 +145,8 @@ internal class TokenProcessor
 
         var whileToken = frames.Peek().Token;
 
-        string expressionError = null;
+        // ReSharper disable once RedundantAssignment
+        string expressionError = null; // assign to avoid compiler complaint
 
         var conditionIsTrue = whileToken.TokenEvaluation switch
         {
@@ -164,6 +165,7 @@ internal class TokenProcessor
 
     private TokenAction ProcessDefineToken( TokenDefinition token )
     {
+        // ReSharper disable once RedundantAssignment
         string expressionError = null; // assign to avoid compiler complaint
 
         _tokens[token.Name] = token.TokenEvaluation switch
