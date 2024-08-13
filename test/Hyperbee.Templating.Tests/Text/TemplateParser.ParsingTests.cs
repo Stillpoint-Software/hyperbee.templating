@@ -13,7 +13,7 @@ public class TemplateParserParsingTests
     [DataRow( " token ", nameof( TokenType.Value ), nameof( TokenEvaluation.None ) )]
     [DataRow( "x=>x.token", nameof( TokenType.Value ), nameof( TokenEvaluation.Expression ) )]
     [DataRow( "x => x.token", nameof( TokenType.Value ), nameof( TokenEvaluation.Expression ) )]
-    [DataRow( "token:x => x.token", nameof( TokenType.Define ), nameof( TokenEvaluation.None ) )]
+    [DataRow( "token:x => x.token", nameof( TokenType.Define ), nameof( TokenEvaluation.Expression ) )]
     [DataRow( "token: \"x => x.token\" ", nameof( TokenType.Define ), nameof( TokenEvaluation.None ) )]
     public void Should_parse_token( string token, string expectedTokenType, string expectedTokenEvaluation )
     {
@@ -30,7 +30,7 @@ public class TemplateParserParsingTests
     }
 
     [DataTestMethod]
-    [DataRow( 1 )]
+    [DataRow( 2 )]
     [DataRow( 9 )]
     [DataRow( 10 )]
     [DataRow( 11 )]
@@ -48,7 +48,7 @@ public class TemplateParserParsingTests
         //                       123456789+123456789+123456789+123456789+123456789+
         const string template = "all your {{thing}} are belong to {{who}}.";
 
-        TemplateParser.BlockSize = size;
+        TemplateParser.BufferSize = size;
 
         var parser = new TemplateParser
         {
