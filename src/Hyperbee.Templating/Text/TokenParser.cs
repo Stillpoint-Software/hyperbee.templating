@@ -1,4 +1,4 @@
-﻿using Hyperbee.Templating.Collections;
+﻿using Hyperbee.Templating.Core;
 using Hyperbee.Templating.Extensions;
 
 namespace Hyperbee.Templating.Text;

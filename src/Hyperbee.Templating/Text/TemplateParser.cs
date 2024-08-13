@@ -1,6 +1,6 @@
 ﻿using System.Buffers;
-using Hyperbee.Templating.Collections;
 using Hyperbee.Templating.Compiler;
+using Hyperbee.Templating.Core;
 using Hyperbee.Templating.Extensions;
 
 namespace Hyperbee.Templating.Text;
@@ -33,14 +33,20 @@ public class TemplateParser
     public TemplateDictionary Tokens { get; init; }
     public Action<TemplateParser, TemplateEventArgs> TokenHandler { get; init; }
 
-    private string TokenLeft { get; }
-    private string TokenRight { get; }
-
     private TokenParser _tokenParser;
     internal TokenParser TokenParser => _tokenParser ??= new TokenParser( Tokens.Validator, TokenLeft, TokenRight );
 
     private readonly Lazy<TokenProcessor> _lazyTokenProcessor;
     private TokenProcessor TokenProcessor => _lazyTokenProcessor.Value;
+
+    private string TokenLeft { get; }
+    private string TokenRight { get; }
+
+    private enum TemplateScanner
+    {
+        Text,
+        Token
+    }
 
     public TemplateParser()
         : this( TokenStyle.Default )
@@ -177,12 +183,6 @@ public class TemplateParser
 
     // Parse template
 
-    private enum TemplateScanner
-    {
-        Text,
-        Token
-    }
-
     private void ParseTemplate( ReadOnlySpan<char> templateSpan, TextWriter writer )
     {
         var bufferManager = new BufferManager( templateSpan );
@@ -224,10 +224,11 @@ public class TemplateParser
             while ( true )
             {
                 var span = bufferManager.ReadSpan( reader );
-                var lastReadBytes = span.Length;
 
                 if ( span.IsEmpty )
                     break;
+
+                var bytesRead = span.Length;
 
                 while ( !span.IsEmpty )
                 {
@@ -255,14 +256,14 @@ public class TemplateParser
                                 }
 
                                 // no-match eof: write final content
-                                if ( bufferManager.IsFixed || lastReadBytes < bufferManager.BufferSize )
+                                if ( bufferManager.IsFixed || bytesRead < bufferManager.BufferSize )
                                 {
                                     if ( !ignore )
                                         writer.Write( span ); // write final content
                                     return;
                                 }
 
-                                // no-match: write content less remainder
+                                // no-match eob: write content less remainder
                                 if ( !ignore )
                                 {
                                     var writeLength = span.Length - TokenLeft.Length;
@@ -274,7 +275,7 @@ public class TemplateParser
                                     }
                                 }
 
-                                span = [];
+                                span = []; // clear span for read
                                 break;
                             }
 
@@ -313,10 +314,10 @@ public class TemplateParser
                                 }
 
                                 // no-match eof: incomplete token
-                                if ( bufferManager.IsFixed || lastReadBytes < bufferManager.BufferSize )
+                                if ( bufferManager.IsFixed || bytesRead < bufferManager.BufferSize )
                                     throw new TemplateException( "Missing right token delimiter." );
 
-                                // no-match: save partial token less remainder
+                                // no-match eob: save partial token less remainder
                                 var writeLength = span.Length - TokenRight.Length;
 
                                 if ( writeLength > 0 )
@@ -325,7 +326,7 @@ public class TemplateParser
                                     bufferManager.AdvanceCurrentSpan( writeLength );
                                 }
 
-                                span = [];
+                                span = []; // clear span for read
                                 break;
                             }
 
@@ -334,7 +335,7 @@ public class TemplateParser
                     }
                 }
 
-                if ( bufferManager.IsFixed || lastReadBytes < bufferManager.BufferSize )
+                if ( bufferManager.IsFixed || bytesRead < bufferManager.BufferSize )
                     break;
             }
 
@@ -365,10 +366,12 @@ public class TemplateParser
                 return true;
             }
 
-            // loop buffer management
+            // no loop buffer management required for fixed buffer
 
-            if ( bufferManager.IsFixed )
+            if ( bufferManager.IsFixed ) 
                 return false;
+
+            // loop buffer management
 
             if ( token.TokenType.HasFlag( TokenType.LoopStart ) )
             {
@@ -463,19 +466,21 @@ public class TemplateParser
         public int BraceCount = 0;
     }
 
-    private static int IndexOfIgnoreContent( ReadOnlySpan<char> span, ReadOnlySpan<char> value )
+    private int IndexOfIgnoreContent( ReadOnlySpan<char> span, ReadOnlySpan<char> value )
     {
         IndexOfState state = default;
         return IndexOfIgnoreContent( span, value, ref state );
     }
 
-    private static int IndexOfIgnoreContent( ReadOnlySpan<char> span, ReadOnlySpan<char> value, ref IndexOfState state )
+    private int IndexOfIgnoreContent( ReadOnlySpan<char> span, ReadOnlySpan<char> value, ref IndexOfState state )
     {
-        // look for value pattern in span ignoring quoted strings and code expression braces
+        // Look for value pattern in span ignoring quoted strings and code expression braces
 
         const char quoteChar = '"';
+        var tokenLeftSpan = TokenLeft.AsSpan();
+        var tokenRightSpan = TokenRight.AsSpan();
 
-        var limit = span.Length - (value.Length - 1); // optimize end range 
+        var limit = span.Length - (value.Length - 1); // Optimize end range
 
         for ( var i = 0; i < limit; i++ )
         {
@@ -487,23 +492,48 @@ public class TemplateParser
                     state.Quoted = false;
 
                 state.Escape = c == '\\' && !state.Escape;
+                continue;
             }
-            else if ( c == quoteChar )
+
+            switch ( c )
             {
-                state.Quoted = true;
-                state.Escape = false;
-            }
-            else if ( c == '{' ) // we need to track braces to prevent 'false' end-of-token identification
-            {
-                state.BraceCount++;
-            }
-            else if ( c == '}' && state.BraceCount > 0 )
-            {
-                state.BraceCount--;
-            }
-            else if ( span[i..].StartsWith( value ) )
-            {
-                return i;
+                case quoteChar:
+                    state.Quoted = true;
+                    state.Escape = false;
+                    break;
+
+                case var _ when c == tokenLeftSpan[0]:
+                    switch ( tokenLeftSpan.Length )
+                    {
+                        case 1:
+                            state.BraceCount++;
+                            break;
+                        case 2 when i + 1 < span.Length && span[i + 1] == tokenLeftSpan[1]:
+                            state.BraceCount++;
+                            i++;
+                            break;
+                    }
+
+                    break;
+
+                case var _ when c == tokenRightSpan[0] && state.BraceCount > 0:
+                    switch ( tokenRightSpan.Length )
+                    {
+                        case 1:
+                            state.BraceCount--;
+                            break;
+                        case 2 when i + 1 < span.Length && span[i + 1] == tokenRightSpan[1]:
+                            state.BraceCount--;
+                            i++;
+                            break;
+                    }
+
+                    break;
+
+                default:
+                    if ( span[i..].StartsWith( value ) )
+                        return i;
+                    break;
             }
         }
 

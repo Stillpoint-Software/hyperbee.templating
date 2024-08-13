@@ -1,6 +1,6 @@
 ﻿using System.Collections;
 using System.Reflection;
-using Hyperbee.Templating.Collections;
+using Hyperbee.Templating.Core;
 
 namespace Hyperbee.Templating.Text;
 

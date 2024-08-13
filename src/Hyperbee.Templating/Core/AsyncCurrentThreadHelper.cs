@@ -11,7 +11,7 @@ using System.Collections.Concurrent;
 
 namespace Hyperbee.Templating.Tasks;
 
-public static class AsyncCurrentThreadHelper
+internal static class AsyncCurrentThreadHelper
 {
     public static void RunSync( Func<Task> func )
     {

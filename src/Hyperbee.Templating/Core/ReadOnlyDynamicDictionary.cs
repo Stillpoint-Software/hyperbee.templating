@@ -1,7 +1,7 @@
 ﻿using System.Collections;
 using System.Dynamic;
 
-namespace Hyperbee.Templating.Compiler;
+namespace Hyperbee.Templating.Core;
 
 public delegate object DynamicMethod( params object[] args );
 

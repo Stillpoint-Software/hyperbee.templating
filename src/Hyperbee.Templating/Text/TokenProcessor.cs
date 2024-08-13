@@ -1,5 +1,6 @@
 ﻿using System.Globalization;
 using Hyperbee.Templating.Compiler;
+using Hyperbee.Templating.Core;
 
 namespace Hyperbee.Templating.Text;
 
@@ -150,7 +151,7 @@ internal class TokenProcessor
         {
             TokenEvaluation.Expression when TryInvokeTokenExpression( whileToken, out var expressionResult, out expressionError ) => Convert.ToBoolean( expressionResult ),
             TokenEvaluation.Expression => throw new TemplateException( $"{_tokenLeft}Error ({whileToken.Id}):{expressionError ?? "Error in while condition."}{_tokenRight}" ),
-            _ => TemplateHelper.Truthy( _tokens[whileToken.Name] ) // Re-evaluate the condition
+            _ => Truthy( _tokens[whileToken.Name] ) // Re-evaluate the condition
         };
 
         if ( conditionIsTrue ) // If the condition is true, replay the while block
@@ -163,7 +164,7 @@ internal class TokenProcessor
 
     private TokenAction ProcessDefineToken( TokenDefinition token )
     {
-        string expressionError = null;
+        string expressionError = null; // assign to avoid compiler complaint
 
         _tokens[token.Name] = token.TokenEvaluation switch
         {
@@ -195,7 +196,7 @@ internal class TokenProcessor
                 }
 
                 if ( token.TokenType == TokenType.If || token.TokenType == TokenType.While )
-                    ifResult = defined && TemplateHelper.Truthy( value );
+                    ifResult = defined && Truthy( value );
                 break;
 
             case TokenType.Value when token.TokenEvaluation == TokenEvaluation.Expression:
@@ -262,5 +263,30 @@ internal class TokenProcessor
 
         result = default;
         return false;
+    }
+
+    private static readonly string[] FalsyStrings = ["False", "No", "Off", "0"];
+
+    private static bool Truthy( ReadOnlySpan<char> value )
+    {
+        // falsy => null, String.Empty, False, No, Off, 0
+
+        var truthy = !value.IsEmpty;
+
+        if ( !truthy )
+            return false;
+
+        var compare = value.Trim();
+
+        foreach ( var item in FalsyStrings )
+        {
+            if ( !compare.SequenceEqual( item ) )
+                continue;
+
+            truthy = false;
+            break;
+        }
+
+        return truthy;
     }
 }
