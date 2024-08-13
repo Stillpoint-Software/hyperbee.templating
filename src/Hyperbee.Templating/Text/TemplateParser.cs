@@ -302,7 +302,9 @@ public class TemplateParser
                                     scanner = TemplateScanner.Text;
 
                                     // loop handling
-                                    if ( ProcessLoop( tokenAction, token, state, ref span, ref bufferManager, ref loopDepth ) )
+                                    ProcessFrame( state.CurrentFrame(), tokenAction, token.TokenType, ref span, ref bufferManager, ref loopDepth );
+
+                                    if ( tokenAction == TokenAction.Loop )
                                         continue;
 
                                     // write value
@@ -354,40 +356,38 @@ public class TemplateParser
 
         return;
 
-        static bool ProcessLoop( TokenAction tokenAction, TokenDefinition token, TemplateState state, ref ReadOnlySpan<char> span, ref BufferManager bufferManager, ref int loopDepth )
+        static void ProcessFrame( TemplateStack.Frame frame, TokenAction tokenAction, TokenType tokenType, ref ReadOnlySpan<char> span, ref BufferManager bufferManager, ref int loopDepth )
         {
             // loop handling
 
             if ( tokenAction == TokenAction.Loop )
             {
                 // Reset position to the start of the loop block
-                bufferManager.Position( state.CurrentFrame().StartPos );
+                bufferManager.Position( frame.StartPos );
                 span = bufferManager.GetCurrentSpan();
-                return true;
+                return;
             }
 
             // no loop buffer management required for fixed buffer
 
             if ( bufferManager.IsFixed )
-                return false;
+                return;
 
             // loop buffer management
 
-            if ( token.TokenType.HasFlag( TokenType.LoopStart ) )
+            if ( tokenType.HasFlag( TokenType.LoopStart ) )
             {
                 if ( loopDepth++ == 0 )
                     bufferManager.SetGrow( true );
             }
-            else if ( token.TokenType.HasFlag( TokenType.LoopEnd ) )
+            else if ( tokenType.HasFlag( TokenType.LoopEnd ) )
             {
                 if ( --loopDepth != 0 )
-                    return false;
+                    return;
 
                 bufferManager.SetGrow( false );
                 bufferManager.TrimBuffers();
             }
-
-            return false;
         }
     }
 
@@ -566,5 +566,10 @@ internal sealed class TemplateState
     public TemplateStack Frames { get; } = new();
     public int NextTokenId { get; set; } = 1;
     public int CurrentPos { get; set; }
-    public TemplateStack.Frame CurrentFrame() => Frames.Peek();
+    public TemplateStack.Frame CurrentFrame()
+    {
+        return Frames.Depth > 0
+            ? Frames.Peek()
+            : default;
+    }
 }
