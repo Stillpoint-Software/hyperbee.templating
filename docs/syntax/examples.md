@@ -1,36 +1,12 @@
-# Hyperbee Templating
+---
+layout: default
+title: Examples
+parent: Syntax
+nav_order: 4
+---
+# Examples
 
-Hyperbee Templating is a lightweight templating and variable substitution syntax engine. The library supports value replacements, 
-code expressions, token nesting, in-line definitions, conditional flow, and looping. It is designed to be lightweight and fast, 
-and does not rely on any external dependencies.
-
-## Features
-
-* Variable substitution syntax engine
-* Value replacements
-* Expression replacements
-* Token nesting
-* Conditional tokens
-* Conditional flow
-* Iterators
-* User-defined methods
-
-## Getting Started
-
-To get started with Hyperbee.Templating, refer to the [documentation](https://stillpoint-software.github.io/hyperbee.templating) for 
-detailed instructions and examples. 
-
-Install via NuGet:
-
-```bash
-dotnet add package Hyperbee.Templating
-```
-
-## Usage
-
-### Variable Substitution
-
-You can use the `TemplateParser` to perform basic variable substitutions.
+## Variable Substitution
 
 ```csharp
 var parser = new TemplateParser
@@ -65,9 +41,7 @@ var result = parser.Render(template);
 Console.WriteLine(result); // Output: hello ME.
 ```
 
-### Token Nesting
-
-Token values can contain other tokens.
+## Token Nesting
 
 ```csharp
 var parser = new TemplateParser
@@ -86,9 +60,7 @@ var result = parser.Render(template);
 Console.WriteLine(result); // Output: hello Hari Seldon.
 ```
 
-### Conditional Tokens
-
-You can use conditional tokens to control the flow based on conditions.
+## Conditional Tokens
 
 ```csharp
 var parser = new TemplateParser
@@ -123,9 +95,7 @@ var result = parser.Render(template);
 Console.WriteLine(result); // Output: hello you.
 ```
 
-### Inline Token Definitions
-
-You can define tokens inline within a template. Inline tokens must be defined before they are referenced.
+## Inline Token Definitions
 
 ```csharp
 var template = """{{identity:"me"}} hello {{identity}}.""";
@@ -141,9 +111,7 @@ var result = parser.Render(template);
 Console.WriteLine(result); // Output: hello me.
 ```
 
-### While Loop
-
-You can use a while loop to repeat a block of text while a condition is true.
+## While Loop
 
 ```csharp
 var parser = new TemplateParser
@@ -160,9 +128,9 @@ var result = parser.Render(template);
 Console.WriteLine(result); // Output: 012. 
 ```
 
-### Framework Methods
+## Method Invocation
 
-You can invoke framework methods within the template.
+### Framework Method
 
 ```csharp
 var parser = new TemplateParser
@@ -179,9 +147,7 @@ var result = parser.Render(template);
 Console.WriteLine(result); // Output: hello ME.
 ```
 
-### User-Defined Methods
-
-You can define custom methods and use them within the template.
+### User-Defined Method
 
 ```csharp
 var parser = new TemplateParser
@@ -201,13 +167,3 @@ var template = "hello {{x => x.name.MyUpper()}}.";
 var result = parser.Render(template);
 Console.WriteLine(result); // Output: hello ME.
 ```
-
-## Credits
-
-Special thanks to:
-
-- [Just The Docs](https://github.com/just-the-docs/just-the-docs) for the documentation theme.
-
-## Contributing
-
-We welcome contributions! Please see our [Contributing Guide](https://github.com/Stillpoint-Software/.github/blob/main/.github/CONTRIBUTING.md) for more details.
