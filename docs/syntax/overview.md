@@ -5,7 +5,7 @@ parent: Syntax
 nav_order: 1
 ---
 {% raw %}
-# Syntax Overview
+# Templating Syntax Overview
 
 Templating provides a variety of token syntaxes for different use cases. The templating syntax supports
 value and expression token replacement, conditional flow, iterators, in-line declarations, and method invocation.

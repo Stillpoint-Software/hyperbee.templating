@@ -160,24 +160,6 @@ var result = parser.Render(template);
 Console.WriteLine(result); // Output: hello ME.
 ```
 
-### Inline Token Definitions
-
-You can define tokens inline within a template. Inline tokens must be defined before they are referenced.
-
-```csharp
-var template = """{{identity:"me"}} hello {{identity}}.""";
-
-var result = parser.Render(template);
-Console.WriteLine(result); // Output: hello me.
-```
-
-```csharp
-var template = """{{identity:{{x => "me"}} }} hello {{identity}}.""";
-
-var result = parser.Render(template);
-Console.WriteLine(result); // Output: hello me.
-```
-
 ## Credits
 
 Special thanks to:

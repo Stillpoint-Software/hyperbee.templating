@@ -5,7 +5,9 @@ parent: Syntax
 nav_order: 3
 ---
 {% raw %}
-# Methods
+# Templating Methods
+
+## Methods
 
 Templating supports two types of methods:
 
@@ -14,7 +16,7 @@ Templating supports two types of methods:
 
 The syntax for invoking **framework** methods, and **user-defined** methods is the same; the difference lies in how **user-defined** methods are declared.
 
-## Framework Method Invocation
+### Framework Method Invocation
 
 You can invoke framework methods within the template. 
 
@@ -22,7 +24,7 @@ You can invoke framework methods within the template.
 |---------------------------------------|---------------------------------
 | `{{x => x.token.ToUpper()}}`          | Invoke a framework method.           
 
-## User-Defined Methods
+### User-Defined Methods
 
 You can define custom methods and use them within the template. User-defined methods are `Action` lambdas that are registerd with the template parser.
 (see example below).

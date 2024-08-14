@@ -5,7 +5,9 @@ parent: Syntax
 nav_order: 2
 ---
 {% raw %}
-# Tokens
+# Templating Tokens
+
+## Tokens
 
 Templating supports two kinds of tokens:
 
@@ -84,5 +86,3 @@ The available token styles are:
 | DoubleBrace | `{{` and `}}`  | `{{identifier}}`
 | PoundBrace  | `#{` and `}`   | `#{identifier}}`
 | DollarBrace | `${` and `}`   | `${identifier}}`
-
-
