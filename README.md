@@ -143,7 +143,7 @@ Console.WriteLine(result); // Output: 012.
 
 ### Methods
 
-You can invoke methods within roken expressions.
+You can invoke methods within token expressions.
 
 ```csharp
 var parser = new TemplateParser
