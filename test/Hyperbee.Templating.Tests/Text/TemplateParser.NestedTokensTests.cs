@@ -16,15 +16,15 @@ namespace Hyperbee.Templating.Tests.Text
 
             const string template = "hello {{name}}.";
 
-            var parser = new TemplateParser 
-            { 
-                Tokens = 
-                { 
-                    ["name"] = "{{first}} {{last_expression}}", 
-                    ["first"] = "hari", 
-                    ["last"] = "seldon", 
-                    ["last_expression"] = "{{last}}" 
-                } 
+            var parser = new TemplateParser
+            {
+                Tokens =
+                {
+                    ["name"] = "{{first}} {{last_expression}}",
+                    ["first"] = "hari",
+                    ["last"] = "seldon",
+                    ["last_expression"] = "{{last}}"
+                }
             };
 
             // act
