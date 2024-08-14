@@ -4,7 +4,7 @@ title: Token Types
 parent: Syntax
 nav_order: 2
 ---
-
+{% raw %}
 # Token Types
 
 Templating supports two main types of tokens:
@@ -44,3 +44,4 @@ Value Tokens are considered truthy when used in a condition. This means they eva
 - **Truthy Values**: Any value that is not falsy is considered truthy. This includes non-empty strings 
   and any string that does not match the falsy values listed above.
 
+{% endraw %}

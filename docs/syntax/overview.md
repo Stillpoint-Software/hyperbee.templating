@@ -4,7 +4,7 @@ title: Overview
 parent: Syntax
 nav_order: 1
 ---
-
+{% raw %}
 # Syntax Overview
 
 Templating provides a variety of token syntaxes for different use cases. The templating syntax supports
@@ -74,3 +74,5 @@ You can declare variable tokens inline within the template.
 
 - **identifier**: The name of the token variable defined.
 - **value**: The value to assign.
+
+{% endraw %}

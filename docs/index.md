@@ -89,6 +89,7 @@ Console.WriteLine(result); // Output: hello me.
 
 You can use conditional tokens to control the flow based on conditions.
 
+#### If Statement
 ```csharp
 var parser = new TemplateParser
 {
@@ -105,6 +106,7 @@ var result = parser.Render(template);
 Console.WriteLine(result); // Output: hello me.
 ```
 
+#### If-Else Statement
 ```csharp
 var parser = new TemplateParser
 {
@@ -120,6 +122,23 @@ var template = "hello {{#if condition}}{{name1}}{{else}}{{name2}}{{/if}}.";
 
 var result = parser.Render(template);
 Console.WriteLine(result); // Output: hello you.
+```
+
+#### While Statement
+
+```csharp
+var parser = new TemplateParser
+{
+    Tokens =
+    {
+        ["counter"] = 0
+    }
+};
+
+var template = "{{while x => int.Parse(x.counter) < 3}}{{counter}}{{counter:{{x => int.Parse(x.counter) + 1}}}}{{/while}}";
+
+var result = parser.Render(template);
+Console.WriteLine(result); // Output: 012. 
 ```
 
 ### Inline Token Definitions
@@ -138,28 +157,9 @@ var result = parser.Render(template);
 Console.WriteLine(result); // Output: hello me.
 ```
 
-### While Loop
+### Framework Method Invocation
 
-You can use a while loop to repeat a block of text while a condition is true.
-
-```csharp
-var parser = new TemplateParser
-{
-    Tokens =
-    {
-        ["counter"] = 0
-    }
-};
-
-var template = "{{while x => int.Parse(x.counter) < 3}}{{counter}}{{counter:{{x => int.Parse(x.counter) + 1}}}}{{/while}}";
-
-var result = parser.Render(template);
-Console.WriteLine(result); // Output: 012. 
-```
-
-### CLR Method Invocation
-
-You can invoke CLR methods within the template.
+You can invoke framework methods within the template.
 
 ```csharp
 var parser = new TemplateParser

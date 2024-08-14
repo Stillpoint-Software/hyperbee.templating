@@ -4,6 +4,7 @@ title: Examples
 parent: Syntax
 nav_order: 4
 ---
+{% raw %}
 # Examples
 
 ## Variable Substitution
@@ -167,3 +168,4 @@ var template = "hello {{x => x.name.MyUpper()}}.";
 var result = parser.Render(template);
 Console.WriteLine(result); // Output: hello ME.
 ```
+{% endraw %}

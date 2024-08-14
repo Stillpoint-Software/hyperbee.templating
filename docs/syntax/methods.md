@@ -4,6 +4,7 @@ title: Methods
 parent: Syntax
 nav_order: 3
 ---
+{% raw %}
 # Methods
 
 Templating supports two types of methods:
@@ -48,3 +49,4 @@ var template = "hello {{x => x.name.CustomUpper()}}.";
 var result = parser.Render(template);
 Console.WriteLine(result); // Output: hello ME.
 ```
+{% endraw %}
