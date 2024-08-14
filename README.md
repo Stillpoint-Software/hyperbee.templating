@@ -47,7 +47,7 @@ var result = parser.Render(template);
 Console.WriteLine(result); // Output: hello me.
 ```
 
-## Expression Substitution
+### Expression Substitution
 
 ```csharp
 var parser = new TemplateParser
