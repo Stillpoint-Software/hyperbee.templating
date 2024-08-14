@@ -7,10 +7,10 @@ nav_order: 2
 {% raw %}
 # Token Types
 
-Templating supports two main types of tokens:
+Templating supports two kinds of tokens:
 
-- **Variable Tokens**: These tokens are simple variable identifiers that are replaced with their corresponding values. They are considered truthy.
-- **Expression Tokens**: These tokens are more complex and can include operations or transformations. Expression tokens can evaluate conditions or invoke methods.
+- **Variable Tokens**: These are simple variables that are replaced with their corresponding values. They are considered truthy.
+- **Expression Tokens**: These are more expressive, and can include operations, method calls, and transformations.
 
 ### Variable Token
 
@@ -22,18 +22,43 @@ Variable tokens are simple identifiers that are replaced with their correspondin
 
 ### Expression Token
 
-Expression tokens are lambdas that can perform operations or transformations on data.
-They are passed a token context that expose token variables and methods as readonly properties.
+Expression tokens are runtime compiled lambdas that can perform operations or transformations on data.
+They are passed a token context that provides invokable methods, and readonly token variables.
 
 `{{ x => x.identifier + 1 }}`
 
-- **x**: Represents the token context.
+- **x**: The token context.
 - **identifier**: A token variable.
+
+```csharp
+var parser = new TemplateParser
+{
+    Tokens =
+    {
+        ["choice"] = "2"
+    }
+};
+
+const string template =
+    """
+    hello {{x => {
+        return x.choice switch
+        {
+            "1" => "me",
+            "2" => "you",
+            _ => "default"
+        };
+    } }}.
+    """;
+
+var result = parser.Render(template);
+Console.WriteLine(result); // Output: hello you.
+```
 
 ## Truthy Tokens
 
-Value Tokens are considered truthy when used in a condition. This means they evaluate to a boolean value
-(`true` or `false`). A token is `Truthy`. based on whether its value is considered "truthy" or "falsy". 
+Variable Tokens are `Truthy`. This means they evaluate to a boolean value
+(`true` or `false`). A token's `Truthy-ness` is determined according to the following rules. 
 
 - **Falsy Values**: The following values are considered falsy:
    - If the identifier does not exist

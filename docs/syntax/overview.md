@@ -12,11 +12,10 @@ value and expression token replacement, conditional flow, iterators, in-line dec
 
 ## Variable and Expression Tokens
 
-Tokens are substituted with their corresponding values directly within templates.
-Two types of tokens are supported:
+Tokens are substituted with their corresponding values directly within templates. Templating supports:
 
-- **Variable Tokens**: These tokens are simple variable identifiers that are replaced with their corresponding values. They are considered truthy.
-- **Expression Tokens**: These tokens are more complex and can include operations or transformations. Expression tokens can evaluate conditions or invoke methods.
+- **Variable Tokens**: These are simple variables that are replaced with their corresponding values. They are considered truthy.
+- **Expression Tokens**: These are more expressive, and can include operations, method calls, and transformations.
 
 ### Variable Token
 
@@ -28,12 +27,12 @@ Variable tokens are simple identifiers that are replaced with their correspondin
 
 ### Expression Token
 
-Expression tokens are lambdas that can perform operations or transformations on data.
-They are passed a token context that expose token variables and methods as readonly properties.
+Expression tokens are runtime compiled lambdas that can perform operations or transformations on data.
+They are passed a token context that provides invokable methods, and readonly token variables.
 
 `{{ x => x.identifier + 1 }}`
 
-- **x**: Represents the token context.
+- **x**: The token context.
 - **identifier**: A token variable.
 
 ### Token Nesting

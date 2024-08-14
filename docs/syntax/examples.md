@@ -37,7 +37,6 @@ var parser = new TemplateParser
 
 var template = "hello {{x => x.name.ToUpper()}}.";
 
-
 var result = parser.Render(template);
 Console.WriteLine(result); // Output: hello ME.
 ```
@@ -61,7 +60,9 @@ var result = parser.Render(template);
 Console.WriteLine(result); // Output: hello Hari Seldon.
 ```
 
-## Conditional Tokens
+## Conditional Flow
+
+### If Statement
 
 ```csharp
 var parser = new TemplateParser
@@ -78,6 +79,8 @@ var template = "{{#if condition}}hello {{name}}.{{/if}}";
 var result = parser.Render(template);
 Console.WriteLine(result); // Output: hello me.
 ```
+
+### If-Else Statement
 
 ```csharp
 var parser = new TemplateParser
@@ -96,23 +99,7 @@ var result = parser.Render(template);
 Console.WriteLine(result); // Output: hello you.
 ```
 
-## Inline Token Definitions
-
-```csharp
-var template = """{{identity:"me"}} hello {{identity}}.""";
-
-var result = parser.Render(template);
-Console.WriteLine(result); // Output: hello me.
-```
-
-```csharp
-var template = """{{identity:{{x => "me"}} }} hello {{identity}}.""";
-
-var result = parser.Render(template);
-Console.WriteLine(result); // Output: hello me.
-```
-
-## While Loop
+### While Statement
 
 ```csharp
 var parser = new TemplateParser
@@ -127,6 +114,22 @@ var template = "{{while x => int.Parse(x.counter) < 3}}{{counter}}{{counter:{{x 
 
 var result = parser.Render(template);
 Console.WriteLine(result); // Output: 012. 
+```
+
+## Inline Definitions
+
+```csharp
+var template = """{{identity:"me"}} hello {{identity}}.""";
+
+var result = parser.Render(template);
+Console.WriteLine(result); // Output: hello me.
+```
+
+```csharp
+var template = """{{identity:{{x => "me"}} }} hello {{identity}}.""";
+
+var result = parser.Render(template);
+Console.WriteLine(result); // Output: hello me.
 ```
 
 ## Method Invocation
