@@ -15,16 +15,16 @@ internal sealed class RoslynTokenExpressionProvider : ITokenExpressionProvider
 
     private static readonly ImmutableArray<MetadataReference> MetadataReferences =
     [
-        MetadataReference.CreateFromFile( typeof(object).Assembly.Location ),
-        MetadataReference.CreateFromFile( typeof(object).Assembly.Location.Replace("System.Private.CoreLib", "System.Runtime")),
-        MetadataReference.CreateFromFile( typeof(MethodImplAttribute).Assembly.Location ),
-        MetadataReference.CreateFromFile( typeof(RuntimeBinderException).Assembly.Location ),
-        MetadataReference.CreateFromFile( typeof(DynamicAttribute).Assembly.Location ),
-        MetadataReference.CreateFromFile( typeof(RoslynTokenExpressionProvider).Assembly.Location )
+        MetadataReference.CreateFromFile( typeof( object ).Assembly.Location ),
+        MetadataReference.CreateFromFile( typeof( object ).Assembly.Location.Replace( "System.Private.CoreLib", "System.Runtime" ) ),
+        MetadataReference.CreateFromFile( typeof( MethodImplAttribute ).Assembly.Location ),
+        MetadataReference.CreateFromFile( typeof( RuntimeBinderException ).Assembly.Location ),
+        MetadataReference.CreateFromFile( typeof( DynamicAttribute ).Assembly.Location ),
+        MetadataReference.CreateFromFile( typeof( RoslynTokenExpressionProvider ).Assembly.Location )
     ];
 
     private static readonly CSharpCompilationOptions CompilationOptions =
-        new(OutputKind.DynamicallyLinkedLibrary, optimizationLevel: OptimizationLevel.Release);
+        new( OutputKind.DynamicallyLinkedLibrary, optimizationLevel: OptimizationLevel.Release );
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public TokenExpression GetTokenExpression( string codeExpression )
@@ -77,7 +77,7 @@ internal sealed class RoslynTokenExpressionProvider : ITokenExpressionProvider
         var type = assembly.GetType( "TokenExpressionInvoker" );
         var method = type!.GetMethod( "Invoke", BindingFlags.Public | BindingFlags.Static );
 
-        var tokenExpression = (TokenExpression) Delegate.CreateDelegate( typeof(TokenExpression), method! );
+        var tokenExpression = (TokenExpression) Delegate.CreateDelegate( typeof( TokenExpression ), method! );
         return tokenExpression;
     }
 }
