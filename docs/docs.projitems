@@ -11,7 +11,7 @@
   <ItemGroup>
     <None Include="$(MSBuildThisFileDirectory)syntax\examples.md" />
     <None Include="$(MSBuildThisFileDirectory)syntax\methods.md" />
-    <None Include="$(MSBuildThisFileDirectory)syntax\token-types.md" />
+    <None Include="$(MSBuildThisFileDirectory)syntax\tokens.md" />
     <None Include="$(MSBuildThisFileDirectory)syntax\overview.md" />
     <None Include="$(MSBuildThisFileDirectory)syntax\syntax.md" />
     <None Include="$(MSBuildThisFileDirectory)index.md" />

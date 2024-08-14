@@ -26,11 +26,11 @@ Install via NuGet:
 dotnet add package Hyperbee.Templating
 ```
 
-## Usage
+## Basic Usage
 
 ### Variable Substitution
 
-You can use the `TemplateParser` to perform basic variable substitutions.
+You can use the `TemplateParser` to perform variable substitutions.
 
 ```csharp
 var parser = new TemplateParser
@@ -59,7 +59,6 @@ var parser = new TemplateParser
 };
 
 var template = "hello {{x => x.name.ToUpper()}}.";
-
 
 var result = parser.Render(template);
 Console.WriteLine(result); // Output: hello ME.
@@ -123,27 +122,9 @@ var result = parser.Render(template);
 Console.WriteLine(result); // Output: hello you.
 ```
 
-### Inline Token Definitions
+### While Statement
 
-You can define tokens inline within a template. Inline tokens must be defined before they are referenced.
-
-```csharp
-var template = """{{identity:"me"}} hello {{identity}}.""";
-
-var result = parser.Render(template);
-Console.WriteLine(result); // Output: hello me.
-```
-
-```csharp
-var template = """{{identity:{{x => "me"}} }} hello {{identity}}.""";
-
-var result = parser.Render(template);
-Console.WriteLine(result); // Output: hello me.
-```
-
-### While Loop
-
-You can use a while loop to repeat a block of text while a condition is true.
+You can use a while statement to repeat a block of text while a condition is true.
 
 ```csharp
 var parser = new TemplateParser
@@ -160,9 +141,9 @@ var result = parser.Render(template);
 Console.WriteLine(result); // Output: 012. 
 ```
 
-### Framework Methods
+### Methods
 
-You can invoke framework methods within the template.
+You can invoke methods within roken expressions.
 
 ```csharp
 var parser = new TemplateParser
@@ -179,27 +160,22 @@ var result = parser.Render(template);
 Console.WriteLine(result); // Output: hello ME.
 ```
 
-### User-Defined Methods
+### Inline Token Definitions
 
-You can define custom methods and use them within the template.
+You can define tokens inline within a template. Inline tokens must be defined before they are referenced.
 
 ```csharp
-var parser = new TemplateParser
-{
-    Methods =
-    {
-        ["MyUpper"] = args => ((string)args[0]).ToUpper()
-    },
-    Tokens =
-    {
-        ["name"] = "me"
-    }
-};
-
-var template = "hello {{x => x.name.MyUpper()}}.";
+var template = """{{identity:"me"}} hello {{identity}}.""";
 
 var result = parser.Render(template);
-Console.WriteLine(result); // Output: hello ME.
+Console.WriteLine(result); // Output: hello me.
+```
+
+```csharp
+var template = """{{identity:{{x => "me"}} }} hello {{identity}}.""";
+
+var result = parser.Render(template);
+Console.WriteLine(result); // Output: hello me.
 ```
 
 ## Credits

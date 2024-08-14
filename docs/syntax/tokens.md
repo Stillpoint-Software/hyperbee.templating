@@ -1,11 +1,11 @@
 ---
 layout: default
-title: Token Types
+title: Tokens
 parent: Syntax
 nav_order: 2
 ---
 {% raw %}
-# Token Types
+# Tokens
 
 Templating supports two kinds of tokens:
 
@@ -70,3 +70,19 @@ Variable Tokens are `Truthy`. This means they evaluate to a boolean value
   and any string that does not match the falsy values listed above.
 
 {% endraw %}
+
+## Token Delimiters
+
+By default, tokens are enclosed in double curly braces (`{{` and `}}`). The delimiters can be customized
+by passing `TokenStyle` to the `TemplateParser` constructor.
+
+The available token styles are:
+
+| Token Style | Description    | Usage
+| ----------- | -------------- | ----------------
+| SingleBrace | `{` and `}`    | `{identifier}`
+| DoubleBrace | `{{` and `}}`  | `{{identifier}}`
+| PoundBrace  | `#{` and `}`   | `#{identifier}}`
+| DollarBrace | `${` and `}`   | `${identifier}}`
+
+

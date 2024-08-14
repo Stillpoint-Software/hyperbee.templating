@@ -50,7 +50,7 @@ var result = parser.Render(template);
 Console.WriteLine(result); // Output: hello Hari Seldon.
 ```
 
-For more examples and detailed instructions, refer to the [examples](https://stillpoint-software.github.io/hyperbee.templating/syntax/examples.html).
+For more examples and detailed instructions, refer to the [examples](https://stillpoint-software.github.io/hyperbee.templating/syntax/examples.html) section.
 
 ## Credits
 
