@@ -295,7 +295,7 @@ public class TemplateParser
                             {
                                 // scan: find closing token pattern
                                 // token may span multiple reads so track search state
-                                pos = IndexOfIgnoreContent( span, TokenRight, ref indexOfState );
+                                pos = IndexOfIgnoreQuotedContent( span, TokenRight, ref indexOfState );
 
                                 // match: process completed token
                                 if ( pos >= 0 )
@@ -443,7 +443,7 @@ public class TemplateParser
 
             // find token end
 
-            var stop = IndexOfIgnoreContent( value, TokenRight );
+            var stop = IndexOfIgnoreQuotedContent( value, TokenRight );
 
             if ( stop == -1 )
                 throw new TemplateException( "Missing right token delimiter." );
@@ -478,13 +478,13 @@ public class TemplateParser
         public int BraceCount = 0;
     }
 
-    private int IndexOfIgnoreContent( ReadOnlySpan<char> span, ReadOnlySpan<char> value )
+    private int IndexOfIgnoreQuotedContent( ReadOnlySpan<char> span, ReadOnlySpan<char> value )
     {
         IndexOfState state = default;
-        return IndexOfIgnoreContent( span, value, ref state );
+        return IndexOfIgnoreQuotedContent( span, value, ref state );
     }
 
-    private int IndexOfIgnoreContent( ReadOnlySpan<char> span, ReadOnlySpan<char> value, ref IndexOfState state )
+    private int IndexOfIgnoreQuotedContent( ReadOnlySpan<char> span, ReadOnlySpan<char> value, ref IndexOfState state )
     {
         // Look for value pattern in span ignoring quoted strings and code expression braces
 
@@ -555,6 +555,16 @@ public class TemplateParser
 
 // Minimal frame management for flow control
 
+internal sealed class TemplateState
+{
+    public TemplateStack Frames { get; } = new();
+    public int NextTokenId { get; set; } = 1;
+    public int CurrentPos { get; set; }
+
+    public TemplateStack.Frame CurrentFrame() =>
+        Frames.Depth > 0 ? Frames.Peek() : default;
+}
+
 internal sealed class TemplateStack
 {
     public record Frame( TokenDefinition Token, bool Truthy, int StartPos = -1 );
@@ -568,20 +578,9 @@ internal sealed class TemplateStack
     public void Pop() => _stack.Pop();
     public int Depth => _stack.Count;
 
-    public bool IsTokenType( TokenType compare ) => _stack.Count > 0 && _stack.Peek().Token.TokenType == compare;
+    public bool IsTokenType( TokenType compare ) 
+        => _stack.Count > 0 && _stack.Peek().Token.TokenType == compare;
+
     public bool IsTruthy => _stack.Count == 0 || _stack.Peek().Truthy;
     public bool IsFalsy => !IsTruthy;
-}
-
-internal sealed class TemplateState
-{
-    public TemplateStack Frames { get; } = new();
-    public int NextTokenId { get; set; } = 1;
-    public int CurrentPos { get; set; }
-    public TemplateStack.Frame CurrentFrame()
-    {
-        return Frames.Depth > 0
-            ? Frames.Peek()
-            : default;
-    }
 }
