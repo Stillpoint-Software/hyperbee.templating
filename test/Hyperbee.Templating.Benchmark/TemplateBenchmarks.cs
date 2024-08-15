@@ -8,14 +8,7 @@ namespace Hyperbee.Templating.Benchmark;
 
 public class TemplateBenchmarks
 {
-    [Benchmark]
-    public void RoslynCompile()
-    {
-        const string source = "x => ( 2 + 2 ).ToString()";
-        var provider = new RoslynTokenExpressionProvider();
-        provider.GetTokenExpression( source );
-    }
-/*
+
     [Params( ParseTemplateMethod.InMemory, ParseTemplateMethod.Buffered )]
     public ParseTemplateMethod ParseMethod { get; set; }
 
@@ -109,6 +102,5 @@ public class TemplateBenchmarks
 
         parser.Render( template, ParseMethod );
     }
-*/
 }
 
