@@ -2,7 +2,7 @@
 // WARNING: only subset of helpers.
 namespace Hyperbee.Templating.Extensions;
 
-public static class ReadOnlySpanExtensions
+internal static class ReadOnlySpanExtensions
 {
     public static int IndexOfIgnoreEscaped( this ReadOnlySpan<char> span, ReadOnlySpan<char> value )
     {

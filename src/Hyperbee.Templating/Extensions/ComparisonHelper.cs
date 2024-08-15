@@ -4,7 +4,7 @@ using System.Globalization;
 
 namespace Hyperbee.Templating.Extensions;
 
-public static class ComparisonHelper
+internal static class ComparisonHelper
 {
     public static bool HasIgnoreCase( StringComparison comparisonType )
     {

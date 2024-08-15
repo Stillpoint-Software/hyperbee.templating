@@ -1,8 +1,6 @@
-﻿using BenchmarkDotNet.Attributes;
-using Hyperbee.Templating.Compiler;
+using BenchmarkDotNet.Attributes;
 using Hyperbee.Templating.Tests.TestSupport;
 using Hyperbee.Templating.Text;
-
 
 namespace Hyperbee.Templating.Benchmark;
 

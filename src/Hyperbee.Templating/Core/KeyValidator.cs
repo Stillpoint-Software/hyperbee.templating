@@ -1,3 +1,0 @@
-﻿namespace Hyperbee.Templating.Core;
-
-
