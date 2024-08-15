@@ -15,100 +15,100 @@ public class TemplateBenchmarks
         var provider = new RoslynTokenExpressionProvider();
         provider.GetTokenExpression( source );
     }
-/*
-    [Params( ParseTemplateMethod.InMemory, ParseTemplateMethod.Buffered )]
-    public ParseTemplateMethod ParseMethod { get; set; }
+    /*
+        [Params( ParseTemplateMethod.InMemory, ParseTemplateMethod.Buffered )]
+        public ParseTemplateMethod ParseMethod { get; set; }
 
 
-    [Benchmark( Baseline = true )]
-    public void ParserSignal()
-    {
-        const string template = "hello. this is a single line template with no tokens.";
-        var parser = new TemplateParser();
-        parser.Render( template, ParseMethod );
-
-    }
-
-    [Benchmark]
-    public void ParserMulti()
-    {
-        const string template =
-            """
-            hello.
-            this is a multi line template with no tokens. 
-            and no trailing cr lf pair on the last line
-            """;
-
-        var parser = new TemplateParser();
-        parser.Render( template, ParseMethod );
-
-    }
-
-    [Benchmark]
-    public void NestedTokens()
-    {
-        const string template = "hello {{name}}.";
-
-        var parser = new TemplateParser
+        [Benchmark( Baseline = true )]
+        public void ParserSignal()
         {
-            Tokens =
-            {
-                ["name"] = "{{first}} {{last_expression}}",
-                ["first"] = "hari",
-                ["last"] = "seldon",
-                ["last_expression"] = "{{last}}"
-            }
-        };
+            const string template = "hello. this is a single line template with no tokens.";
+            var parser = new TemplateParser();
+            parser.Render( template, ParseMethod );
 
-        parser.Render( template, ParseMethod );
-    }
+        }
 
-
-    [Benchmark]
-    public void ParseTokenWithBufferWraps()
-    {
-        const string template = "all your {{thing}} are belong to {{who}}.";
-
-        var parser = new TemplateParser
+        [Benchmark]
+        public void ParserMulti()
         {
-            Tokens =
+            const string template =
+                """
+                hello.
+                this is a multi line template with no tokens. 
+                and no trailing cr lf pair on the last line
+                """;
+
+            var parser = new TemplateParser();
+            parser.Render( template, ParseMethod );
+
+        }
+
+        [Benchmark]
+        public void NestedTokens()
+        {
+            const string template = "hello {{name}}.";
+
+            var parser = new TemplateParser
             {
-                ["thing"] = "base",
-                ["who"] = "us"
-            }
-        };
-
-        parser.Render( template, ParseTemplateMethod.Buffered );
-    }
-
-    [Benchmark]
-    public void InlineBlockExpression()
-    {
-        const string expression = "{{name}}";
-        const string definition =
-            """
-            {{name:{{x => {
-                return x.choice switch
+                Tokens =
                 {
-                    "1" => "me",
-                    "2" => "you",
-                    _ => "default"
-                };
-            } }} }}
-            """;
+                    ["name"] = "{{first}} {{last_expression}}",
+                    ["first"] = "hari",
+                    ["last"] = "seldon",
+                    ["last_expression"] = "{{last}}"
+                }
+            };
 
-        const string template = $"{definition}hello {expression}.";
+            parser.Render( template, ParseMethod );
+        }
 
-        var parser = new TemplateParser
+
+        [Benchmark]
+        public void ParseTokenWithBufferWraps()
         {
-            Tokens =
-            {
-                ["choice"] = "2"
-            }
-        };
+            const string template = "all your {{thing}} are belong to {{who}}.";
 
-        parser.Render( template, ParseMethod );
-    }
-*/
+            var parser = new TemplateParser
+            {
+                Tokens =
+                {
+                    ["thing"] = "base",
+                    ["who"] = "us"
+                }
+            };
+
+            parser.Render( template, ParseTemplateMethod.Buffered );
+        }
+
+        [Benchmark]
+        public void InlineBlockExpression()
+        {
+            const string expression = "{{name}}";
+            const string definition =
+                """
+                {{name:{{x => {
+                    return x.choice switch
+                    {
+                        "1" => "me",
+                        "2" => "you",
+                        _ => "default"
+                    };
+                } }} }}
+                """;
+
+            const string template = $"{definition}hello {expression}.";
+
+            var parser = new TemplateParser
+            {
+                Tokens =
+                {
+                    ["choice"] = "2"
+                }
+            };
+
+            parser.Render( template, ParseMethod );
+        }
+    */
 }
 

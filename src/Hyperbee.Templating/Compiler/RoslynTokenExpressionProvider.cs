@@ -77,7 +77,7 @@ internal sealed class RoslynTokenExpressionProvider : ITokenExpressionProvider
         var methodDelegate = assembly!
             .GetType( "TokenExpressionInvoker" )!
             .GetMethod( "Invoke", BindingFlags.Public | BindingFlags.Static )!
-            .CreateDelegate( typeof(TokenExpression) );
+            .CreateDelegate( typeof( TokenExpression ) );
 
         return (TokenExpression) methodDelegate;
     }
