@@ -59,7 +59,7 @@ internal sealed class RoslynTokenExpressionProvider : ITokenExpressionProvider
             references: MetadataReferences,
             options: CompilationOptions );
 
-        using var ms = new MemoryStream( 1024 );
+        using var ms = new MemoryStream( 2048 );
         EmitResult result = compilation.Emit( ms );
 
         if ( !result.Success )
@@ -74,11 +74,12 @@ internal sealed class RoslynTokenExpressionProvider : ITokenExpressionProvider
         ms.Seek( 0, SeekOrigin.Begin );
         var assembly = Assembly.Load( ms.ToArray() );
 
-        var type = assembly.GetType( "TokenExpressionInvoker" );
-        var method = type!.GetMethod( "Invoke", BindingFlags.Public | BindingFlags.Static );
+        var methodDelegate = assembly!
+            .GetType( "TokenExpressionInvoker" )!
+            .GetMethod( "Invoke", BindingFlags.Public | BindingFlags.Static )!
+            .CreateDelegate( typeof(TokenExpression) );
 
-        var tokenExpression = (TokenExpression) Delegate.CreateDelegate( typeof( TokenExpression ), method! );
-        return tokenExpression;
+        return (TokenExpression) methodDelegate;
     }
 }
 
