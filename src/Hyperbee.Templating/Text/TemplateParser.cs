@@ -137,6 +137,7 @@ public class TemplateParser
         if ( pos < 0 )
             return template.ToString();
 
+        // write content before token and parse remainder
         using var writer = new StringWriter();
         writer.Write( template[..pos] );
 
@@ -146,7 +147,18 @@ public class TemplateParser
 
     public void Render( ReadOnlySpan<char> template, TextWriter writer )
     {
-        ParseTemplate( template, writer );
+        // quick out
+        var pos = template.IndexOf( TokenLeft );
+
+        if ( pos < 0 )
+        {
+            writer.Write( template );
+            return;
+        }
+
+        // write content before token and parse remainder
+        writer.Write( template[..pos] );
+        ParseTemplate( template[pos..], writer );
     }
 
     public string Render( TextReader reader )
