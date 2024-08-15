@@ -578,7 +578,7 @@ internal sealed class TemplateStack
     public void Pop() => _stack.Pop();
     public int Depth => _stack.Count;
 
-    public bool IsTokenType( TokenType compare ) 
+    public bool IsTokenType( TokenType compare )
         => _stack.Count > 0 && _stack.Peek().Token.TokenType == compare;
 
     public bool IsTruthy => _stack.Count == 0 || _stack.Peek().Truthy;
