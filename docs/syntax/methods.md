@@ -38,7 +38,7 @@ var parser = new TemplateParser
 {
     Methods =
     {
-        ["CustomUpper"] = args => ((string)args[0]).ToUpper()
+        ["CustomUpper"] = Method.Create<string, string>( arg => arg.ToUpper() ) 
     },
     Tokens =
     {

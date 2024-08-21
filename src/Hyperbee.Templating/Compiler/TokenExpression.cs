@@ -1,11 +1,8 @@
-﻿namespace Hyperbee.Templating.Compiler;
+﻿using Hyperbee.Templating.Core;namespace Hyperbee.Templating.Compiler;
 
-// we expect methods with the signature
-//
-// delegate IConvertible TokenExpression( ReadOnlyDynamicDictionary tokens );
-//
-// but we will declare the input argument as dynamic so that the user can
-// use dot notation for member access, and so we can support user defined
-// dynamic methods
+public delegate object TokenExpression( ReadOnlyTokenDictionary token );
 
-public delegate IConvertible TokenExpression( dynamic tokens );
+public interface ITokenExpressionProvider
+{
+    public TokenExpression GetTokenExpression( string codeExpression );
+}

@@ -7,7 +7,8 @@ namespace Hyperbee.Templating.Text;
 internal class TokenProcessor
 {
     private readonly TemplateDictionary _tokens;
-    private readonly IDictionary<string, DynamicMethod> _methods;
+    //private readonly IDictionary<string, DynamicMethod> _methods; //BF
+    private readonly IDictionary<string, IMethodInvoker> _methods;
     private readonly Action<TemplateParser, TemplateEventArgs> _tokenHandler;
     private readonly ITokenExpressionProvider _tokenExpressionProvider;
     private readonly bool _ignoreMissingTokens;
@@ -17,7 +18,8 @@ internal class TokenProcessor
 
     public TokenProcessor(
         TemplateDictionary tokens,
-        IDictionary<string, DynamicMethod> methods,
+        //IDictionary<string, DynamicMethod> methods,
+        IDictionary<string, IMethodInvoker> methods, //BF
         Action<TemplateParser, TemplateEventArgs> tokenHandler,
         ITokenExpressionProvider tokenExpressionProvider,
         bool ignoreMissingTokens,
@@ -251,9 +253,9 @@ internal class TokenProcessor
         try
         {
             var tokenExpression = _tokenExpressionProvider.GetTokenExpression( token.TokenExpression );
-            var dynamicReadOnlyTokens = new ReadOnlyDynamicDictionary( _tokens, (IReadOnlyDictionary<string, DynamicMethod>) _methods );
+            var readOnlyTokens = new ReadOnlyTokenDictionary( _tokens, (IReadOnlyDictionary<string, IMethodInvoker>) _methods );
 
-            result = tokenExpression( dynamicReadOnlyTokens );
+            result = tokenExpression( readOnlyTokens );
             error = default;
 
             return true;

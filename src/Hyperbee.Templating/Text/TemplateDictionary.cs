@@ -5,13 +5,13 @@ namespace Hyperbee.Templating.Text;
 
 public class TemplateDictionary : IReadOnlyDictionary<string, string>
 {
-    private IDictionary<string, string> Source { get; }
+    protected internal IDictionary<string, string> Variables { get; }
     public KeyValidator Validator { get; }
 
     public TemplateDictionary( KeyValidator validator, IDictionary<string, string> source = default )
     {
         Validator = validator ?? throw new ArgumentNullException( nameof( validator ) );
-        Source = source ?? new Dictionary<string, string>( StringComparer.OrdinalIgnoreCase );
+        Variables = source ?? new Dictionary<string, string>( StringComparer.OrdinalIgnoreCase );
 
         if ( source != null )
             ValidateKeys( validator, source );
@@ -32,14 +32,14 @@ public class TemplateDictionary : IReadOnlyDictionary<string, string>
 
     public string this[string name]
     {
-        get => Source[name];
+        get => Variables[name];
         set => Add( name, value );
     }
 
-    public int Count => Source.Count;
+    public int Count => Variables.Count;
 
-    public IEnumerable<string> Keys => Source.Keys;
-    public IEnumerable<string> Values => Source.Values;
+    public IEnumerable<string> Keys => Variables.Keys;
+    public IEnumerable<string> Values => Variables.Values;
 
     public void Add( object tokenObject )
     {
@@ -90,28 +90,28 @@ public class TemplateDictionary : IReadOnlyDictionary<string, string>
         if ( !Validator( name ) )
             throw new ArgumentException( $"Invalid token identifier `{name}`.", nameof( name ) );
 
-        Source[name] = value;
+        Variables[name] = value;
     }
 
     public bool ContainsKey( string name )
     {
         ArgumentNullException.ThrowIfNull( name );
 
-        return Source.ContainsKey( name );
+        return Variables.ContainsKey( name );
     }
 
     public bool Remove( string name )
     {
         ArgumentNullException.ThrowIfNull( name );
 
-        return Source.Remove( name );
+        return Variables.Remove( name );
     }
 
     public bool TryGetValue( string name, out string value )
     {
-        return Source.TryGetValue( name, out value );
+        return Variables.TryGetValue( name, out value );
     }
 
-    public IEnumerator<KeyValuePair<string, string>> GetEnumerator() => Source.GetEnumerator();
+    public IEnumerator<KeyValuePair<string, string>> GetEnumerator() => Variables.GetEnumerator();
     IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 }

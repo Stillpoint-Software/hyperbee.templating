@@ -1,4 +1,5 @@
-﻿using Hyperbee.Templating.Tests.TestSupport;
+﻿using Hyperbee.Templating.Compiler;
+using Hyperbee.Templating.Tests.TestSupport;
 using Hyperbee.Templating.Text;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
@@ -19,7 +20,7 @@ public class TemplateParserDynamicMethodTests
         {
             Methods =
             {
-                ["ToUpper"] = args => ((string)args[0]).ToUpper()
+                ["ToUpper"] = Method.Create<string, string>( arg => arg.ToUpper() ) 
             },
             Tokens =
             {
@@ -52,7 +53,11 @@ public class TemplateParserDynamicMethodTests
         {
             Methods =
             {
-                ["TheBest"] = args => $"{args[0]} {((string)args[1] == "yes" ? "ARE" : "are NOT")} the best"
+                ["TheBest"] = Method.Create<string,string,string>( (arg0, arg1) =>
+                {
+                    var result = $"{arg0} {(arg1 == "yes" ? "ARE" : "are NOT")} the best";
+                    return result;
+                } ) 
             },
             Tokens =
             {

@@ -23,7 +23,7 @@ public class RoslynTokenExpressionProviderTests
         };
 
         var tokenExpression = compiler.GetTokenExpression( expression );
-        var dynamicReadOnlyTokens = new ReadOnlyDynamicDictionary( tokens );
+        var dynamicReadOnlyTokens = new ReadOnlyTokenDictionary( tokens );
 
         // act
 
@@ -32,6 +32,32 @@ public class RoslynTokenExpressionProviderTests
         // assert
 
         Assert.AreEqual( "ALL YOUR BASE ARE BELONG TO US.", result );
+    }
+
+    [TestMethod]
+    public void Should_compile_cast_expression()
+    {
+        // arrange
+
+        const string expression = """x => ($"all your {1 + x.Value<int>} base are belong to us.").ToUpper()""";
+
+        var compiler = new RoslynTokenExpressionProvider();
+
+        var tokens = new Dictionary<string, string> 
+        { 
+            ["Value"] = "1" 
+        };
+
+        var tokenExpression = compiler.GetTokenExpression( expression );
+        var readOnlyTokens = new ReadOnlyTokenDictionary( tokens );
+
+        // act
+
+        var result = tokenExpression( readOnlyTokens );
+
+        // assert
+
+        Assert.AreEqual( "ALL YOUR 2 BASE ARE BELONG TO US.", result );
     }
 
     [TestMethod]
@@ -49,7 +75,7 @@ public class RoslynTokenExpressionProviderTests
         };
 
         var tokenExpression = compiler.GetTokenExpression( expression );
-        var dynamicReadOnlyTokens = new ReadOnlyDynamicDictionary( tokens );
+        var dynamicReadOnlyTokens = new ReadOnlyTokenDictionary( tokens );
 
         // act
 
@@ -75,7 +101,7 @@ public class RoslynTokenExpressionProviderTests
         var tokenExpression1 = compiler.GetTokenExpression( expression1 );
         var tokenExpression2 = compiler.GetTokenExpression( expression2 );
 
-        var dynamicReadOnlyTokens = new ReadOnlyDynamicDictionary( tokens );
+        var dynamicReadOnlyTokens = new ReadOnlyTokenDictionary( tokens );
 
         // act
 
@@ -87,5 +113,4 @@ public class RoslynTokenExpressionProviderTests
         Assert.AreEqual( "ALL YOUR BASE ARE BELONG TO US.", result1 );
         Assert.AreEqual( "ALL YOUR BASE ARE NOT BELONG TO US.", result2 );
     }
-
 }

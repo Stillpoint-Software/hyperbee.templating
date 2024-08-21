@@ -29,7 +29,9 @@ public class TemplateParser
     public int MaxTokenDepth { get; init; } = 20;
 
     public ITokenExpressionProvider TokenExpressionProvider { get; init; } = new RoslynTokenExpressionProvider();
-    public IDictionary<string, DynamicMethod> Methods { get; init; } = new Dictionary<string, DynamicMethod>( StringComparer.OrdinalIgnoreCase );
+//  public IDictionary<string, DynamicMethod> Methods { get; init; } = new Dictionary<string, DynamicMethod>( StringComparer.OrdinalIgnoreCase );
+    public IDictionary<string, IMethodInvoker> Methods { get; init; } = new Dictionary<string, IMethodInvoker>( StringComparer.OrdinalIgnoreCase );
+
     public TemplateDictionary Tokens { get; init; }
     public Action<TemplateParser, TemplateEventArgs> TokenHandler { get; init; }
 
