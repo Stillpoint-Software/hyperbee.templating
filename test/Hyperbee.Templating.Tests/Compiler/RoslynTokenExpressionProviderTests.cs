@@ -43,9 +43,9 @@ public class RoslynTokenExpressionProviderTests
 
         var compiler = new RoslynTokenExpressionProvider();
 
-        var tokens = new Dictionary<string, string> 
-        { 
-            ["Value"] = "1" 
+        var tokens = new Dictionary<string, string>
+        {
+            ["Value"] = "1"
         };
 
         var tokenExpression = compiler.GetTokenExpression( expression );

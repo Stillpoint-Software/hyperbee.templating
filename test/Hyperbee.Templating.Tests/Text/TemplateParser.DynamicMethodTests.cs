@@ -20,7 +20,7 @@ public class TemplateParserDynamicMethodTests
         {
             Methods =
             {
-                ["ToUpper"] = Method.Create<string, string>( arg => arg.ToUpper() ) 
+                ["ToUpper"] = Method.Create<string, string>( arg => arg.ToUpper() )
             },
             Tokens =
             {
@@ -57,7 +57,7 @@ public class TemplateParserDynamicMethodTests
                 {
                     var result = $"{arg0} {(arg1 == "yes" ? "ARE" : "are NOT")} the best";
                     return result;
-                } ) 
+                } )
             },
             Tokens =
             {

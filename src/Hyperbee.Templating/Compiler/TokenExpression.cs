@@ -1,4 +1,5 @@
-﻿using Hyperbee.Templating.Core;namespace Hyperbee.Templating.Compiler;
+﻿using Hyperbee.Templating.Core;
+namespace Hyperbee.Templating.Compiler;
 
 public delegate object TokenExpression( ReadOnlyTokenDictionary token );
 

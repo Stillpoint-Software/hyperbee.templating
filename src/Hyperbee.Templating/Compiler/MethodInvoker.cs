@@ -13,7 +13,7 @@ public sealed class MethodInvoker : IMethodInvoker
 
     public MethodInvoker( Delegate method )
     {
-        ArgumentNullException.ThrowIfNull( method , nameof( method ) );
+        ArgumentNullException.ThrowIfNull( method, nameof( method ) );
 
         _invoker = CreateInvoker( method );
     }
@@ -21,7 +21,7 @@ public sealed class MethodInvoker : IMethodInvoker
     private static Func<object[], object> CreateInvoker( Delegate method )
     {
         var parameters = method.Method.GetParameters();
-        var arguments = new[] { Expression.Parameter( typeof(object[]), "args" ) };
+        var arguments = new[] { Expression.Parameter( typeof( object[] ), "args" ) };
         var callArguments = new Expression[parameters.Length];
 
         for ( var i = 0; i < parameters.Length; i++ )
@@ -39,7 +39,7 @@ public sealed class MethodInvoker : IMethodInvoker
         var methodCall = Expression.Call( instance, method.Method, callArguments );
 
         var lambda = Expression.Lambda<Func<object[], object>>(
-            Expression.Convert( methodCall, typeof(object) ), arguments );
+            Expression.Convert( methodCall, typeof( object ) ), arguments );
 
         return lambda.Compile();
     }
@@ -51,43 +51,43 @@ public sealed class MethodInvoker : IMethodInvoker
 
 public static class Method
 {
-    public static IMethodInvoker Create<TInput, TOutput>( 
+    public static IMethodInvoker Create<TInput, TOutput>(
         Func<TInput, TOutput> method )
     {
         return new MethodInvoker( method );
     }
 
-    public static IMethodInvoker Create<TInput1, TInput2, TOutput>( 
+    public static IMethodInvoker Create<TInput1, TInput2, TOutput>(
         Func<TInput1, TInput2, TOutput> method )
     {
         return new MethodInvoker( method );
     }
 
-    public static IMethodInvoker Create<TInput1, TInput2, TInput3, TOutput>( 
+    public static IMethodInvoker Create<TInput1, TInput2, TInput3, TOutput>(
         Func<TInput1, TInput2, TInput3, TOutput> method )
     {
         return new MethodInvoker( method );
     }
 
-    public static IMethodInvoker Create<TInput1, TInput2, TInput3, TInput4, TOutput>( 
+    public static IMethodInvoker Create<TInput1, TInput2, TInput3, TInput4, TOutput>(
         Func<TInput1, TInput2, TInput3, TInput4, TOutput> method )
     {
         return new MethodInvoker( method );
     }
 
-    public static IMethodInvoker Create<TInput1, TInput2, TInput3, TInput4, TInput5, TOutput>( 
+    public static IMethodInvoker Create<TInput1, TInput2, TInput3, TInput4, TInput5, TOutput>(
         Func<TInput1, TInput2, TInput3, TInput4, TInput5, TOutput> method )
     {
         return new MethodInvoker( method );
     }
 
-    public static IMethodInvoker Create<TInput1, TInput2, TInput3, TInput4, TInput5, TInput6, TOutput>( 
+    public static IMethodInvoker Create<TInput1, TInput2, TInput3, TInput4, TInput5, TInput6, TOutput>(
         Func<TInput1, TInput2, TInput3, TInput4, TInput5, TInput6, TOutput> method )
     {
         return new MethodInvoker( method );
     }
 
-    public static IMethodInvoker Create<TInput1, TInput2, TInput3, TInput4, TInput5, TInput6, TInput7, TOutput>( 
+    public static IMethodInvoker Create<TInput1, TInput2, TInput3, TInput4, TInput5, TInput6, TInput7, TOutput>(
         Func<TInput1, TInput2, TInput3, TInput4, TInput5, TInput6, TInput7, TOutput> method )
     {
         return new MethodInvoker( method );

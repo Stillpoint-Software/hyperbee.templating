@@ -13,7 +13,7 @@ public class ReadOnlyTokenDictionary : TemplateDictionary
         Methods = methods ?? new Dictionary<string, IMethodInvoker>( StringComparer.OrdinalIgnoreCase );
     }
 
-    public ReadOnlyTokenDictionary( IDictionary<string,string> tokens, IReadOnlyDictionary<string, IMethodInvoker> methods = null )
+    public ReadOnlyTokenDictionary( IDictionary<string, string> tokens, IReadOnlyDictionary<string, IMethodInvoker> methods = null )
         : base( TemplateHelper.ValidateKey, tokens )
     {
         Methods = methods ?? new Dictionary<string, IMethodInvoker>( StringComparer.OrdinalIgnoreCase );
@@ -21,7 +21,7 @@ public class ReadOnlyTokenDictionary : TemplateDictionary
 
     public TType Value<TType>( string name ) where TType : IConvertible
     {
-        return (TType) Convert.ChangeType( this[name], typeof(TType) );
+        return (TType) Convert.ChangeType( this[name], typeof( TType ) );
     }
 
     public object InvokeMethod( string methodName, params object[] args )
