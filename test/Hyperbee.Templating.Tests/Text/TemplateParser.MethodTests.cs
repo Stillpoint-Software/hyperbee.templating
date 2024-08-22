@@ -6,7 +6,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 namespace Hyperbee.Templating.Tests.Text;
 
 [TestClass]
-public class TemplateParserDynamicMethodTests
+public class TemplateParserMethodTests
 {
     [DataTestMethod]
     [DataRow( ParseTemplateMethod.Buffered )]

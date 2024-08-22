@@ -12,7 +12,7 @@ public class TemplateBenchmarks
 
 
     [Benchmark( Baseline = true )]
-    public void ParserSignal()
+    public void ParserSingleLine()
     {
         const string template = "hello. this is a single line template with no tokens.";
         var parser = new TemplateParser();
@@ -21,14 +21,14 @@ public class TemplateBenchmarks
     }
 
     [Benchmark]
-    public void ParserMulti()
+    public void ParserMultiLine()
     {
         const string template =
             """
-                hello.
-                this is a multi line template with no tokens. 
-                and no trailing cr lf pair on the last line
-                """;
+            hello.
+            this is a multi line template with no tokens. 
+            and no trailing cr lf pair on the last line
+            """;
 
         var parser = new TemplateParser();
         parser.Render( template, ParseMethod );
@@ -78,15 +78,15 @@ public class TemplateBenchmarks
         const string expression = "{{name}}";
         const string definition =
             """
-                {{name:{{x => {
-                    return x.choice switch
-                    {
-                        "1" => "me",
-                        "2" => "you",
-                        _ => "default"
-                    };
-                } }} }}
-                """;
+            {{name:{{x => {
+                return x.choice switch
+                {
+                    "1" => "me",
+                    "2" => "you",
+                    _ => "default"
+                };
+            } }} }}
+            """;
 
         const string template = $"{definition}hello {expression}.";
 
