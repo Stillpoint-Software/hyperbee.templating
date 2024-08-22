@@ -56,7 +56,7 @@ public class MemberDictionary : IReadOnlyMemberDictionary
 
     public IEnumerable<string> Keys => Variables.Keys;
     public IEnumerable<string> Values => Variables.Values;
-    
+
     public void Add( IEnumerable<KeyValuePair<string, string>> tokens )
     {
         foreach ( var (key, value) in tokens )

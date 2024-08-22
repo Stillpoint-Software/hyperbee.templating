@@ -76,7 +76,7 @@ public class TemplateConfig
 
             var valueType = value?.GetType();
 
-            if ( valueType != null && (valueType.IsPrimitive || valueType == typeof(string)) )
+            if ( valueType != null && (valueType.IsPrimitive || valueType == typeof( string )) )
                 AddToken( member.Name, value.ToString() );
         }
 
