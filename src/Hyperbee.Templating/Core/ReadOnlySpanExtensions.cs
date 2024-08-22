@@ -1,6 +1,9 @@
 ﻿// FIX: Pulled from Hyperbee.Text.Extensions which is not OpenSource yet.
 // WARNING: only subset of helpers.
-namespace Hyperbee.Templating.Extensions;
+
+// FIX: Pulled from Hyperbee.Text.Extensions which is not OpenSource yet.
+// WARNING: only subset of helpers.
+namespace Hyperbee.Templating.Core;
 
 internal static class ReadOnlySpanExtensions
 {

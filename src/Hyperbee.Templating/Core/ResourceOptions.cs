@@ -1,4 +1,4 @@
-﻿namespace Hyperbee.Templating.Extensions;
+﻿namespace Hyperbee.Templating.Core;
 
 public sealed class ResourceOptions
 {

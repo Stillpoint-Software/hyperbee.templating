@@ -1,5 +1,5 @@
 ﻿using Hyperbee.Templating.Configure;
-using Hyperbee.Templating.Extensions;
+using Hyperbee.Templating.Core;
 
 namespace Hyperbee.Templating.Text;
 

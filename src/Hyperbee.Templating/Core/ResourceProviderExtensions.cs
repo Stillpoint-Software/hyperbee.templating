@@ -2,7 +2,7 @@
 using Hyperbee.Templating.Configure;
 using Hyperbee.Templating.Text;
 
-namespace Hyperbee.Templating.Extensions;
+namespace Hyperbee.Templating.Core;
 
 public static class ResourceProviderExtensions
 {

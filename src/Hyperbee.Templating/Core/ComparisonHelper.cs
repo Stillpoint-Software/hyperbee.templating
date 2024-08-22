@@ -2,7 +2,7 @@
 // WARNING: only subset of helpers.
 using System.Globalization;
 
-namespace Hyperbee.Templating.Extensions;
+namespace Hyperbee.Templating.Core;
 
 internal static class ComparisonHelper
 {

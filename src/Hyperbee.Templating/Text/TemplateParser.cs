@@ -2,7 +2,6 @@
 using Hyperbee.Templating.Compiler;
 using Hyperbee.Templating.Configure;
 using Hyperbee.Templating.Core;
-using Hyperbee.Templating.Extensions;
 
 namespace Hyperbee.Templating.Text;
 
