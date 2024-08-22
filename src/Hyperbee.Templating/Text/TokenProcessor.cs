@@ -1,14 +1,11 @@
 ﻿using System.Globalization;
 using Hyperbee.Templating.Compiler;
-using Hyperbee.Templating.Core;
+using Hyperbee.Templating.Configure;
 
 namespace Hyperbee.Templating.Text;
 
 internal class TokenProcessor
 {
-    private readonly TemplateDictionary _tokens;
-    //private readonly IDictionary<string, DynamicMethod> _methods; //BF
-    private readonly IDictionary<string, IMethodInvoker> _methods;
     private readonly Action<TemplateParser, TemplateEventArgs> _tokenHandler;
     private readonly ITokenExpressionProvider _tokenExpressionProvider;
     private readonly bool _ignoreMissingTokens;
@@ -16,25 +13,26 @@ internal class TokenProcessor
     private readonly string _tokenLeft;
     private readonly string _tokenRight;
 
-    public TokenProcessor(
-        TemplateDictionary tokens,
-        //IDictionary<string, DynamicMethod> methods,
-        IDictionary<string, IMethodInvoker> methods, //BF
-        Action<TemplateParser, TemplateEventArgs> tokenHandler,
-        ITokenExpressionProvider tokenExpressionProvider,
-        bool ignoreMissingTokens,
-        bool substituteEnvironmentVariables,
-        string tokenLeft,
-        string tokenRight )
+    private readonly MemberDictionary _tokens;
+
+    public TokenProcessor( MemberDictionary tokens, TemplateConfig config )
     {
-        _tokens = tokens ?? throw new ArgumentNullException( nameof( tokens ) );
-        _methods = methods ?? throw new ArgumentNullException( nameof( methods ) );
-        _tokenHandler = tokenHandler;
-        _tokenExpressionProvider = tokenExpressionProvider ?? throw new ArgumentNullException( nameof( tokenExpressionProvider ) );
-        _ignoreMissingTokens = ignoreMissingTokens;
-        _substituteEnvironmentVariables = substituteEnvironmentVariables;
-        _tokenLeft = tokenLeft;
-        _tokenRight = tokenRight;
+        ArgumentNullException.ThrowIfNull( tokens );
+
+        if ( config.Methods == null )
+            throw new ArgumentNullException( nameof(config), $"{nameof(config.Methods)} cannot be null." );
+
+        if ( config.TokenExpressionProvider == null )
+            throw new ArgumentNullException( nameof(config), $"{nameof(config.TokenExpressionProvider)} cannot be null." );
+
+        _tokenExpressionProvider = config.TokenExpressionProvider;
+        _tokenHandler = config.TokenHandler;
+        _ignoreMissingTokens = config.IgnoreMissingTokens;
+        _substituteEnvironmentVariables = config.SubstituteEnvironmentVariables;
+
+        _tokens = tokens;
+
+        (_tokenLeft,_tokenRight) = config.TokenDelimiters();
     }
 
     public TokenAction ProcessToken( TokenDefinition token, TemplateState state, out string value )
@@ -253,9 +251,8 @@ internal class TokenProcessor
         try
         {
             var tokenExpression = _tokenExpressionProvider.GetTokenExpression( token.TokenExpression );
-            var readOnlyTokens = new ReadOnlyTokenDictionary( _tokens, (IReadOnlyDictionary<string, IMethodInvoker>) _methods );
 
-            result = tokenExpression( readOnlyTokens );
+            result = tokenExpression( _tokens );
             error = default;
 
             return true;

@@ -2,6 +2,7 @@
 using System.Collections.Immutable;
 using System.Reflection;
 using System.Runtime.CompilerServices;
+using Hyperbee.Templating.Text;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -37,16 +38,15 @@ internal sealed class RoslynTokenExpressionProvider : ITokenExpressionProvider
         // Create a shim to compile the expression
         var codeShim =
             $$"""
-              using System;
-              using Hyperbee.Templating.Core;
+              using Hyperbee.Templating.Text;
               using Hyperbee.Templating.Compiler;
               
               public static class TokenExpressionInvoker
               {
-                  public static object Invoke( ReadOnlyTokenDictionary tokens ) 
+                  public static object Invoke( {{nameof(IReadOnlyMemberDictionary)}} members ) 
                   {
                       TokenExpression expr = {{codeExpression}};
-                      return expr( tokens );
+                      return expr( members );
                   }
               }
               """;
@@ -110,7 +110,7 @@ internal sealed class RoslynTokenExpressionProvider : ITokenExpressionProvider
 // we want to transform these syntactic-sugar patterns:
 //
 // 1. x => x.someProp to x["someProp"]
-// 2. x => x.someProp<T> to x.Value<T>("someProp")
+// 2. x => x.someProp<T> to x.GetValueAs<T>("someProp")
 // 3. x => x.someMethod(..) to x.InvokeMethod("someMethod", ..)
 
 internal class TokenExpressionRewriter( string parameterName ) : CSharpSyntaxRewriter
@@ -181,14 +181,14 @@ internal class TokenExpressionRewriter( string parameterName ) : CSharpSyntaxRew
     {
         var typeArgument = genericName.TypeArgumentList.Arguments.First();
 
-        // Rewrites x.someProp<T> to x.Value<T>("someProp")
+        // Rewrite x.someProp<T> to x.GetValueAs<T>("someProp")
         var propertyName = genericName.Identifier.Text;
 
         var valueInvocation = SyntaxFactory.InvocationExpression(
             SyntaxFactory.MemberAccessExpression(
                 SyntaxKind.SimpleMemberAccessExpression,
                 node.Expression, // This is `x`
-                SyntaxFactory.GenericName( "Value" )
+                SyntaxFactory.GenericName( "GetValueAs" )
                     .WithTypeArgumentList( SyntaxFactory.TypeArgumentList( SyntaxFactory.SingletonSeparatedList( typeArgument ) ) )
             ),
             SyntaxFactory.ArgumentList(

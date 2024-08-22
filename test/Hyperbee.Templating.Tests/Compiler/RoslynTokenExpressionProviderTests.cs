@@ -1,6 +1,8 @@
 ﻿using System.Collections.Generic;
 using Hyperbee.Templating.Compiler;
 using Hyperbee.Templating.Core;
+using Hyperbee.Templating.Text;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Hyperbee.Templating.Tests.Compiler;
@@ -23,11 +25,11 @@ public class RoslynTokenExpressionProviderTests
         };
 
         var tokenExpression = compiler.GetTokenExpression( expression );
-        var dynamicReadOnlyTokens = new ReadOnlyTokenDictionary( tokens );
+        var variables = new MemberDictionary( tokens );
 
         // act
 
-        var result = tokenExpression( dynamicReadOnlyTokens );
+        var result = tokenExpression( variables );
 
         // assert
 
@@ -49,11 +51,11 @@ public class RoslynTokenExpressionProviderTests
         };
 
         var tokenExpression = compiler.GetTokenExpression( expression );
-        var readOnlyTokens = new ReadOnlyTokenDictionary( tokens );
+        var variables = new MemberDictionary( tokens );
 
         // act
 
-        var result = tokenExpression( readOnlyTokens );
+        var result = tokenExpression( variables );
 
         // assert
 
@@ -75,11 +77,11 @@ public class RoslynTokenExpressionProviderTests
         };
 
         var tokenExpression = compiler.GetTokenExpression( expression );
-        var dynamicReadOnlyTokens = new ReadOnlyTokenDictionary( tokens );
+        var variables = new MemberDictionary( tokens );
 
         // act
 
-        var result = tokenExpression( dynamicReadOnlyTokens );
+        var result = tokenExpression( variables );
 
         // assert
 
@@ -101,12 +103,12 @@ public class RoslynTokenExpressionProviderTests
         var tokenExpression1 = compiler.GetTokenExpression( expression1 );
         var tokenExpression2 = compiler.GetTokenExpression( expression2 );
 
-        var dynamicReadOnlyTokens = new ReadOnlyTokenDictionary( tokens );
+        var variables = new MemberDictionary( tokens );
 
         // act
 
-        var result1 = tokenExpression1( dynamicReadOnlyTokens );
-        var result2 = tokenExpression2( dynamicReadOnlyTokens );
+        var result1 = tokenExpression1( variables );
+        var result2 = tokenExpression2( variables );
 
         // assert
 

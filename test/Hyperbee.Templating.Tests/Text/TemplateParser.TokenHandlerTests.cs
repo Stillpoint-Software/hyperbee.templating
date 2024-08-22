@@ -1,4 +1,5 @@
 ﻿using System;
+using Hyperbee.Templating.Configure;
 using Hyperbee.Templating.Tests.TestSupport;
 using Hyperbee.Templating.Text;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -24,7 +25,7 @@ public class TemplateParserTokenHandlerTests
 
         var undefinedCounter = 0;
 
-        var parser = new TemplateParser
+        var config = new TemplateConfig
         {
             TokenHandler = ( sender, eventArgs ) =>
             {
@@ -36,6 +37,8 @@ public class TemplateParserTokenHandlerTests
                 eventArgs.Value = "me";
             }
         };
+
+        var parser = new TemplateParser( config );
 
         // act
 
@@ -58,18 +61,20 @@ public class TemplateParserTokenHandlerTests
 
         const string template = "hello {{name}}.";
 
-        var parser = new TemplateParser
+        var config = new TemplateConfig
         {
             TokenHandler = ( sender, eventArgs ) =>
             {
                 if ( !eventArgs.UnknownToken && string.Equals( eventArgs.Name, "name", StringComparison.OrdinalIgnoreCase ) )
                     eventArgs.Value = "super " + eventArgs.Value;
             },
-            Tokens =
+            Tokens = 
             {
                 ["name"] = "me"
             }
         };
+
+        var parser = new TemplateParser( config );
 
         // act 
 
@@ -95,14 +100,16 @@ public class TemplateParserTokenHandlerTests
             {{name}} is {{feels}}.
             """;
 
-        var parser = new TemplateParser
+        var config = new TemplateConfig
         {
             IgnoreMissingTokens = true,
-            Tokens =
+            Tokens = 
             {
                 ["feels"] = "happy"
             }
         };
+
+        var parser = new TemplateParser( config );
 
         // act
 
@@ -134,7 +141,7 @@ public class TemplateParserTokenHandlerTests
         var unknownCounter = 0;
         var tokenCount = 0;
 
-        var parser = new TemplateParser
+        var config = new TemplateConfig
         {
             TokenHandler = ( sender, eventArgs ) =>
             {
@@ -146,11 +153,13 @@ public class TemplateParserTokenHandlerTests
                 unknownCounter++;
                 eventArgs.Action = TokenAction.Ignore;
             },
-            Tokens =
+            Tokens = 
             {
-                ["feels"] = "happy"
+                ["feels"] = "happy" 
             }
         };
+
+        var parser = new TemplateParser( config );
 
         // act
 
