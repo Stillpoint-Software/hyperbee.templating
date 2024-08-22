@@ -2,7 +2,7 @@
 layout: default
 title: Methods
 parent: Syntax
-nav_order: 3
+nav_order: 4
 ---
 {% raw %}
 # Templating Methods
@@ -34,17 +34,12 @@ You can define custom methods and use them within the template. User-defined met
 | `{{x => x.token.CustomUpper()}}`      | Invoke a user-defined method. 
 
 ```csharp
-var parser = new TemplateParser
-{
-    Methods =
-    {
-        ["CustomUpper"] = Method.Create<string, string>( arg => arg.ToUpper() ) 
-    },
-    Tokens =
-    {
-        ["name"] = "me"
-    }
-};
+
+var config = new TemplateConfig()
+    .AddToken( "name", "me" )
+    .AddMethod( "CustomUpper" ).Expression<string, string>( arg => arg.ToUpper() ) ;
+
+var parser = new TemplateParser( config );
 
 var template = "hello {{x => x.name.CustomUpper()}}.";
 

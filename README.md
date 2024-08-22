@@ -131,7 +131,7 @@ var parser = new TemplateParser
 {
     Tokens =
     {
-        ["counter"] = 0
+        ["counter"] = "0"
     }
 };
 

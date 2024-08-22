@@ -12,6 +12,3 @@ public sealed class MethodInvoker( Func<object[], object> invoker ) : IMethodInv
 
     public object Invoke( params object[] args ) => _invoker( args );
 }
-
-
-

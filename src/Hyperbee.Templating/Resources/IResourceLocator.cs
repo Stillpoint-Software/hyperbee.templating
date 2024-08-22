@@ -2,7 +2,7 @@
 
 namespace Hyperbee.Templating.Resources;
 
-// Provides a dependency injection pattern for embedded resources
+// Provide a dependency injection pattern for embedded resources
 //
 // Implement IResourceLocator and set the implementation's namespace
 // to your resource location.

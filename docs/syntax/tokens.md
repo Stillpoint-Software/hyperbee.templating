@@ -2,7 +2,7 @@
 layout: default
 title: Tokens
 parent: Syntax
-nav_order: 2
+nav_order: 3
 ---
 {% raw %}
 # Templating Tokens
