@@ -20,7 +20,7 @@ public sealed class ResourceOptions
 
     public ResourceOptions Parameter( string name, string value )
     {
-        // Be careful to guard against injection attacks.
+        // IMPORTANT: Guard against injection attacks.
         //
         // DO Use query parameters for user inputs.
         // DO NOT allow user inputs to go directly in to select statements through tokens.

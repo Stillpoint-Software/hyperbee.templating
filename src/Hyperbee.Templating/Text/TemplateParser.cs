@@ -1,5 +1,6 @@
 ﻿using System.Buffers;
 using Hyperbee.Templating.Compiler;
+using Hyperbee.Templating.Configure;
 using Hyperbee.Templating.Core;
 using Hyperbee.Templating.Extensions;
 
@@ -24,23 +25,13 @@ public class TemplateParser
 {
     internal static int BufferSize = 1024;
 
-    public bool IgnoreMissingTokens { get; init; } = false;
-    public bool SubstituteEnvironmentVariables { get; init; } = false;
-    public int MaxTokenDepth { get; init; } = 20;
+    public MemberDictionary Tokens { get; }
+    internal TokenParser TokenParser { get; }
+    internal TokenProcessor TokenProcessor { get; }
 
-    public ITokenExpressionProvider TokenExpressionProvider { get; init; } = new RoslynTokenExpressionProvider();
-    public IDictionary<string, DynamicMethod> Methods { get; init; } = new Dictionary<string, DynamicMethod>( StringComparer.OrdinalIgnoreCase );
-    public TemplateDictionary Tokens { get; init; }
-    public Action<TemplateParser, TemplateEventArgs> TokenHandler { get; init; }
-
-    private TokenParser _tokenParser;
-    internal TokenParser TokenParser => _tokenParser ??= new TokenParser( Tokens.Validator, TokenLeft, TokenRight );
-
-    private readonly Lazy<TokenProcessor> _lazyTokenProcessor;
-    private TokenProcessor TokenProcessor => _lazyTokenProcessor.Value;
-
-    private string TokenLeft { get; }
-    private string TokenRight { get; }
+    private readonly int MaxTokenDepth;
+    private readonly string TokenLeft;
+    private readonly string TokenRight;
 
     private enum TemplateScanner
     {
@@ -49,69 +40,22 @@ public class TemplateParser
     }
 
     public TemplateParser()
-        : this( TokenStyle.Default )
+        : this( null )
     {
     }
 
-    public TemplateParser( IDictionary<string, string> source )
-        : this( TokenStyle.Default, source, default )
+    public TemplateParser( TemplateConfig config )
     {
-    }
+        config ??= new TemplateConfig();
 
-    public TemplateParser( TokenStyle style )
-        : this( style, default, (KeyValidator) default )
-    {
-    }
+        Tokens = new MemberDictionary( config.Validator, config.Tokens, (IReadOnlyDictionary<string, IMethodInvoker>) config.Methods );
 
-    public TemplateParser( TokenStyle style, KeyValidator validator, IDictionary<string, string> source = default )
-        : this( style, source, validator )
-    {
-    }
+        MaxTokenDepth = config.MaxTokenDepth;
 
-    public TemplateParser( TokenStyle style, IDictionary<string, string> source, KeyValidator validator )
-        : this( style, new TemplateDictionary( validator ?? TemplateHelper.ValidateKey, source ) )
-    {
-    }
+        (TokenLeft, TokenRight) = config.TokenDelimiters();
 
-    public TemplateParser( TokenStyle style, TemplateDictionary source )
-    {
-        ArgumentNullException.ThrowIfNull( source );
-
-        Tokens = source;
-
-        _lazyTokenProcessor = new Lazy<TokenProcessor>( () => new TokenProcessor(
-            Tokens,
-            Methods,
-            TokenHandler,
-            TokenExpressionProvider,
-            IgnoreMissingTokens,
-            SubstituteEnvironmentVariables,
-            TokenLeft,
-            TokenRight
-        ) );
-
-        switch ( style )
-        {
-            case TokenStyle.Default:
-            case TokenStyle.DoubleBrace:
-                TokenLeft = "{{";
-                TokenRight = "}}";
-                break;
-            case TokenStyle.SingleBrace:
-                TokenLeft = "{";
-                TokenRight = "}";
-                break;
-            case TokenStyle.PoundBrace:
-                TokenLeft = "#{";
-                TokenRight = "}";
-                break;
-            case TokenStyle.DollarBrace:
-                TokenLeft = "${";
-                TokenRight = "}";
-                break;
-            default:
-                throw new ArgumentOutOfRangeException( nameof( style ), style, null );
-        }
+        TokenParser = new TokenParser( config );
+        TokenProcessor = new TokenProcessor( Tokens, config );
     }
 
     // Render - all the ways

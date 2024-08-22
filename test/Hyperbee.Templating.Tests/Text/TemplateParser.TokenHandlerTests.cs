@@ -1,4 +1,5 @@
 ﻿using System;
+using Hyperbee.Templating.Configure;
 using Hyperbee.Templating.Tests.TestSupport;
 using Hyperbee.Templating.Text;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -24,7 +25,7 @@ public class TemplateParserTokenHandlerTests
 
         var undefinedCounter = 0;
 
-        var parser = new TemplateParser
+        var config = new TemplateConfig
         {
             TokenHandler = ( sender, eventArgs ) =>
             {
@@ -36,6 +37,8 @@ public class TemplateParserTokenHandlerTests
                 eventArgs.Value = "me";
             }
         };
+
+        var parser = new TemplateParser( config );
 
         // act
 
@@ -58,7 +61,7 @@ public class TemplateParserTokenHandlerTests
 
         const string template = "hello {{name}}.";
 
-        var parser = new TemplateParser
+        var config = new TemplateConfig
         {
             TokenHandler = ( sender, eventArgs ) =>
             {
@@ -70,6 +73,8 @@ public class TemplateParserTokenHandlerTests
                 ["name"] = "me"
             }
         };
+
+        var parser = new TemplateParser( config );
 
         // act 
 
@@ -95,7 +100,7 @@ public class TemplateParserTokenHandlerTests
             {{name}} is {{feels}}.
             """;
 
-        var parser = new TemplateParser
+        var config = new TemplateConfig
         {
             IgnoreMissingTokens = true,
             Tokens =
@@ -103,6 +108,8 @@ public class TemplateParserTokenHandlerTests
                 ["feels"] = "happy"
             }
         };
+
+        var parser = new TemplateParser( config );
 
         // act
 
@@ -134,7 +141,7 @@ public class TemplateParserTokenHandlerTests
         var unknownCounter = 0;
         var tokenCount = 0;
 
-        var parser = new TemplateParser
+        var config = new TemplateConfig
         {
             TokenHandler = ( sender, eventArgs ) =>
             {
@@ -151,6 +158,8 @@ public class TemplateParserTokenHandlerTests
                 ["feels"] = "happy"
             }
         };
+
+        var parser = new TemplateParser( config );
 
         // act
 

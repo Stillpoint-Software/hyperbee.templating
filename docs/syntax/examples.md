@@ -2,7 +2,7 @@
 layout: default
 title: Examples
 parent: Syntax
-nav_order: 4
+nav_order: 5
 ---
 {% raw %}
 # Examples
@@ -158,7 +158,7 @@ var parser = new TemplateParser
 {
     Methods =
     {
-        ["MyUpper"] = args => ((string)args[0]).ToUpper()
+        ["MyUpper"] = Method.Create<string, string>( arg => arg.ToUpper() )
     },
     Tokens =
     {

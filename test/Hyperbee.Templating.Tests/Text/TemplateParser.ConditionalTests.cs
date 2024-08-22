@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using Hyperbee.Collections;
+using Hyperbee.Templating.Configure;
 using Hyperbee.Templating.Tests.TestSupport;
 using Hyperbee.Templating.Text;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -18,13 +19,15 @@ public class TemplateParserConditionalTests
         const string expression = "{{if name}}{{name}}{{else}}not {{name}}{{/if}}";
         const string template = $"hello {expression}.";
 
-        var parser = new TemplateParser
+        var config = new TemplateConfig
         {
             Tokens =
             {
                 ["name"] = "me"
             }
         };
+
+        var parser = new TemplateParser( config );
 
         // act
 
@@ -175,7 +178,8 @@ public class TemplateParserConditionalTests
             ["upper"] = "True"
         } );
 
-        var parser = new TemplateParser( source );
+        var config = new TemplateConfig( source );
+        var parser = new TemplateParser( config );
 
         // act
 

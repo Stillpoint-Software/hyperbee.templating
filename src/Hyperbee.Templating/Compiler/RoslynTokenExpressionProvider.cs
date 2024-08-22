@@ -2,9 +2,10 @@
 using System.Collections.Immutable;
 using System.Reflection;
 using System.Runtime.CompilerServices;
+using Hyperbee.Templating.Text;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
-using Microsoft.CodeAnalysis.Emit;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CSharp.RuntimeBinder;
 
 namespace Hyperbee.Templating.Compiler;
@@ -29,38 +30,58 @@ internal sealed class RoslynTokenExpressionProvider : ITokenExpressionProvider
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public TokenExpression GetTokenExpression( string codeExpression )
     {
-        return TokenExpressions.GetOrAdd( codeExpression, CompileAndExecute );
+        return TokenExpressions.GetOrAdd( codeExpression, Compile );
     }
 
-    private static TokenExpression CompileAndExecute( string codeExpression )
+    private static TokenExpression Compile( string codeExpression )
     {
+        // Create a shim to compile the expression
         var codeShim =
             $$"""
-              using System;
-              using System.Runtime.CompilerServices;
+              using Hyperbee.Templating.Text;
               using Hyperbee.Templating.Compiler;
-
+              
               public static class TokenExpressionInvoker
               {
-                  [MethodImpl( MethodImplOptions.AggressiveInlining )]
-                  public static IConvertible Invoke( dynamic tokens ) 
+                  public static object Invoke( {{nameof( IReadOnlyMemberDictionary )}} members ) 
                   {
                       TokenExpression expr = {{codeExpression}};
-                      return expr( tokens );
+                      return expr( members );
                   }
               }
               """;
 
+        // Parse the code expression
         var syntaxTree = CSharpSyntaxTree.ParseText( codeShim );
+        var root = syntaxTree.GetRoot();
 
+        // Locate the TokenExpression lambda and get the parameter name
+        var lambdaExpression = root.DescendantNodes()
+            .OfType<LambdaExpressionSyntax>()
+            .FirstOrDefault() ?? throw new InvalidOperationException( "Could not locate the token lambda expression in code." );
+
+        var parameterName = lambdaExpression switch
+        {
+            SimpleLambdaExpressionSyntax simpleLambda => simpleLambda.Parameter.Identifier.Text,
+            ParenthesizedLambdaExpressionSyntax parenthesizedLambda => parenthesizedLambda.ParameterList.Parameters.First().Identifier.Text,
+            _ => throw new InvalidOperationException( "Unsupported lambda expression type." )
+        };
+
+        // Rewrite the lambda expression to use the dictionary lookup
+        var rewriter = new TokenExpressionRewriter( parameterName );
+        var rewrittenSyntaxTree = rewriter.Visit( root );
+
+        //var rewrittenCode = rewrittenSyntaxTree.ToFullString(); // Keep for debugging
+
+        // Compile the rewritten code
         var compilation = CSharpCompilation.Create(
             assemblyName: "DynamicTokenExpressionAssembly",
-            syntaxTrees: [syntaxTree],
+            syntaxTrees: [rewrittenSyntaxTree.SyntaxTree],
             references: MetadataReferences,
             options: CompilationOptions );
 
         using var ms = new MemoryStream( 2048 );
-        EmitResult result = compilation.Emit( ms );
+        var result = compilation.Emit( ms );
 
         if ( !result.Success )
         {
@@ -83,3 +104,135 @@ internal sealed class RoslynTokenExpressionProvider : ITokenExpressionProvider
     }
 }
 
+// This rewriter will transform the lambda expression to use dictionary lookup
+// for property access, method invocation, and 'generic' property casting.
+//
+// we want to transform these syntactic-sugar patterns:
+//
+// 1. x => x.someProp to x["someProp"]
+// 2. x => x.someProp<T> to x.GetValueAs<T>("someProp")
+// 3. x => x.someMethod(..) to x.InvokeMethod("someMethod", ..)
+
+internal class TokenExpressionRewriter( string parameterName ) : CSharpSyntaxRewriter
+{
+    private readonly HashSet<string> _aliases = [parameterName];
+
+    public override SyntaxNode VisitVariableDeclarator( VariableDeclaratorSyntax node )
+    {
+        // Check if the variable is being assigned to the parameter name (or an alias)
+        if ( node.Initializer?.Value is IdentifierNameSyntax identifier &&
+             _aliases.Contains( identifier.Identifier.Text ) )
+        {
+            // Add this variable name as an alias for the parameter
+            _aliases.Add( node.Identifier.Text );
+        }
+
+        return base.VisitVariableDeclarator( node );
+    }
+
+    public override SyntaxNode VisitInvocationExpression( InvocationExpressionSyntax node )
+    {
+        if ( node.Expression is MemberAccessExpressionSyntax memberAccess &&
+             memberAccess.Expression is IdentifierNameSyntax identifier &&
+             _aliases.Contains( identifier.Identifier.Text ) )
+        {
+            // Handle method invocation rewrite
+            return RewriteMethodInvocation( memberAccess, node );
+        }
+
+        return base.VisitInvocationExpression( node );
+    }
+
+    public override SyntaxNode VisitMemberAccessExpression( MemberAccessExpressionSyntax node )
+    {
+        if ( node.Expression is not IdentifierNameSyntax identifier || !_aliases.Contains( identifier.Identifier.Text ) )
+        {
+            return base.VisitMemberAccessExpression( node );
+        }
+
+        if ( node.Name is GenericNameSyntax genericName )
+        {
+            // Handle generic property access like x.someProp<int>
+            return RewriteGenericProperty( node, genericName );
+        }
+
+        // Handle simple property access like x.someProp
+        return RewriteSimpleProperty( node );
+
+    }
+
+    private static ElementAccessExpressionSyntax RewriteSimpleProperty( MemberAccessExpressionSyntax node )
+    {
+        // Rewrites x.someProp to x["someProp"]
+        var propertyName = node.Name.Identifier.Text;
+        var propertyAccess = SyntaxFactory.ElementAccessExpression(
+            node.Expression,
+            SyntaxFactory.BracketedArgumentList(
+                SyntaxFactory.SingletonSeparatedList(
+                    SyntaxFactory.Argument( SyntaxFactory.LiteralExpression( SyntaxKind.StringLiteralExpression, SyntaxFactory.Literal( propertyName ) ) )
+                )
+            )
+        );
+
+        return propertyAccess;
+    }
+
+    private static InvocationExpressionSyntax RewriteGenericProperty( MemberAccessExpressionSyntax node, GenericNameSyntax genericName )
+    {
+        var typeArgument = genericName.TypeArgumentList.Arguments.First();
+
+        // Rewrite x.someProp<T> to x.GetValueAs<T>("someProp")
+        var propertyName = genericName.Identifier.Text;
+
+        var valueInvocation = SyntaxFactory.InvocationExpression(
+            SyntaxFactory.MemberAccessExpression(
+                SyntaxKind.SimpleMemberAccessExpression,
+                node.Expression, // This is `x`
+                SyntaxFactory.GenericName( "GetValueAs" )
+                    .WithTypeArgumentList( SyntaxFactory.TypeArgumentList( SyntaxFactory.SingletonSeparatedList( typeArgument ) ) )
+            ),
+            SyntaxFactory.ArgumentList(
+                SyntaxFactory.SingletonSeparatedList(
+                    SyntaxFactory.Argument(
+                        SyntaxFactory.LiteralExpression( SyntaxKind.StringLiteralExpression, SyntaxFactory.Literal( propertyName ) )
+                    )
+                )
+            )
+        );
+
+        return valueInvocation;
+    }
+
+    private InvocationExpressionSyntax RewriteMethodInvocation( MemberAccessExpressionSyntax memberAccess, InvocationExpressionSyntax node )
+    {
+        var methodName = memberAccess.Name.Identifier.Text;
+
+        // Create the method name argument for the InvokeMethod call
+        var methodNameArgument = SyntaxFactory.LiteralExpression(
+            SyntaxKind.StringLiteralExpression,
+            SyntaxFactory.Literal( methodName )
+        );
+
+        // Rewrite the arguments to be passed to the InvokeMethod call
+        var rewrittenArguments = node.ArgumentList.Arguments
+            .Select( arg => (ExpressionSyntax) Visit( arg.Expression ) )
+            .ToArray();
+
+        // Create the InvokeMethod call: x.InvokeMethod("MethodName", arg1, arg2, ...)
+        var invokeMethodCall = SyntaxFactory.InvocationExpression(
+            SyntaxFactory.MemberAccessExpression(
+                SyntaxKind.SimpleMemberAccessExpression,
+                memberAccess.Expression, // This is `x`
+                SyntaxFactory.IdentifierName( "InvokeMethod" )
+            ),
+            SyntaxFactory.ArgumentList(
+                SyntaxFactory.SeparatedList(
+                    new[] { SyntaxFactory.Argument( methodNameArgument ) }
+                        .Concat( rewrittenArguments.Select( SyntaxFactory.Argument ) )
+                )
+            )
+        );
+
+        return invokeMethodCall;
+    }
+}

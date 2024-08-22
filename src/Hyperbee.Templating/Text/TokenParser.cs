@@ -1,4 +1,5 @@
-﻿using Hyperbee.Templating.Extensions;
+﻿using Hyperbee.Templating.Configure;
+using Hyperbee.Templating.Extensions;
 
 namespace Hyperbee.Templating.Text;
 
@@ -35,11 +36,10 @@ internal class TokenParser
     private string TokenLeft { get; }
     private string TokenRight { get; }
 
-    internal TokenParser( KeyValidator validator, string tokenLeft, string tokenRight )
+    internal TokenParser( TemplateConfig config )
     {
-        ValidateKey = validator ?? throw new ArgumentNullException( nameof( validator ) );
-        TokenLeft = tokenLeft ?? throw new ArgumentNullException( nameof( tokenLeft ) );
-        TokenRight = tokenRight ?? throw new ArgumentNullException( nameof( tokenRight ) );
+        ValidateKey = config.Validator ?? throw new ArgumentNullException( nameof( config.Validator ) );
+        (TokenLeft, TokenRight) = config.TokenDelimiters();
     }
 
     public TokenDefinition ParseToken( ReadOnlySpan<char> token, int tokenId )
