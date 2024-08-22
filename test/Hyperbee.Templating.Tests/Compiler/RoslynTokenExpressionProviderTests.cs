@@ -1,8 +1,6 @@
 ﻿using System.Collections.Generic;
 using Hyperbee.Templating.Compiler;
-using Hyperbee.Templating.Core;
 using Hyperbee.Templating.Text;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Hyperbee.Templating.Tests.Compiler;

@@ -56,38 +56,7 @@ public class MemberDictionary : IReadOnlyMemberDictionary
 
     public IEnumerable<string> Keys => Variables.Keys;
     public IEnumerable<string> Values => Variables.Values;
-
-    public void Add( object tokenObject )
-    {
-        const BindingFlags bindingFlags = BindingFlags.Public | BindingFlags.Instance | BindingFlags.InvokeMethod | BindingFlags.IgnoreCase;
-
-        ArgumentNullException.ThrowIfNull( tokenObject );
-
-        var type = tokenObject.GetType();
-
-        foreach ( var member in type.GetMembers( bindingFlags ) )
-        {
-            object value;
-
-            switch ( member.MemberType )
-            {
-                case MemberTypes.Property:
-                    value = ((PropertyInfo) member).GetValue( tokenObject, null );
-                    break;
-                case MemberTypes.Field:
-                    value = ((PropertyInfo) member).GetValue( tokenObject, null );
-                    break;
-                default:
-                    continue;
-            }
-
-            var valueType = value?.GetType();
-
-            if ( valueType != null && (valueType.IsPrimitive || valueType == typeof( string )) )
-                Add( member.Name, value.ToString() );
-        }
-    }
-
+    
     public void Add( IEnumerable<KeyValuePair<string, string>> tokens )
     {
         foreach ( var (key, value) in tokens )

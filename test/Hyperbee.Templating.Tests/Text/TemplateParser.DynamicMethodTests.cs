@@ -17,15 +17,9 @@ public class TemplateParserDynamicMethodTests
         // arrange
         const string template = "hello {{x=>x.ToUpper(x.name)}}. this is a template with an expression token.";
 
-        var config = new TemplateConfig
-        {
-            Tokens =
-            {
-                ["name"] = "me"
-            }
-        };
-
-        config.AddMethod( "ToUpper" ).Expression<string, string>( arg => arg.ToUpper() );
+        var config = new TemplateConfig()
+            .AddToken( "name", "me" )
+            .AddMethod( "ToUpper" ).Expression<string, string>( arg => arg.ToUpper() );
 
         var parser = new TemplateParser( config );
 
@@ -50,19 +44,13 @@ public class TemplateParserDynamicMethodTests
         const string expression = """{{x=> x.TheBest( x.name, "yes" )}}""";
         const string template = $"hello {expression}.";
 
-        var config = new TemplateConfig
-        {
-            Tokens =
+        var config = new TemplateConfig()
+            .AddToken( "name", "we" )
+            .AddMethod( "TheBest" ).Expression<string, string, string>( ( arg0, arg1 ) =>
             {
-                ["name"] = "we"
-            }
-        };
-
-        config.AddMethod( "TheBest" ).Expression<string, string, string>( ( arg0, arg1 ) =>
-        {
-            var result = $"{arg0} {(arg1 == "yes" ? "ARE" : "are NOT")} the best";
-            return result;
-        } );
+                var result = $"{arg0} {(arg1 == "yes" ? "ARE" : "are NOT")} the best";
+                return result;
+            } );
 
         var parser = new TemplateParser( config );
 
@@ -87,13 +75,8 @@ public class TemplateParserDynamicMethodTests
         const string expression = "{{x=>x.missing(x.name)}}";
         const string template = $"hello {expression}. this is a template with a missing method.";
 
-        var config = new TemplateConfig
-        {
-            Tokens =
-            {
-                ["name"] = "me"
-            }
-        };
+        var config = new TemplateConfig()
+            .AddToken( "name", "me" );
 
         var parser = new TemplateParser( config );
 
