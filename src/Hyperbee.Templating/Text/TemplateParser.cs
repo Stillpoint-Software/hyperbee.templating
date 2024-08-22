@@ -1,4 +1,4 @@
-using System.Buffers;
+﻿using System.Buffers;
 using Hyperbee.Templating.Compiler;
 using Hyperbee.Templating.Configure;
 using Hyperbee.Templating.Core;
@@ -48,7 +48,7 @@ public class TemplateParser
     {
         config ??= new TemplateConfig();
 
-        Tokens = new MemberDictionary( config.Validator, config.Tokens, (IReadOnlyDictionary<string,IMethodInvoker>) config.Methods );
+        Tokens = new MemberDictionary( config.Validator, config.Tokens, (IReadOnlyDictionary<string, IMethodInvoker>) config.Methods );
 
         MaxTokenDepth = config.MaxTokenDepth;
 

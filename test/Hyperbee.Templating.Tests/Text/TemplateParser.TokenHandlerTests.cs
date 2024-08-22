@@ -68,7 +68,7 @@ public class TemplateParserTokenHandlerTests
                 if ( !eventArgs.UnknownToken && string.Equals( eventArgs.Name, "name", StringComparison.OrdinalIgnoreCase ) )
                     eventArgs.Value = "super " + eventArgs.Value;
             },
-            Tokens = 
+            Tokens =
             {
                 ["name"] = "me"
             }
@@ -103,7 +103,7 @@ public class TemplateParserTokenHandlerTests
         var config = new TemplateConfig
         {
             IgnoreMissingTokens = true,
-            Tokens = 
+            Tokens =
             {
                 ["feels"] = "happy"
             }
@@ -153,9 +153,9 @@ public class TemplateParserTokenHandlerTests
                 unknownCounter++;
                 eventArgs.Action = TokenAction.Ignore;
             },
-            Tokens = 
+            Tokens =
             {
-                ["feels"] = "happy" 
+                ["feels"] = "happy"
             }
         };
 

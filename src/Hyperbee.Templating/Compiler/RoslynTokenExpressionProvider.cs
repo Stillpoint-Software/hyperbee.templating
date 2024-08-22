@@ -43,7 +43,7 @@ internal sealed class RoslynTokenExpressionProvider : ITokenExpressionProvider
               
               public static class TokenExpressionInvoker
               {
-                  public static object Invoke( {{nameof(IReadOnlyMemberDictionary)}} members ) 
+                  public static object Invoke( {{nameof( IReadOnlyMemberDictionary )}} members ) 
                   {
                       TokenExpression expr = {{codeExpression}};
                       return expr( members );

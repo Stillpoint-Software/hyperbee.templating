@@ -38,7 +38,7 @@ internal class TokenParser
 
     internal TokenParser( TemplateConfig config )
     {
-        ValidateKey = config.Validator ?? throw new ArgumentNullException( nameof(config.Validator) );
+        ValidateKey = config.Validator ?? throw new ArgumentNullException( nameof( config.Validator ) );
         (TokenLeft, TokenRight) = config.TokenDelimiters();
     }
 

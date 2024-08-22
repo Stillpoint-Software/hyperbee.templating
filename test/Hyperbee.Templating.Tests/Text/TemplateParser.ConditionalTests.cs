@@ -19,12 +19,12 @@ public class TemplateParserConditionalTests
         const string expression = "{{if name}}{{name}}{{else}}not {{name}}{{/if}}";
         const string template = $"hello {expression}.";
 
-        var config = new TemplateConfig 
-        { 
-            Tokens = 
-            { 
-                ["name"] = "me" 
-            } 
+        var config = new TemplateConfig
+        {
+            Tokens =
+            {
+                ["name"] = "me"
+            }
         };
 
         var parser = new TemplateParser( config );

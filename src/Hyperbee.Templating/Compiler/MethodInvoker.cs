@@ -1,4 +1,4 @@
-
+﻿
 namespace Hyperbee.Templating.Compiler;
 
 public interface IMethodInvoker

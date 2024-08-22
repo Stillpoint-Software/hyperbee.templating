@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using Hyperbee.Templating.Configure;
 using Hyperbee.Templating.Tests.TestSupport;
 using Hyperbee.Templating.Text;
@@ -17,8 +17,8 @@ public class TemplateParserDynamicMethodTests
         // arrange
         const string template = "hello {{x=>x.ToUpper(x.name)}}. this is a template with an expression token.";
 
-        var config = new TemplateConfig 
-        { 
+        var config = new TemplateConfig
+        {
             Tokens =
             {
                 ["name"] = "me"
@@ -50,12 +50,12 @@ public class TemplateParserDynamicMethodTests
         const string expression = """{{x=> x.TheBest( x.name, "yes" )}}""";
         const string template = $"hello {expression}.";
 
-        var config = new TemplateConfig 
-        { 
-            Tokens = 
-            { 
-                ["name"] = "we" 
-            } 
+        var config = new TemplateConfig
+        {
+            Tokens =
+            {
+                ["name"] = "we"
+            }
         };
 
         config.AddMethod( "TheBest" ).Expression<string, string, string>( ( arg0, arg1 ) =>
@@ -87,12 +87,12 @@ public class TemplateParserDynamicMethodTests
         const string expression = "{{x=>x.missing(x.name)}}";
         const string template = $"hello {expression}. this is a template with a missing method.";
 
-        var config = new TemplateConfig 
-        { 
-            Tokens = 
-            { 
-                ["name"] = "me" 
-            } 
+        var config = new TemplateConfig
+        {
+            Tokens =
+            {
+                ["name"] = "me"
+            }
         };
 
         var parser = new TemplateParser( config );

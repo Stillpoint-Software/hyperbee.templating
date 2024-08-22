@@ -20,10 +20,10 @@ internal class TokenProcessor
         ArgumentNullException.ThrowIfNull( tokens );
 
         if ( config.Methods == null )
-            throw new ArgumentNullException( nameof(config), $"{nameof(config.Methods)} cannot be null." );
+            throw new ArgumentNullException( nameof( config ), $"{nameof( config.Methods )} cannot be null." );
 
         if ( config.TokenExpressionProvider == null )
-            throw new ArgumentNullException( nameof(config), $"{nameof(config.TokenExpressionProvider)} cannot be null." );
+            throw new ArgumentNullException( nameof( config ), $"{nameof( config.TokenExpressionProvider )} cannot be null." );
 
         _tokenExpressionProvider = config.TokenExpressionProvider;
         _tokenHandler = config.TokenHandler;
@@ -32,7 +32,7 @@ internal class TokenProcessor
 
         _tokens = tokens;
 
-        (_tokenLeft,_tokenRight) = config.TokenDelimiters();
+        (_tokenLeft, _tokenRight) = config.TokenDelimiters();
     }
 
     public TokenAction ProcessToken( TokenDefinition token, TemplateState state, out string value )

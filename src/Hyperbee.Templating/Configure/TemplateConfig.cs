@@ -20,7 +20,7 @@ public class TemplateConfig
     public Action<TemplateParser, TemplateEventArgs> TokenHandler { get; set; } = null;
 
     public TemplateConfig()
-        : this(null)
+        : this( null )
     {
     }
 
@@ -32,7 +32,7 @@ public class TemplateConfig
 
     public void AddToken( string key, string value ) => Tokens[key] = value;
 
-    public MethodBuilder AddMethod( string name ) => new ( name, this );
+    public MethodBuilder AddMethod( string name ) => new( name, this );
 
     public (string TokenLeft, string TokenRight) TokenDelimiters()
     {
@@ -59,7 +59,7 @@ public class TemplateConfig
                 tokenRight = "}";
                 break;
             default:
-                throw new InvalidEnumArgumentException( nameof(TokenStyle), (int) TokenStyle, typeof(TokenStyle) );
+                throw new InvalidEnumArgumentException( nameof( TokenStyle ), (int) TokenStyle, typeof( TokenStyle ) );
         }
 
         return (tokenLeft, tokenRight);
