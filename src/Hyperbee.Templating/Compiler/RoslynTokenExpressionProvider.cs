@@ -1,4 +1,4 @@
-﻿using System.Collections.Concurrent;
+using System.Collections.Concurrent;
 using System.Collections.Immutable;
 using System.Reflection;
 using System.Runtime.CompilerServices;
@@ -14,12 +14,12 @@ internal sealed class RoslynTokenExpressionProvider : ITokenExpressionProvider
 {
     private static readonly ImmutableArray<MetadataReference> MetadataReferences =
     [
-        MetadataReference.CreateFromFile( typeof(object).Assembly.Location ),
-        MetadataReference.CreateFromFile( typeof(object).Assembly.Location.Replace( "System.Private.CoreLib", "System.Runtime" ) ),
-        MetadataReference.CreateFromFile( typeof(MethodImplAttribute).Assembly.Location ),
-        MetadataReference.CreateFromFile( typeof(RuntimeBinderException).Assembly.Location ),
-        MetadataReference.CreateFromFile( typeof(DynamicAttribute).Assembly.Location ),
-        MetadataReference.CreateFromFile( typeof(RoslynTokenExpressionProvider).Assembly.Location )
+        MetadataReference.CreateFromFile( typeof( object ).Assembly.Location ),
+        MetadataReference.CreateFromFile( typeof( object ).Assembly.Location.Replace( "System.Private.CoreLib", "System.Runtime" ) ),
+        MetadataReference.CreateFromFile( typeof( MethodImplAttribute ).Assembly.Location ),
+        MetadataReference.CreateFromFile( typeof( RuntimeBinderException ).Assembly.Location ),
+        MetadataReference.CreateFromFile( typeof( DynamicAttribute ).Assembly.Location ),
+        MetadataReference.CreateFromFile( typeof( RoslynTokenExpressionProvider ).Assembly.Location )
     ];
 
     private sealed class RuntimeContext( ImmutableArray<MetadataReference> metadataReferences )
