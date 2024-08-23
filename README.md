@@ -35,7 +35,7 @@ You can use the `TemplateParser` to perform variable substitutions.
 ```csharp
 var parser = new TemplateParser
 {
-    Tokens =
+    Variables =
     {
         ["name"] = "me"
     }
@@ -52,7 +52,7 @@ Console.WriteLine(result); // Output: hello me.
 ```csharp
 var parser = new TemplateParser
 {
-    Tokens =
+    Variables =
     {
         ["name"] = "me"
     }
@@ -71,7 +71,7 @@ Token values can contain other tokens.
 ```csharp
 var parser = new TemplateParser
 {
-    Tokens =
+    Variables =
     {
         ["fullname"] = "{{first}} {{last}}",
         ["first"] = "Hari",
@@ -92,7 +92,7 @@ You can use conditional tokens to control the flow based on conditions.
 ```csharp
 var parser = new TemplateParser
 {
-    Tokens =
+    Variables =
     {
         ["condition"] = "true",
         ["name"] = "me"
@@ -108,7 +108,7 @@ Console.WriteLine(result); // Output: hello me.
 ```csharp
 var parser = new TemplateParser
 {
-    Tokens =
+    Variables =
     {
         ["condition"] = "false",
         ["name1"] = "me",
@@ -129,13 +129,13 @@ You can use a while statement to repeat a block of text while a condition is tru
 ```csharp
 var parser = new TemplateParser
 {
-    Tokens =
+    Variables =
     {
         ["counter"] = "0"
     }
 };
 
-var template = "{{while x => int.Parse(x.counter) < 3}}{{counter}}{{counter:{{x => int.Parse(x.counter) + 1}}}}{{/while}}";
+var template = "{{while x => x.counter<int> < 3}}{{counter}}{{counter:{{x => x.counter<int> + 1}}}}{{/while}}";
 
 var result = parser.Render(template);
 Console.WriteLine(result); // Output: 012. 
@@ -146,15 +146,13 @@ Console.WriteLine(result); // Output: 012.
 You can invoke methods within token expressions.
 
 ```csharp
-var parser = new TemplateParser
-{
-    Tokens =
-    {
-        ["name"] = "me"
-    }
-};
+var options = new TemplateOptions()
+    .AddVariable("name", "me")
+    .AddMethod("ToUpper").Expression<string,string>( value => value.ToUpper() );
 
-var template = "hello {{x => x.name.ToUpper()}}.";
+var parser = new TemplateParser( options );
+
+var template = "hello {{x => x.ToUpper( x.name )}}.";
 
 var result = parser.Render(template);
 Console.WriteLine(result); // Output: hello ME.
