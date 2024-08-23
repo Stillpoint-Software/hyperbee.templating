@@ -65,7 +65,7 @@ public class TemplateParserTests
 
         var parser = new TemplateParser
         {
-            Tokens =
+            Variables =
             {
                 ["token"] = value
             }
@@ -90,7 +90,7 @@ public class TemplateParserTests
 
         var parser = new TemplateParser
         {
-            Tokens =
+            Variables =
             {
                 ["name"] = "{{first}} {{last_proxy}}",
                 ["first"] = "hari",

@@ -23,7 +23,7 @@ public static class ResourceProviderExtensions
 
         var parser = new TemplateParser( templateOptions );
 
-        parser.Tokens.Add( options.Parameters );
+        parser.Variables.Add( options.Parameters );
 
         var statement = parser.Render( reader );
 

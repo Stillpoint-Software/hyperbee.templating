@@ -21,7 +21,7 @@ public class TemplateParserConditionalTests
 
         var config = new TemplateOptions
         {
-            Tokens =
+            Variables =
             {
                 ["name"] = "me"
             }
@@ -73,7 +73,7 @@ public class TemplateParserConditionalTests
 
         var parser = new TemplateParser
         {
-            Tokens =
+            Variables =
             {
                 ["unused"] = "me"
             }
@@ -101,7 +101,7 @@ public class TemplateParserConditionalTests
 
         var parser = new TemplateParser
         {
-            Tokens =
+            Variables =
             {
                 ["name"] = "me"
             }
@@ -129,7 +129,7 @@ public class TemplateParserConditionalTests
 
         var parser = new TemplateParser
         {
-            Tokens =
+            Variables =
             {
                 ["name"] = "{{first}} {{last_condition}}",
                 ["first"] = "hari",

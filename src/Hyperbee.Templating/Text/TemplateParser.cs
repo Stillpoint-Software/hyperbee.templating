@@ -24,13 +24,16 @@ public class TemplateParser
 {
     internal static int BufferSize = 1024;
 
-    public MemberDictionary Tokens { get; }
+    // ReSharper disable once ConvertToAutoPropertyWhenPossible
+    public MemberDictionary Variables => _members; 
+    
     internal TokenParser TokenParser { get; }
     internal TokenProcessor TokenProcessor { get; }
 
-    private readonly int MaxTokenDepth;
-    private readonly string TokenLeft;
-    private readonly string TokenRight;
+    private readonly MemberDictionary _members;
+    private readonly int _maxTokenDepth;
+    private readonly string _tokenLeft;
+    private readonly string _tokenRight;
 
     private enum TemplateScanner
     {
@@ -47,14 +50,13 @@ public class TemplateParser
     {
         options ??= new TemplateOptions();
 
-        Tokens = new MemberDictionary( options.Validator, options.Tokens, (IReadOnlyDictionary<string, IMethodInvoker>) options.Methods );
+        _members = new MemberDictionary( options.Validator, options.Variables, (IReadOnlyDictionary<string, IMethodInvoker>) options.Methods );
+        _maxTokenDepth = options.MaxTokenDepth;
 
-        MaxTokenDepth = options.MaxTokenDepth;
-
-        (TokenLeft, TokenRight) = options.TokenDelimiters();
+        (_tokenLeft, _tokenRight) = options.TokenDelimiters();
 
         TokenParser = new TokenParser( options );
-        TokenProcessor = new TokenProcessor( Tokens, options );
+        TokenProcessor = new TokenProcessor( _members, options );
     }
 
     // Render - all the ways
@@ -75,7 +77,7 @@ public class TemplateParser
     public string Render( ReadOnlySpan<char> template )
     {
         // quick out
-        var pos = template.IndexOf( TokenLeft );
+        var pos = template.IndexOf( _tokenLeft );
 
         if ( pos < 0 )
             return template.ToString();
@@ -91,7 +93,7 @@ public class TemplateParser
     public void Render( ReadOnlySpan<char> template, TextWriter writer )
     {
         // quick out
-        var pos = template.IndexOf( TokenLeft );
+        var pos = template.IndexOf( _tokenLeft );
 
         if ( pos < 0 )
         {
@@ -126,10 +128,10 @@ public class TemplateParser
 
     public string Resolve( string identifier )
     {
-        if ( !Tokens.TryGetValue( identifier, out var value ) )
+        if ( !_members.TryGetValue( identifier, out var value ) )
             return string.Empty;
 
-        if ( string.IsNullOrWhiteSpace( value ) || !value.Contains( TokenLeft ) )
+        if ( string.IsNullOrWhiteSpace( value ) || !value.Contains( _tokenLeft ) )
             return value;
 
         var result = Render( value );
@@ -146,7 +148,7 @@ public class TemplateParser
 
     private void ParseTemplate( TextReader reader, TextWriter writer )
     {
-        var bufferSize = GetScopedBufferSize( BufferSize, TokenLeft.Length, TokenRight.Length );
+        var bufferSize = GetScopedBufferSize( BufferSize, _tokenLeft.Length, _tokenRight.Length );
         var bufferManager = new BufferManager( bufferSize );
 
         ParseTemplate( ref bufferManager, reader, writer );
@@ -194,7 +196,7 @@ public class TemplateParser
                     {
                         case TemplateScanner.Text:
                             {
-                                pos = span.IndexOf( TokenLeft );
+                                pos = span.IndexOf( _tokenLeft );
 
                                 // match: write to start of token
                                 if ( pos >= 0 )
@@ -203,7 +205,7 @@ public class TemplateParser
                                     if ( !ignore )
                                         writer.Write( span[..pos] );
 
-                                    span = bufferManager.GetCurrentSpan( pos + TokenLeft.Length );
+                                    span = bufferManager.GetCurrentSpan( pos + _tokenLeft.Length );
 
                                     // transition state
                                     scanner = TemplateScanner.Token;
@@ -221,7 +223,7 @@ public class TemplateParser
                                 // no-match eob: write content less remainder
                                 if ( !ignore )
                                 {
-                                    var writeLength = span.Length - TokenLeft.Length;
+                                    var writeLength = span.Length - _tokenLeft.Length;
 
                                     if ( writeLength > 0 )
                                     {
@@ -238,17 +240,17 @@ public class TemplateParser
                             {
                                 // scan: find closing token pattern
                                 // token may span multiple reads so track search state
-                                pos = IndexOfIgnoreQuotedContent( span, TokenRight, ref indexOfState );
+                                pos = IndexOfIgnoreQuotedContent( span, _tokenRight, ref indexOfState );
 
                                 // match: process completed token
                                 if ( pos >= 0 )
                                 {
                                     // update CurrentPos to point to the first character after the token
-                                    state.CurrentPos += pos + TokenRight.Length;
+                                    state.CurrentPos += pos + _tokenRight.Length;
 
                                     // process token
                                     tokenWriter.Write( span[..pos] );
-                                    span = bufferManager.GetCurrentSpan( pos + TokenRight.Length );
+                                    span = bufferManager.GetCurrentSpan( pos + _tokenRight.Length );
 
                                     var token = TokenParser.ParseToken( tokenWriter.WrittenSpan, state.NextTokenId++ );
                                     var tokenAction = TokenProcessor.ProcessToken( token, state, out var tokenValue );
@@ -275,7 +277,7 @@ public class TemplateParser
                                     throw new TemplateException( "Missing right token delimiter." );
 
                                 // no-match eob: save partial token less remainder
-                                var writeLength = span.Length - TokenRight.Length;
+                                var writeLength = span.Length - _tokenRight.Length;
 
                                 if ( writeLength > 0 )
                                 {
@@ -350,7 +352,7 @@ public class TemplateParser
     {
         // infinite recursion guard
 
-        if ( recursionCount++ == MaxTokenDepth )
+        if ( recursionCount++ == _maxTokenDepth )
             throw new TemplateException( "Recursion depth exceeded." );
 
         // quick outs
@@ -365,7 +367,7 @@ public class TemplateParser
                 return;
         }
 
-        var start = value.IndexOfIgnoreEscaped( TokenLeft );
+        var start = value.IndexOfIgnoreEscaped( _tokenLeft );
 
         if ( start == -1 ) // token is literal
         {
@@ -382,17 +384,17 @@ public class TemplateParser
             if ( start > 0 && state.Frames.IsTruthy )
                 writer.Write( value[..start] );
 
-            value = value[(start + TokenLeft.Length)..];
+            value = value[(start + _tokenLeft.Length)..];
 
             // find token end
 
-            var stop = IndexOfIgnoreQuotedContent( value, TokenRight );
+            var stop = IndexOfIgnoreQuotedContent( value, _tokenRight );
 
             if ( stop == -1 )
                 throw new TemplateException( "Missing right token delimiter." );
 
             var innerValue = value[..stop];
-            value = value[(stop + TokenRight.Length)..];
+            value = value[(stop + _tokenRight.Length)..];
 
             // process token
 
@@ -404,7 +406,7 @@ public class TemplateParser
 
             // find next token start
 
-            start = !value.IsEmpty ? value.IndexOfIgnoreEscaped( TokenLeft ) : -1;
+            start = !value.IsEmpty ? value.IndexOfIgnoreEscaped( _tokenLeft ) : -1;
 
             if ( start == -1 && !value.IsEmpty && state.Frames.IsTruthy )
                 writer.Write( value );
@@ -432,8 +434,8 @@ public class TemplateParser
         // Look for value pattern in span ignoring quoted strings and code expression braces
 
         const char quoteChar = '"';
-        var tokenLeftSpan = TokenLeft.AsSpan();
-        var tokenRightSpan = TokenRight.AsSpan();
+        var tokenLeftSpan = _tokenLeft.AsSpan();
+        var tokenRightSpan = _tokenRight.AsSpan();
 
         var limit = span.Length - (value.Length - 1); // Optimize end range
 

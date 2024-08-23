@@ -17,7 +17,7 @@ public class TemplateParserMethodTests
         const string template = "hello {{x=>x.ToUpper(x.name)}}. this is a template with an expression token.";
 
         var options = new TemplateOptions()
-            .AddToken( "name", "me" )
+            .AddVariable( "name", "me" )
             .AddMethod( "ToUpper" ).Expression<string, string>( arg => arg.ToUpper() );
 
         var parser = new TemplateParser( options );
@@ -44,7 +44,7 @@ public class TemplateParserMethodTests
         const string template = $"hello {expression}.";
 
         var options = new TemplateOptions()
-            .AddToken( "name", "we" )
+            .AddVariable( "name", "we" )
             .AddMethod( "TheBest" ).Expression<string, string, string>( ( arg0, arg1 ) =>
             {
                 var result = $"{arg0} {(arg1 == "yes" ? "ARE" : "are NOT")} the best";
@@ -75,7 +75,7 @@ public class TemplateParserMethodTests
         const string template = $"hello {expression}. this is a template with a missing method.";
 
         var options = new TemplateOptions()
-            .AddToken( "name", "me" );
+            .AddVariable( "name", "me" );
 
         var parser = new TemplateParser( options );
 

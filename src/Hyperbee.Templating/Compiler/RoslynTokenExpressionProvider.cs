@@ -12,19 +12,19 @@ namespace Hyperbee.Templating.Compiler;
 
 internal sealed class RoslynTokenExpressionProvider : ITokenExpressionProvider
 {
-    private static readonly ConcurrentDictionary<string, TokenExpression> TokenExpressions = new();
-
     private static readonly ImmutableArray<MetadataReference> MetadataReferences =
     [
-        MetadataReference.CreateFromFile( typeof( object ).Assembly.Location ),
-        MetadataReference.CreateFromFile( typeof( object ).Assembly.Location.Replace( "System.Private.CoreLib", "System.Runtime" ) ),
-        MetadataReference.CreateFromFile( typeof( MethodImplAttribute ).Assembly.Location ),
-        MetadataReference.CreateFromFile( typeof( RuntimeBinderException ).Assembly.Location ),
-        MetadataReference.CreateFromFile( typeof( DynamicAttribute ).Assembly.Location ),
-        MetadataReference.CreateFromFile( typeof( RoslynTokenExpressionProvider ).Assembly.Location )
+        MetadataReference.CreateFromFile( typeof(object).Assembly.Location ),
+        MetadataReference.CreateFromFile( typeof(object).Assembly.Location.Replace( "System.Private.CoreLib", "System.Runtime" ) ),
+        MetadataReference.CreateFromFile( typeof(MethodImplAttribute).Assembly.Location ),
+        MetadataReference.CreateFromFile( typeof(RuntimeBinderException).Assembly.Location ),
+        MetadataReference.CreateFromFile( typeof(DynamicAttribute).Assembly.Location ),
+        MetadataReference.CreateFromFile( typeof(RoslynTokenExpressionProvider).Assembly.Location )
     ];
 
-    private static readonly DynamicAssemblyLoadContext LoadContext = new( MetadataReferences );
+    private static readonly ConcurrentDictionary<string, TokenExpression> TokenExpressions = new();
+    private static readonly DynamicAssemblyLoadContext LoadContext = new(MetadataReferences);
+
     private static int __counter;
 
     private static readonly CSharpCompilationOptions CompilationOptions =
@@ -98,7 +98,6 @@ internal sealed class RoslynTokenExpressionProvider : ITokenExpressionProvider
         }
 
         ms.Seek( 0, SeekOrigin.Begin );
-        //var assembly = Assembly.Load( ms.ToArray() );
         var assembly = LoadContext.LoadFromStream( ms );
 
         var methodDelegate = assembly!

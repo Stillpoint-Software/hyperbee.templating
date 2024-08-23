@@ -32,14 +32,14 @@ internal enum TokenEvaluation
 
 internal class TokenParser
 {
-    private KeyValidator ValidateKey { get; }
-    private string TokenLeft { get; }
-    private string TokenRight { get; }
+    private readonly KeyValidator _validateKey;
+    private readonly string _tokenLeft;
+    private readonly string _tokenRight;
 
     internal TokenParser( TemplateOptions options )
     {
-        ValidateKey = options.Validator ?? throw new ArgumentNullException( nameof( options.Validator ) );
-        (TokenLeft, TokenRight) = options.TokenDelimiters();
+        _validateKey = options.Validator ?? throw new ArgumentNullException( nameof( options.Validator ) );
+        (_tokenLeft, _tokenRight) = options.TokenDelimiters();
     }
 
     public TokenDefinition ParseToken( ReadOnlySpan<char> token, int tokenId )
@@ -96,7 +96,7 @@ internal class TokenParser
                 if ( span.IsEmpty )
                     throw new TemplateException( "Invalid `if` statement. Missing identifier." );
 
-                if ( !isFatArrow && !ValidateKey( span ) )
+                if ( !isFatArrow && !_validateKey( span ) )
                     throw new TemplateException( "Invalid `if` statement. Invalid identifier in truthy expression." );
 
                 if ( bang && isFatArrow )
@@ -163,7 +163,7 @@ internal class TokenParser
                 if ( span.IsEmpty )
                     throw new TemplateException( "Invalid `while` statement. Missing identifier." );
 
-                if ( !isFatArrow && !ValidateKey( span ) )
+                if ( !isFatArrow && !_validateKey( span ) )
                     throw new TemplateException( "Invalid `while` statement. Invalid identifier in truthy expression." );
 
                 if ( bang && isFatArrow )
@@ -210,9 +210,9 @@ internal class TokenParser
                     tokenEvaluation = TokenEvaluation.Expression;
 
                     // Check and remove surrounding token delimiters (e.g., {{ and }})
-                    if ( tokenExpression.StartsWith( TokenLeft ) && tokenExpression.EndsWith( TokenRight ) )
+                    if ( tokenExpression.StartsWith( _tokenLeft ) && tokenExpression.EndsWith( _tokenRight ) )
                     {
-                        tokenExpression = tokenExpression[TokenLeft.Length..^TokenRight.Length].Trim();
+                        tokenExpression = tokenExpression[_tokenLeft.Length..^_tokenRight.Length].Trim();
                     }
                 }
             }
@@ -228,7 +228,7 @@ internal class TokenParser
             {
                 // identifier value
 
-                if ( !ValidateKey( span ) )
+                if ( !_validateKey( span ) )
                     throw new TemplateException( "Invalid token name." );
 
                 tokenType = TokenType.Value;
