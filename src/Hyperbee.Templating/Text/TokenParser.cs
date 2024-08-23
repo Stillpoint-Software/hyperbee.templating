@@ -44,7 +44,7 @@ internal class TokenParser
 
     public TokenDefinition ParseToken( ReadOnlySpan<char> token, int tokenId )
     {
-        // parse tokens like
+        // token syntax:
         //
         // {{token:definition}}
         //
@@ -56,6 +56,10 @@ internal class TokenParser
         //
         // {{else}
         // {{/if}}
+        //
+        // {{while [!]token}}
+        // {{while x => x.token}}
+        // {{/while}}
 
         var span = token.Trim();
 
