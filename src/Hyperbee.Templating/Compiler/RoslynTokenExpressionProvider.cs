@@ -1,5 +1,6 @@
 ﻿using System.Collections.Concurrent;
 using System.Collections.Immutable;
+using System.Diagnostics;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using Hyperbee.Templating.Text;
@@ -16,7 +17,6 @@ internal sealed class RoslynTokenExpressionProvider : ITokenExpressionProvider
     [
         MetadataReference.CreateFromFile( typeof( object ).Assembly.Location ),
         MetadataReference.CreateFromFile( typeof( object ).Assembly.Location.Replace( "System.Private.CoreLib", "System.Runtime" ) ),
-        MetadataReference.CreateFromFile( typeof( MethodImplAttribute ).Assembly.Location ),
         MetadataReference.CreateFromFile( typeof( RuntimeBinderException ).Assembly.Location ),
         MetadataReference.CreateFromFile( typeof( DynamicAttribute ).Assembly.Location ),
         MetadataReference.CreateFromFile( typeof( RoslynTokenExpressionProvider ).Assembly.Location )
@@ -94,8 +94,8 @@ internal sealed class RoslynTokenExpressionProvider : ITokenExpressionProvider
             references: MetadataReferences,
             options: CompilationOptions );
 
-        using var ms = new MemoryStream( 2048 );
-        var result = compilation.Emit( ms );
+        using var peStream = new MemoryStream( 4096 ); // size based on average expression size
+        var result = compilation.Emit( peStream );
 
         if ( !result.Success )
         {
@@ -106,8 +106,8 @@ internal sealed class RoslynTokenExpressionProvider : ITokenExpressionProvider
             throw new InvalidOperationException( "Compilation failed: " + string.Join( "\n", failures.Select( diagnostic => diagnostic.GetMessage() ) ) );
         }
 
-        ms.Seek( 0, SeekOrigin.Begin );
-        var assembly = __runtimeContext.AssemblyLoadContext.LoadFromStream( ms );
+        peStream.Seek( 0, SeekOrigin.Begin );
+        var assembly = __runtimeContext.AssemblyLoadContext.LoadFromStream( peStream );
 
         var methodDelegate = assembly!
             .GetType( "TokenExpressionInvoker" )!

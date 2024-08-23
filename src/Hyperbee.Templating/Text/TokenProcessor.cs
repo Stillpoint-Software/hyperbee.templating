@@ -13,11 +13,11 @@ internal class TokenProcessor
     private readonly string _tokenLeft;
     private readonly string _tokenRight;
 
-    private readonly MemberDictionary _tokens;
+    private readonly MemberDictionary _members;
 
-    public TokenProcessor( MemberDictionary tokens, TemplateOptions options )
+    public TokenProcessor( MemberDictionary members, TemplateOptions options )
     {
-        ArgumentNullException.ThrowIfNull( tokens );
+        ArgumentNullException.ThrowIfNull( members );
 
         if ( options.Methods == null )
             throw new ArgumentNullException( nameof( options ), $"{nameof( options.Methods )} cannot be null." );
@@ -30,7 +30,7 @@ internal class TokenProcessor
         _ignoreMissingTokens = options.IgnoreMissingTokens;
         _substituteEnvironmentVariables = options.SubstituteEnvironmentVariables;
 
-        _tokens = tokens;
+        _members = members;
 
         (_tokenLeft, _tokenRight) = options.TokenDelimiters();
     }
@@ -116,7 +116,7 @@ internal class TokenProcessor
         return tokenAction;
     }
 
-    private static TokenAction ProcessElseToken( TemplateStack frames, TokenDefinition token )
+    private static TokenAction ProcessElseToken( FrameStack frames, TokenDefinition token )
     {
         if ( !frames.IsTokenType( TokenType.If ) )
             throw new TemplateException( "Syntax error. Invalid `else` without matching `if`." );
@@ -125,7 +125,7 @@ internal class TokenProcessor
         return TokenAction.Ignore;
     }
 
-    private static TokenAction ProcessEndIfToken( TemplateStack frames )
+    private static TokenAction ProcessEndIfToken( FrameStack frames )
     {
         if ( frames.Depth == 0 || !frames.IsTokenType( TokenType.If ) && !frames.IsTokenType( TokenType.Else ) )
             throw new TemplateException( "Syntax error. Invalid `/if` without matching `if`." );
@@ -138,7 +138,7 @@ internal class TokenProcessor
         return TokenAction.Ignore;
     }
 
-    private TokenAction ProcessEndWhileToken( TemplateStack frames )
+    private TokenAction ProcessEndWhileToken( FrameStack frames )
     {
         if ( frames.Depth == 0 || !frames.IsTokenType( TokenType.While ) )
             throw new TemplateException( "Syntax error. Invalid `/while` without matching `while`." );
@@ -152,7 +152,7 @@ internal class TokenProcessor
         {
             TokenEvaluation.Expression when TryInvokeTokenExpression( whileToken, out var expressionResult, out expressionError ) => Convert.ToBoolean( expressionResult ),
             TokenEvaluation.Expression => throw new TemplateException( $"{_tokenLeft}Error ({whileToken.Id}):{expressionError ?? "Error in while condition."}{_tokenRight}" ),
-            _ => Truthy( _tokens[whileToken.Name] ) // Re-evaluate the condition
+            _ => Truthy( _members[whileToken.Name] ) // Re-evaluate the condition
         };
 
         if ( conditionIsTrue ) // If the condition is true, replay the while block
@@ -168,7 +168,7 @@ internal class TokenProcessor
         // ReSharper disable once RedundantAssignment
         string expressionError = null; // assign to avoid compiler complaint
 
-        _tokens[token.Name] = token.TokenEvaluation switch
+        _members[token.Name] = token.TokenEvaluation switch
         {
             TokenEvaluation.Expression when TryInvokeTokenExpression( token, out var expressionResult, out expressionError )
                 => Convert.ToString( expressionResult, CultureInfo.InvariantCulture ),
@@ -191,7 +191,7 @@ internal class TokenProcessor
             case TokenType.Value when token.TokenEvaluation != TokenEvaluation.Expression:
             case TokenType.If when token.TokenEvaluation != TokenEvaluation.Expression:
             case TokenType.While when token.TokenEvaluation != TokenEvaluation.Expression:
-                defined = _tokens.TryGetValue( token.Name, out value );
+                defined = _members.TryGetValue( token.Name, out value );
 
                 if ( !defined && _substituteEnvironmentVariables )
                 {
@@ -254,7 +254,7 @@ internal class TokenProcessor
         {
             var tokenExpression = _tokenExpressionProvider.GetTokenExpression( token.TokenExpression );
 
-            result = tokenExpression( _tokens );
+            result = tokenExpression( _members );
             error = default;
 
             return true;

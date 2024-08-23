@@ -313,7 +313,7 @@ public class TemplateParser
 
         return;
 
-        static void ProcessFrame( TemplateStack.Frame frame, TokenAction tokenAction, TokenType tokenType, ref ReadOnlySpan<char> span, ref BufferManager bufferManager, ref int loopDepth )
+        static void ProcessFrame( FrameStack.Frame frame, TokenAction tokenAction, TokenType tokenType, ref ReadOnlySpan<char> span, ref BufferManager bufferManager, ref int loopDepth )
         {
             // loop handling
 
@@ -502,15 +502,15 @@ public class TemplateParser
 
 internal sealed class TemplateState
 {
-    public TemplateStack Frames { get; } = new();
+    public FrameStack Frames { get; } = new();
     public int NextTokenId { get; set; } = 1;
     public int CurrentPos { get; set; }
 
-    public TemplateStack.Frame CurrentFrame() =>
+    public FrameStack.Frame CurrentFrame() =>
         Frames.Depth > 0 ? Frames.Peek() : default;
 }
 
-internal sealed class TemplateStack
+internal sealed class FrameStack
 {
     public record Frame( TokenDefinition Token, bool Truthy, int StartPos = -1 );
 
