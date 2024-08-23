@@ -1,4 +1,4 @@
-using System.Collections.Concurrent;
+﻿using System.Collections.Concurrent;
 using System.Collections.Immutable;
 using System.Reflection;
 using System.Runtime.CompilerServices;
@@ -24,11 +24,11 @@ internal sealed class RoslynTokenExpressionProvider : ITokenExpressionProvider
 
     private sealed class RuntimeContext( ImmutableArray<MetadataReference> metadataReferences )
     {
-        public ConcurrentDictionary<string, TokenExpression> TokenExpressions { get; } = new ();
-        public DynamicAssemblyLoadContext AssemblyLoadContext { get; } = new ( metadataReferences );
+        public ConcurrentDictionary<string, TokenExpression> TokenExpressions { get; } = new();
+        public DynamicAssemblyLoadContext AssemblyLoadContext { get; } = new( metadataReferences );
     }
 
-    private static RuntimeContext __runtimeContext = new(MetadataReferences);
+    private static RuntimeContext __runtimeContext = new( MetadataReferences );
     private static int __counter;
 
     private static readonly CSharpCompilationOptions CompilationOptions =
