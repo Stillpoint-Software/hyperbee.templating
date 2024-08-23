@@ -2,6 +2,7 @@
 using System.Collections.Immutable;
 using System.Reflection;
 using System.Runtime.CompilerServices;
+using System.Runtime.Loader;
 using Hyperbee.Templating.Text;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
@@ -13,6 +14,7 @@ namespace Hyperbee.Templating.Compiler;
 internal sealed class RoslynTokenExpressionProvider : ITokenExpressionProvider
 {
     private static readonly ConcurrentDictionary<string, TokenExpression> TokenExpressions = new();
+    private static int __counter;
 
     private static readonly ImmutableArray<MetadataReference> MetadataReferences =
     [
@@ -74,8 +76,10 @@ internal sealed class RoslynTokenExpressionProvider : ITokenExpressionProvider
         //var rewrittenCode = rewrittenSyntaxTree.ToFullString(); // Keep for debugging
 
         // Compile the rewritten code
+        var counter = Interlocked.Increment( ref __counter );
+
         var compilation = CSharpCompilation.Create(
-            assemblyName: "DynamicTokenExpressionAssembly",
+            assemblyName: $"TokenExpressionInvoker_{counter}",
             syntaxTrees: [rewrittenSyntaxTree.SyntaxTree],
             references: MetadataReferences,
             options: CompilationOptions );
@@ -93,7 +97,8 @@ internal sealed class RoslynTokenExpressionProvider : ITokenExpressionProvider
         }
 
         ms.Seek( 0, SeekOrigin.Begin );
-        var assembly = Assembly.Load( ms.ToArray() );
+        //var assembly = Assembly.Load( ms.ToArray() );
+        var assembly = AssemblyLoadContext.Default.LoadFromStream( ms );
 
         var methodDelegate = assembly!
             .GetType( "TokenExpressionInvoker" )!
