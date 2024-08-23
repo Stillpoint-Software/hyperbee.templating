@@ -170,9 +170,9 @@ internal class TokenProcessor
 
         _tokens[token.Name] = token.TokenEvaluation switch
         {
-            TokenEvaluation.Expression when TryInvokeTokenExpression( token, out var expressionResult, out expressionError ) 
+            TokenEvaluation.Expression when TryInvokeTokenExpression( token, out var expressionResult, out expressionError )
                 => Convert.ToString( expressionResult, CultureInfo.InvariantCulture ),
-            TokenEvaluation.Expression 
+            TokenEvaluation.Expression
                 => throw new TemplateException( $"Error evaluating define expression for {token.Name}: {expressionError}" ),
             _ => token.TokenExpression
         };
