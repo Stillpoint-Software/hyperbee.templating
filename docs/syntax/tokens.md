@@ -2,7 +2,7 @@
 layout: default
 title: Tokens
 parent: Syntax
-nav_order: 2
+nav_order: 3
 ---
 {% raw %}
 # Templating Tokens
@@ -35,7 +35,7 @@ They are passed a token context that provides invokable methods, and readonly to
 ```csharp
 var parser = new TemplateParser
 {
-    Tokens =
+    Variables =
     {
         ["choice"] = "2"
     }

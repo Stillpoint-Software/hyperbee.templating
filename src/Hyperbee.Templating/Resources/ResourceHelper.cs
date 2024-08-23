@@ -1,5 +1,6 @@
 ﻿// FIX: Pulled from Hyperbee.Resources which is not OpenSource yet.
-using Hyperbee.Templating.Text;
+
+using Hyperbee.Templating.Core;
 
 namespace Hyperbee.Templating.Resources;
 

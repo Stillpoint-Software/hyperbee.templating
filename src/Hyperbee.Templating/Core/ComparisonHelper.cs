@@ -1,10 +1,9 @@
-﻿// FIX: Pulled from Hyperbee.Extensions which is not OpenSource yet.
-// WARNING: only subset of helpers.
+﻿
 using System.Globalization;
 
-namespace Hyperbee.Templating.Extensions;
+namespace Hyperbee.Templating.Core;
 
-public static class ComparisonHelper
+internal static class ComparisonHelper
 {
     public static bool HasIgnoreCase( StringComparison comparisonType )
     {

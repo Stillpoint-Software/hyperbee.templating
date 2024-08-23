@@ -2,7 +2,7 @@
 layout: default
 title: Methods
 parent: Syntax
-nav_order: 3
+nav_order: 4
 ---
 {% raw %}
 # Templating Methods
@@ -22,7 +22,7 @@ You can invoke framework methods within the template.
 
 | Syntax                                | Description                                
 |---------------------------------------|---------------------------------
-| `{{x => x.token.ToUpper()}}`          | Invoke a framework method.           
+| `{{x => x.variable.ToUpper()}}`       | Invoke a framework method.           
 
 ### User-Defined Methods
 
@@ -31,22 +31,17 @@ You can define custom methods and use them within the template. User-defined met
 
 | Syntax                                | Description
 |---------------------------------------|------------
-| `{{x => x.token.CustomUpper()}}`      | Invoke a user-defined method. 
+| `{{x => x.CustomUpper( x.variable )}}`| Invoke a user-defined method. 
 
 ```csharp
-var parser = new TemplateParser
-{
-    Methods =
-    {
-        ["CustomUpper"] = args => ((string)args[0]).ToUpper()
-    },
-    Tokens =
-    {
-        ["name"] = "me"
-    }
-};
 
-var template = "hello {{x => x.name.CustomUpper()}}.";
+var options = new TemplateOptions()
+    .AddVariable( "name", "me" )
+    .AddMethod( "CustomUpper" ).Expression<string, string>( arg => arg.ToUpper() ) ;
+
+var parser = new TemplateParser( options );
+
+var template = "hello {{x => x.CustomUpper(x.name)}}.";
 
 var result = parser.Render(template);
 Console.WriteLine(result); // Output: hello ME.

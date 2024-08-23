@@ -1,13 +1,11 @@
 ﻿using System.Globalization;
 using Hyperbee.Templating.Compiler;
-using Hyperbee.Templating.Core;
+using Hyperbee.Templating.Configure;
 
 namespace Hyperbee.Templating.Text;
 
 internal class TokenProcessor
 {
-    private readonly TemplateDictionary _tokens;
-    private readonly IDictionary<string, DynamicMethod> _methods;
     private readonly Action<TemplateParser, TemplateEventArgs> _tokenHandler;
     private readonly ITokenExpressionProvider _tokenExpressionProvider;
     private readonly bool _ignoreMissingTokens;
@@ -15,24 +13,26 @@ internal class TokenProcessor
     private readonly string _tokenLeft;
     private readonly string _tokenRight;
 
-    public TokenProcessor(
-        TemplateDictionary tokens,
-        IDictionary<string, DynamicMethod> methods,
-        Action<TemplateParser, TemplateEventArgs> tokenHandler,
-        ITokenExpressionProvider tokenExpressionProvider,
-        bool ignoreMissingTokens,
-        bool substituteEnvironmentVariables,
-        string tokenLeft,
-        string tokenRight )
+    private readonly MemberDictionary _tokens;
+
+    public TokenProcessor( MemberDictionary tokens, TemplateOptions options )
     {
-        _tokens = tokens ?? throw new ArgumentNullException( nameof( tokens ) );
-        _methods = methods ?? throw new ArgumentNullException( nameof( methods ) );
-        _tokenHandler = tokenHandler;
-        _tokenExpressionProvider = tokenExpressionProvider ?? throw new ArgumentNullException( nameof( tokenExpressionProvider ) );
-        _ignoreMissingTokens = ignoreMissingTokens;
-        _substituteEnvironmentVariables = substituteEnvironmentVariables;
-        _tokenLeft = tokenLeft;
-        _tokenRight = tokenRight;
+        ArgumentNullException.ThrowIfNull( tokens );
+
+        if ( options.Methods == null )
+            throw new ArgumentNullException( nameof( options ), $"{nameof( options.Methods )} cannot be null." );
+
+        if ( options.TokenExpressionProvider == null )
+            throw new ArgumentNullException( nameof( options ), $"{nameof( options.TokenExpressionProvider )} cannot be null." );
+
+        _tokenExpressionProvider = options.TokenExpressionProvider;
+        _tokenHandler = options.TokenHandler;
+        _ignoreMissingTokens = options.IgnoreMissingTokens;
+        _substituteEnvironmentVariables = options.SubstituteEnvironmentVariables;
+
+        _tokens = tokens;
+
+        (_tokenLeft, _tokenRight) = options.TokenDelimiters();
     }
 
     public TokenAction ProcessToken( TokenDefinition token, TemplateState state, out string value )
@@ -156,7 +156,7 @@ internal class TokenProcessor
         };
 
         if ( conditionIsTrue ) // If the condition is true, replay the while block
-            return TokenAction.Loop;
+            return TokenAction.ContinueLoop;
 
         // Otherwise, pop the frame and exit the loop
         frames.Pop();
@@ -170,8 +170,10 @@ internal class TokenProcessor
 
         _tokens[token.Name] = token.TokenEvaluation switch
         {
-            TokenEvaluation.Expression when TryInvokeTokenExpression( token, out var expressionResult, out expressionError ) => Convert.ToString( expressionResult, CultureInfo.InvariantCulture ),
-            TokenEvaluation.Expression => throw new TemplateException( $"Error evaluating define expression for {token.Name}: {expressionError}" ),
+            TokenEvaluation.Expression when TryInvokeTokenExpression( token, out var expressionResult, out expressionError )
+                => Convert.ToString( expressionResult, CultureInfo.InvariantCulture ),
+            TokenEvaluation.Expression
+                => throw new TemplateException( $"Error evaluating define expression for {token.Name}: {expressionError}" ),
             _ => token.TokenExpression
         };
         return TokenAction.Ignore;
@@ -251,9 +253,8 @@ internal class TokenProcessor
         try
         {
             var tokenExpression = _tokenExpressionProvider.GetTokenExpression( token.TokenExpression );
-            var dynamicReadOnlyTokens = new ReadOnlyDynamicDictionary( _tokens, (IReadOnlyDictionary<string, DynamicMethod>) _methods );
 
-            result = tokenExpression( dynamicReadOnlyTokens );
+            result = tokenExpression( _tokens );
             error = default;
 
             return true;

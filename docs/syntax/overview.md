@@ -30,10 +30,11 @@ Variable tokens are simple identifiers that are replaced with their correspondin
 Expression tokens are runtime compiled lambdas that can perform operations or transformations on data.
 They are passed a token context that provides invokable methods, and readonly token variables.
 
-`{{ x => x.identifier + 1 }}`
+`{{ x => x.identifier<int> + 1 }}`
 
 - **x**: The token context.
 - **identifier**: A token variable.
+- **identifier<int>**: A pseudo generic property that gets the value as `int`.
 
 ### Token Nesting
 Tokens can contain other tokens, allowing for more complex substitutions.

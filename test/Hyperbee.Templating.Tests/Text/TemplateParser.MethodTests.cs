@@ -1,11 +1,12 @@
-﻿using Hyperbee.Templating.Tests.TestSupport;
+﻿using Hyperbee.Templating.Configure;
+using Hyperbee.Templating.Tests.TestSupport;
 using Hyperbee.Templating.Text;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Hyperbee.Templating.Tests.Text;
 
 [TestClass]
-public class TemplateParserDynamicMethodTests
+public class TemplateParserMethodTests
 {
     [DataTestMethod]
     [DataRow( ParseTemplateMethod.Buffered )]
@@ -15,17 +16,11 @@ public class TemplateParserDynamicMethodTests
         // arrange
         const string template = "hello {{x=>x.ToUpper(x.name)}}. this is a template with an expression token.";
 
-        var parser = new TemplateParser
-        {
-            Methods =
-            {
-                ["ToUpper"] = args => ((string)args[0]).ToUpper()
-            },
-            Tokens =
-            {
-                ["name"] = "me"
-            }
-        };
+        var options = new TemplateOptions()
+            .AddVariable( "name", "me" )
+            .AddMethod( "ToUpper" ).Expression<string, string>( arg => arg.ToUpper() );
+
+        var parser = new TemplateParser( options );
 
         // act
 
@@ -48,17 +43,15 @@ public class TemplateParserDynamicMethodTests
         const string expression = """{{x=> x.TheBest( x.name, "yes" )}}""";
         const string template = $"hello {expression}.";
 
-        var parser = new TemplateParser
-        {
-            Methods =
+        var options = new TemplateOptions()
+            .AddVariable( "name", "we" )
+            .AddMethod( "TheBest" ).Expression<string, string, string>( ( arg0, arg1 ) =>
             {
-                ["TheBest"] = args => $"{args[0]} {((string)args[1] == "yes" ? "ARE" : "are NOT")} the best"
-            },
-            Tokens =
-            {
-                ["name"] = "we"
-            }
-        };
+                var result = $"{arg0} {(arg1 == "yes" ? "ARE" : "are NOT")} the best";
+                return result;
+            } );
+
+        var parser = new TemplateParser( options );
 
         // act
 
@@ -81,13 +74,10 @@ public class TemplateParserDynamicMethodTests
         const string expression = "{{x=>x.missing(x.name)}}";
         const string template = $"hello {expression}. this is a template with a missing method.";
 
-        var parser = new TemplateParser
-        {
-            Tokens =
-            {
-                ["name"] = "me"
-            }
-        };
+        var options = new TemplateOptions()
+            .AddVariable( "name", "me" );
+
+        var parser = new TemplateParser( options );
 
         // act
 

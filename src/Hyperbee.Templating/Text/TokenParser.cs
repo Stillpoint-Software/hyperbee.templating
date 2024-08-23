@@ -1,4 +1,5 @@
-﻿using Hyperbee.Templating.Extensions;
+﻿using Hyperbee.Templating.Configure;
+using Hyperbee.Templating.Core;
 
 namespace Hyperbee.Templating.Text;
 
@@ -31,20 +32,19 @@ internal enum TokenEvaluation
 
 internal class TokenParser
 {
-    private KeyValidator ValidateKey { get; }
-    private string TokenLeft { get; }
-    private string TokenRight { get; }
+    private readonly KeyValidator _validateKey;
+    private readonly string _tokenLeft;
+    private readonly string _tokenRight;
 
-    internal TokenParser( KeyValidator validator, string tokenLeft, string tokenRight )
+    internal TokenParser( TemplateOptions options )
     {
-        ValidateKey = validator ?? throw new ArgumentNullException( nameof( validator ) );
-        TokenLeft = tokenLeft ?? throw new ArgumentNullException( nameof( tokenLeft ) );
-        TokenRight = tokenRight ?? throw new ArgumentNullException( nameof( tokenRight ) );
+        _validateKey = options.Validator ?? throw new ArgumentNullException( nameof( options.Validator ) );
+        (_tokenLeft, _tokenRight) = options.TokenDelimiters();
     }
 
     public TokenDefinition ParseToken( ReadOnlySpan<char> token, int tokenId )
     {
-        // parse tokens like
+        // token syntax:
         //
         // {{token:definition}}
         //
@@ -56,6 +56,10 @@ internal class TokenParser
         //
         // {{else}
         // {{/if}}
+        //
+        // {{while [!]token}}
+        // {{while x => x.token}}
+        // {{/while}}
 
         var span = token.Trim();
 
@@ -92,7 +96,7 @@ internal class TokenParser
                 if ( span.IsEmpty )
                     throw new TemplateException( "Invalid `if` statement. Missing identifier." );
 
-                if ( !isFatArrow && !ValidateKey( span ) )
+                if ( !isFatArrow && !_validateKey( span ) )
                     throw new TemplateException( "Invalid `if` statement. Invalid identifier in truthy expression." );
 
                 if ( bang && isFatArrow )
@@ -159,7 +163,7 @@ internal class TokenParser
                 if ( span.IsEmpty )
                     throw new TemplateException( "Invalid `while` statement. Missing identifier." );
 
-                if ( !isFatArrow && !ValidateKey( span ) )
+                if ( !isFatArrow && !_validateKey( span ) )
                     throw new TemplateException( "Invalid `while` statement. Invalid identifier in truthy expression." );
 
                 if ( bang && isFatArrow )
@@ -206,9 +210,9 @@ internal class TokenParser
                     tokenEvaluation = TokenEvaluation.Expression;
 
                     // Check and remove surrounding token delimiters (e.g., {{ and }})
-                    if ( tokenExpression.StartsWith( TokenLeft ) && tokenExpression.EndsWith( TokenRight ) )
+                    if ( tokenExpression.StartsWith( _tokenLeft ) && tokenExpression.EndsWith( _tokenRight ) )
                     {
-                        tokenExpression = tokenExpression[TokenLeft.Length..^TokenRight.Length].Trim();
+                        tokenExpression = tokenExpression[_tokenLeft.Length..^_tokenRight.Length].Trim();
                     }
                 }
             }
@@ -224,7 +228,7 @@ internal class TokenParser
             {
                 // identifier value
 
-                if ( !ValidateKey( span ) )
+                if ( !_validateKey( span ) )
                     throw new TemplateException( "Invalid token name." );
 
                 tokenType = TokenType.Value;

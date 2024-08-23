@@ -1,7 +1,7 @@
 ﻿using System.Buffers;
 using System.Runtime.CompilerServices;
 
-namespace Hyperbee.Templating.Text;
+namespace Hyperbee.Templating.Core;
 
 internal ref struct ValueStringBuilder // use in a try finally with an explicit Dispose
 {
