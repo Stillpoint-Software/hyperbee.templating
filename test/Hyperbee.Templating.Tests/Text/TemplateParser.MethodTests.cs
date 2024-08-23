@@ -16,11 +16,11 @@ public class TemplateParserMethodTests
         // arrange
         const string template = "hello {{x=>x.ToUpper(x.name)}}. this is a template with an expression token.";
 
-        var config = new TemplateOptions()
+        var options = new TemplateOptions()
             .AddToken( "name", "me" )
             .AddMethod( "ToUpper" ).Expression<string, string>( arg => arg.ToUpper() );
 
-        var parser = new TemplateParser( config );
+        var parser = new TemplateParser( options );
 
         // act
 
@@ -43,7 +43,7 @@ public class TemplateParserMethodTests
         const string expression = """{{x=> x.TheBest( x.name, "yes" )}}""";
         const string template = $"hello {expression}.";
 
-        var config = new TemplateOptions()
+        var options = new TemplateOptions()
             .AddToken( "name", "we" )
             .AddMethod( "TheBest" ).Expression<string, string, string>( ( arg0, arg1 ) =>
             {
@@ -51,7 +51,7 @@ public class TemplateParserMethodTests
                 return result;
             } );
 
-        var parser = new TemplateParser( config );
+        var parser = new TemplateParser( options );
 
         // act
 
@@ -74,10 +74,10 @@ public class TemplateParserMethodTests
         const string expression = "{{x=>x.missing(x.name)}}";
         const string template = $"hello {expression}. this is a template with a missing method.";
 
-        var config = new TemplateOptions()
+        var options = new TemplateOptions()
             .AddToken( "name", "me" );
 
-        var parser = new TemplateParser( config );
+        var parser = new TemplateParser( options );
 
         // act
 

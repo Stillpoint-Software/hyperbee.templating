@@ -25,7 +25,7 @@ public class TemplateParserTokenHandlerTests
 
         var undefinedCounter = 0;
 
-        var config = new TemplateOptions
+        var options = new TemplateOptions
         {
             TokenHandler = ( sender, eventArgs ) =>
             {
@@ -38,7 +38,7 @@ public class TemplateParserTokenHandlerTests
             }
         };
 
-        var parser = new TemplateParser( config );
+        var parser = new TemplateParser( options );
 
         // act
 
@@ -61,7 +61,7 @@ public class TemplateParserTokenHandlerTests
 
         const string template = "hello {{name}}.";
 
-        var config = new TemplateOptions
+        var options = new TemplateOptions
         {
             TokenHandler = ( sender, eventArgs ) =>
             {
@@ -74,7 +74,7 @@ public class TemplateParserTokenHandlerTests
             }
         };
 
-        var parser = new TemplateParser( config );
+        var parser = new TemplateParser( options );
 
         // act 
 
@@ -100,7 +100,7 @@ public class TemplateParserTokenHandlerTests
             {{name}} is {{feels}}.
             """;
 
-        var config = new TemplateOptions
+        var options = new TemplateOptions
         {
             IgnoreMissingTokens = true,
             Tokens =
@@ -109,7 +109,7 @@ public class TemplateParserTokenHandlerTests
             }
         };
 
-        var parser = new TemplateParser( config );
+        var parser = new TemplateParser( options );
 
         // act
 
@@ -141,7 +141,7 @@ public class TemplateParserTokenHandlerTests
         var unknownCounter = 0;
         var tokenCount = 0;
 
-        var config = new TemplateOptions
+        var options = new TemplateOptions
         {
             TokenHandler = ( sender, eventArgs ) =>
             {
@@ -159,7 +159,7 @@ public class TemplateParserTokenHandlerTests
             }
         };
 
-        var parser = new TemplateParser( config );
+        var parser = new TemplateParser( options );
 
         // act
 
@@ -175,5 +175,4 @@ public class TemplateParserTokenHandlerTests
         Assert.IsTrue( unknownCounter == 2 );
         Assert.IsTrue( tokenCount == 3 );
     }
-
 }
