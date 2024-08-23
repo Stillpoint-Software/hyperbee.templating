@@ -35,7 +35,7 @@ They are passed a token context that provides invokable methods, and readonly to
 ```csharp
 var parser = new TemplateParser
 {
-    Tokens =
+    Variables =
     {
         ["choice"] = "2"
     }
