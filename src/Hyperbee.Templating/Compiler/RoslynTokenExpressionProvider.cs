@@ -14,16 +14,16 @@ internal sealed class RoslynTokenExpressionProvider : ITokenExpressionProvider
 {
     private static readonly ImmutableArray<MetadataReference> MetadataReferences =
     [
-        MetadataReference.CreateFromFile( typeof(object).Assembly.Location ),
-        MetadataReference.CreateFromFile( typeof(object).Assembly.Location.Replace( "System.Private.CoreLib", "System.Runtime" ) ),
-        MetadataReference.CreateFromFile( typeof(MethodImplAttribute).Assembly.Location ),
-        MetadataReference.CreateFromFile( typeof(RuntimeBinderException).Assembly.Location ),
-        MetadataReference.CreateFromFile( typeof(DynamicAttribute).Assembly.Location ),
-        MetadataReference.CreateFromFile( typeof(RoslynTokenExpressionProvider).Assembly.Location )
+        MetadataReference.CreateFromFile( typeof( object ).Assembly.Location ),
+        MetadataReference.CreateFromFile( typeof( object ).Assembly.Location.Replace( "System.Private.CoreLib", "System.Runtime" ) ),
+        MetadataReference.CreateFromFile( typeof( MethodImplAttribute ).Assembly.Location ),
+        MetadataReference.CreateFromFile( typeof( RuntimeBinderException ).Assembly.Location ),
+        MetadataReference.CreateFromFile( typeof( DynamicAttribute ).Assembly.Location ),
+        MetadataReference.CreateFromFile( typeof( RoslynTokenExpressionProvider ).Assembly.Location )
     ];
 
     private static readonly ConcurrentDictionary<string, TokenExpression> TokenExpressions = new();
-    private static readonly DynamicAssemblyLoadContext LoadContext = new(MetadataReferences);
+    private static readonly DynamicAssemblyLoadContext LoadContext = new( MetadataReferences );
 
     private static int __counter;
 

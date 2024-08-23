@@ -16,12 +16,12 @@ public class TemplateParserLoopTests
         const string expression = "{{while x => int.Parse(x.counter) < 3}}{{counter}}{{counter:{{x => int.Parse(x.counter) + 1}}}}{{/while}}";
         const string template = $"count: {expression}.";
 
-        var parser = new TemplateParser 
-        { 
-            Variables = 
-            { 
-                ["counter"] = "0" 
-            } 
+        var parser = new TemplateParser
+        {
+            Variables =
+            {
+                ["counter"] = "0"
+            }
         };
 
         // act

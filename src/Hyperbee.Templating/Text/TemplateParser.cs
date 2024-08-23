@@ -25,8 +25,8 @@ public class TemplateParser
     internal static int BufferSize = 1024;
 
     // ReSharper disable once ConvertToAutoPropertyWhenPossible
-    public MemberDictionary Variables => _members; 
-    
+    public MemberDictionary Variables => _members;
+
     internal TokenParser TokenParser { get; }
     internal TokenProcessor TokenProcessor { get; }
 
