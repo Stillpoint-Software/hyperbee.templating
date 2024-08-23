@@ -156,7 +156,7 @@ internal class TokenProcessor
         };
 
         if ( conditionIsTrue ) // If the condition is true, replay the while block
-            return TokenAction.Loop;
+            return TokenAction.ContinueLoop;
 
         // Otherwise, pop the frame and exit the loop
         frames.Pop();

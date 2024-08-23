@@ -259,7 +259,7 @@ public class TemplateParser
                                     // loop handling
                                     ProcessFrame( state.CurrentFrame(), tokenAction, token.TokenType, ref span, ref bufferManager, ref loopDepth );
 
-                                    if ( tokenAction == TokenAction.Loop )
+                                    if ( tokenAction == TokenAction.ContinueLoop )
                                         continue;
 
                                     // write value
@@ -315,7 +315,7 @@ public class TemplateParser
         {
             // loop handling
 
-            if ( tokenAction == TokenAction.Loop )
+            if ( tokenAction == TokenAction.ContinueLoop )
             {
                 // Reset position to the start of the loop block
                 bufferManager.Position( frame.StartPos );
