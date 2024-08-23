@@ -2,7 +2,6 @@
 using System.Collections.Immutable;
 using System.Reflection;
 using System.Runtime.CompilerServices;
-using System.Runtime.Loader;
 using Hyperbee.Templating.Text;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
@@ -14,8 +13,7 @@ namespace Hyperbee.Templating.Compiler;
 internal sealed class RoslynTokenExpressionProvider : ITokenExpressionProvider
 {
     private static readonly ConcurrentDictionary<string, TokenExpression> TokenExpressions = new();
-    private static int __counter;
-
+    
     private static readonly ImmutableArray<MetadataReference> MetadataReferences =
     [
         MetadataReference.CreateFromFile( typeof( object ).Assembly.Location ),
@@ -25,6 +23,9 @@ internal sealed class RoslynTokenExpressionProvider : ITokenExpressionProvider
         MetadataReference.CreateFromFile( typeof( DynamicAttribute ).Assembly.Location ),
         MetadataReference.CreateFromFile( typeof( RoslynTokenExpressionProvider ).Assembly.Location )
     ];
+
+    private static readonly DynamicAssemblyLoadContext LoadContext = new ( MetadataReferences );
+    private static int __counter;
 
     private static readonly CSharpCompilationOptions CompilationOptions =
         new( OutputKind.DynamicallyLinkedLibrary, optimizationLevel: OptimizationLevel.Release );
@@ -98,7 +99,7 @@ internal sealed class RoslynTokenExpressionProvider : ITokenExpressionProvider
 
         ms.Seek( 0, SeekOrigin.Begin );
         //var assembly = Assembly.Load( ms.ToArray() );
-        var assembly = AssemblyLoadContext.Default.LoadFromStream( ms );
+        var assembly = LoadContext.LoadFromStream( ms );
 
         var methodDelegate = assembly!
             .GetType( "TokenExpressionInvoker" )!
