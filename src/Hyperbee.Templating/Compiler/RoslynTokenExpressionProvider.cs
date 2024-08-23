@@ -13,7 +13,7 @@ namespace Hyperbee.Templating.Compiler;
 internal sealed class RoslynTokenExpressionProvider : ITokenExpressionProvider
 {
     private static readonly ConcurrentDictionary<string, TokenExpression> TokenExpressions = new();
-    
+
     private static readonly ImmutableArray<MetadataReference> MetadataReferences =
     [
         MetadataReference.CreateFromFile( typeof( object ).Assembly.Location ),
@@ -24,7 +24,7 @@ internal sealed class RoslynTokenExpressionProvider : ITokenExpressionProvider
         MetadataReference.CreateFromFile( typeof( RoslynTokenExpressionProvider ).Assembly.Location )
     ];
 
-    private static readonly DynamicAssemblyLoadContext LoadContext = new ( MetadataReferences );
+    private static readonly DynamicAssemblyLoadContext LoadContext = new( MetadataReferences );
     private static int __counter;
 
     private static readonly CSharpCompilationOptions CompilationOptions =

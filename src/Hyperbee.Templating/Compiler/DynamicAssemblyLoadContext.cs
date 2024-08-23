@@ -15,7 +15,7 @@ internal class DynamicAssemblyLoadContext : AssemblyLoadContext
     public DynamicAssemblyLoadContext( ImmutableArray<MetadataReference> metadataReferences ) : base( isCollectible: true )
     {
         // Preload assemblies from metadata references
-        
+
         var preloadPaths = metadataReferences.OfType<PortableExecutableReference>()
             .Select( reference => reference.FilePath )
             .Where( path => !string.IsNullOrEmpty( path ) && File.Exists( path ) )
