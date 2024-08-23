@@ -36,7 +36,7 @@ dotnet add package Hyperbee.Templating
 ```csharp
 var parser = new TemplateParser
 {
-    Tokens =
+    Variables =
     {
         ["fullname"] = "{{first}} {{last}}",
         ["first"] = "Hari",

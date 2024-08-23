@@ -18,7 +18,7 @@ namespace Hyperbee.Templating.Tests.Text
 
             var parser = new TemplateParser
             {
-                Tokens =
+                Variables =
                 {
                     ["name"] = "{{first}} {{last_expression}}",
                     ["first"] = "hari",
@@ -47,7 +47,7 @@ namespace Hyperbee.Templating.Tests.Text
             const string template = "hello {{name}}.";
             var parser = new TemplateParser
             {
-                Tokens =
+                Variables =
                 {
                     ["name"] = "{{first}} {{last}}",
                     ["first"] = "{{prefix}} John",
@@ -74,7 +74,7 @@ namespace Hyperbee.Templating.Tests.Text
             const string template = "hello {{name}}.";
             var parser = new TemplateParser
             {
-                Tokens =
+                Variables =
                 {
                     ["name"] = "{{first}} {{last}}",
                     ["first"] = "{{name}}",

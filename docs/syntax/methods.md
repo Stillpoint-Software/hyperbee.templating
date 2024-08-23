@@ -22,7 +22,7 @@ You can invoke framework methods within the template.
 
 | Syntax                                | Description                                
 |---------------------------------------|---------------------------------
-| `{{x => x.token.ToUpper()}}`          | Invoke a framework method.           
+| `{{x => x.variable.ToUpper()}}`       | Invoke a framework method.           
 
 ### User-Defined Methods
 
@@ -31,17 +31,17 @@ You can define custom methods and use them within the template. User-defined met
 
 | Syntax                                | Description
 |---------------------------------------|------------
-| `{{x => x.token.CustomUpper()}}`      | Invoke a user-defined method. 
+| `{{x => x.CustomUpper( x.variable )}}`| Invoke a user-defined method. 
 
 ```csharp
 
-var config = new TemplateConfig()
-    .AddToken( "name", "me" )
+var options = new TemplateOptions()
+    .AddVariable( "name", "me" )
     .AddMethod( "CustomUpper" ).Expression<string, string>( arg => arg.ToUpper() ) ;
 
-var parser = new TemplateParser( config );
+var parser = new TemplateParser( options );
 
-var template = "hello {{x => x.name.CustomUpper()}}.";
+var template = "hello {{x => x.CustomUpper(x.name)}}.";
 
 var result = parser.Render(template);
 Console.WriteLine(result); // Output: hello ME.

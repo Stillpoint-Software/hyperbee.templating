@@ -12,7 +12,7 @@ nav_order: 5
 ```csharp
 var parser = new TemplateParser
 {
-    Tokens =
+    Variables =
     {
         ["name"] = "me"
     }
@@ -29,7 +29,7 @@ Console.WriteLine(result); // Output: hello me.
 ```csharp
 var parser = new TemplateParser
 {
-    Tokens =
+    Variables =
     {
         ["name"] = "me"
     }
@@ -46,7 +46,7 @@ Console.WriteLine(result); // Output: hello ME.
 ```csharp
 var parser = new TemplateParser
 {
-    Tokens =
+    Variables =
     {
         ["fullname"] = "{{first}} {{last}}",
         ["first"] = "Hari",
@@ -67,7 +67,7 @@ Console.WriteLine(result); // Output: hello Hari Seldon.
 ```csharp
 var parser = new TemplateParser
 {
-    Tokens =
+    Variables =
     {
         ["condition"] = "true",
         ["name"] = "me"
@@ -85,7 +85,7 @@ Console.WriteLine(result); // Output: hello me.
 ```csharp
 var parser = new TemplateParser
 {
-    Tokens =
+    Variables =
     {
         ["condition"] = "false",
         ["name1"] = "me",
@@ -104,13 +104,13 @@ Console.WriteLine(result); // Output: hello you.
 ```csharp
 var parser = new TemplateParser
 {
-    Tokens =
+    Variables =
     {
-        ["counter"] = 0
+        ["counter"] = "0"
     }
 };
 
-var template = "{{while x => int.Parse(x.counter) < 3}}{{counter}}{{counter:{{x => int.Parse(x.counter) + 1}}}}{{/while}}";
+var template = "{{while x => x.counter<int> < 3}}{{counter}}{{counter:{{x => x.counter<int> + 1}}}}{{/while}}";
 
 var result = parser.Render(template);
 Console.WriteLine(result); // Output: 012. 
@@ -139,7 +139,7 @@ Console.WriteLine(result); // Output: hello me.
 ```csharp
 var parser = new TemplateParser
 {
-    Tokens =
+    Variables =
     {
         ["name"] = "me"
     }
@@ -154,19 +154,14 @@ Console.WriteLine(result); // Output: hello ME.
 ### User-Defined Method
 
 ```csharp
-var parser = new TemplateParser
-{
-    Methods =
-    {
-        ["MyUpper"] = Method.Create<string, string>( arg => arg.ToUpper() )
-    },
-    Tokens =
-    {
-        ["name"] = "me"
-    }
-};
 
-var template = "hello {{x => x.name.MyUpper()}}.";
+var options = new TemplateOptions()
+    .AddMethod("MyUpper").Expression<string,string>( input => input.ToUpper());
+    .AddVariable("name", "me");
+
+var parser = new TemplateParser( options );
+
+var template = "hello {{x => x.MyUpper( x.name )}}.";
 
 var result = parser.Render(template);
 Console.WriteLine(result); // Output: hello ME.

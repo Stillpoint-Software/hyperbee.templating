@@ -8,7 +8,7 @@ namespace Hyperbee.Templating.Configure;
 public class TemplateOptions
 {
     public IDictionary<string, IMethodInvoker> Methods { get; }
-    public IDictionary<string, string> Tokens { get; init; }
+    public IDictionary<string, string> Variables { get; init; }
 
     public TokenStyle TokenStyle { get; set; } = TokenStyle.Default;
     public KeyValidator Validator { get; set; } = TemplateHelper.ValidateKey;
@@ -25,38 +25,38 @@ public class TemplateOptions
     {
     }
 
-    public TemplateOptions( IDictionary<string, string> source )
+    public TemplateOptions( IDictionary<string, string> variables )
     {
         Methods = new Dictionary<string, IMethodInvoker>( StringComparer.OrdinalIgnoreCase );
-        Tokens = source ?? new Dictionary<string, string>( StringComparer.OrdinalIgnoreCase );
+        Variables = variables ?? new Dictionary<string, string>( StringComparer.OrdinalIgnoreCase );
     }
 
-    public TemplateOptions AddToken( string key, string value )
+    public TemplateOptions AddVariable( string key, string value )
     {
-        Tokens[key] = value;
+        Variables[key] = value;
         return this;
     }
 
-    public TemplateOptions AddTokens( IEnumerable<KeyValuePair<string, string>> tokens )
+    public TemplateOptions AddVariables( IEnumerable<KeyValuePair<string, string>> variables )
     {
-        foreach ( var (key, value) in tokens )
+        foreach ( var (key, value) in variables )
         {
             if ( string.IsNullOrWhiteSpace( key ) || value == null )
                 continue;
 
-            Tokens.Add( key, value );
+            Variables.Add( key, value );
         }
 
         return this;
     }
 
-    public TemplateOptions AddTokens( object tokenObject )
+    public TemplateOptions AddVariables( object variableObject )
     {
         const BindingFlags bindingFlags = BindingFlags.Public | BindingFlags.Instance | BindingFlags.InvokeMethod | BindingFlags.IgnoreCase;
 
-        ArgumentNullException.ThrowIfNull( tokenObject );
+        ArgumentNullException.ThrowIfNull( variableObject );
 
-        var type = tokenObject.GetType();
+        var type = variableObject.GetType();
 
         foreach ( var member in type.GetMembers( bindingFlags ) )
         {
@@ -65,10 +65,10 @@ public class TemplateOptions
             switch ( member.MemberType )
             {
                 case MemberTypes.Property:
-                    value = ((PropertyInfo) member).GetValue( tokenObject, null );
+                    value = ((PropertyInfo) member).GetValue( variableObject, null );
                     break;
                 case MemberTypes.Field:
-                    value = ((PropertyInfo) member).GetValue( tokenObject, null );
+                    value = ((PropertyInfo) member).GetValue( variableObject, null );
                     break;
                 default:
                     continue;
@@ -77,7 +77,7 @@ public class TemplateOptions
             var valueType = value?.GetType();
 
             if ( valueType != null && (valueType.IsPrimitive || valueType == typeof( string )) )
-                AddToken( member.Name, value.ToString() );
+                AddVariable( member.Name, value.ToString() );
         }
 
         return this;

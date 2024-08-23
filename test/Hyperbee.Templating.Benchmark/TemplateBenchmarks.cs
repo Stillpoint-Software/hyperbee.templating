@@ -42,13 +42,13 @@ public class TemplateBenchmarks
 
         var parser = new TemplateParser
         {
-            Tokens =
-                {
-                    ["name"] = "{{first}} {{last_expression}}",
-                    ["first"] = "hari",
-                    ["last"] = "seldon",
-                    ["last_expression"] = "{{last}}"
-                }
+            Variables =
+            {
+                ["name"] = "{{first}} {{last_expression}}",
+                ["first"] = "hari",
+                ["last"] = "seldon",
+                ["last_expression"] = "{{last}}"
+            }
         };
 
         parser.Render( template, ParseMethod );
@@ -62,11 +62,11 @@ public class TemplateBenchmarks
 
         var parser = new TemplateParser
         {
-            Tokens =
-                {
-                    ["thing"] = "base",
-                    ["who"] = "us"
-                }
+            Variables =
+            {
+                ["thing"] = "base",
+                ["who"] = "us"
+            }
         };
 
         parser.Render( template, ParseTemplateMethod.Buffered );
@@ -92,10 +92,10 @@ public class TemplateBenchmarks
 
         var parser = new TemplateParser
         {
-            Tokens =
-                {
-                    ["choice"] = "2"
-                }
+            Variables =
+            {
+                ["choice"] = "2"
+            }
         };
 
         parser.Render( template, ParseMethod );

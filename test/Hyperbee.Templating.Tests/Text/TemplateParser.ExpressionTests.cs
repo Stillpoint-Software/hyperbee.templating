@@ -29,7 +29,7 @@ public class TemplateParserExpressionTests
 
         var parser = new TemplateParser
         {
-            Tokens =
+            Variables =
             {
                 ["choice"] = "2"
             }
@@ -92,7 +92,7 @@ public class TemplateParserExpressionTests
 
         var parser = new TemplateParser
         {
-            Tokens =
+            Variables =
             {
                 ["choice"] = "2"
             }

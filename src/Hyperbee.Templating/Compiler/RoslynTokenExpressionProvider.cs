@@ -12,8 +12,6 @@ namespace Hyperbee.Templating.Compiler;
 
 internal sealed class RoslynTokenExpressionProvider : ITokenExpressionProvider
 {
-    private static readonly ConcurrentDictionary<string, TokenExpression> TokenExpressions = new();
-
     private static readonly ImmutableArray<MetadataReference> MetadataReferences =
     [
         MetadataReference.CreateFromFile( typeof( object ).Assembly.Location ),
@@ -24,7 +22,13 @@ internal sealed class RoslynTokenExpressionProvider : ITokenExpressionProvider
         MetadataReference.CreateFromFile( typeof( RoslynTokenExpressionProvider ).Assembly.Location )
     ];
 
-    private static readonly DynamicAssemblyLoadContext LoadContext = new( MetadataReferences );
+    private sealed class RuntimeContext( ImmutableArray<MetadataReference> metadataReferences )
+    {
+        public ConcurrentDictionary<string, TokenExpression> TokenExpressions { get; } = new();
+        public DynamicAssemblyLoadContext AssemblyLoadContext { get; } = new( metadataReferences );
+    }
+
+    private static RuntimeContext __runtimeContext = new( MetadataReferences );
     private static int __counter;
 
     private static readonly CSharpCompilationOptions CompilationOptions =
@@ -33,7 +37,12 @@ internal sealed class RoslynTokenExpressionProvider : ITokenExpressionProvider
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public TokenExpression GetTokenExpression( string codeExpression )
     {
-        return TokenExpressions.GetOrAdd( codeExpression, Compile );
+        return __runtimeContext.TokenExpressions.GetOrAdd( codeExpression, Compile );
+    }
+
+    public static void Reset()
+    {
+        __runtimeContext = new RuntimeContext( MetadataReferences );
     }
 
     private static TokenExpression Compile( string codeExpression )
@@ -98,8 +107,7 @@ internal sealed class RoslynTokenExpressionProvider : ITokenExpressionProvider
         }
 
         ms.Seek( 0, SeekOrigin.Begin );
-        //var assembly = Assembly.Load( ms.ToArray() );
-        var assembly = LoadContext.LoadFromStream( ms );
+        var assembly = __runtimeContext.AssemblyLoadContext.LoadFromStream( ms );
 
         var methodDelegate = assembly!
             .GetType( "TokenExpressionInvoker" )!
