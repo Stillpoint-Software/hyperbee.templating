@@ -1,4 +1,4 @@
-﻿using System.Globalization;
+using System.Globalization;
 using Hyperbee.Templating.Compiler;
 using Hyperbee.Templating.Configure;
 
