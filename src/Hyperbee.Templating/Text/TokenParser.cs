@@ -36,10 +36,10 @@ internal class TokenParser
     private string TokenLeft { get; }
     private string TokenRight { get; }
 
-    internal TokenParser( TemplateConfig config )
+    internal TokenParser( TemplateOptions options )
     {
-        ValidateKey = config.Validator ?? throw new ArgumentNullException( nameof( config.Validator ) );
-        (TokenLeft, TokenRight) = config.TokenDelimiters();
+        ValidateKey = options.Validator ?? throw new ArgumentNullException( nameof( options.Validator ) );
+        (TokenLeft, TokenRight) = options.TokenDelimiters();
     }
 
     public TokenDefinition ParseToken( ReadOnlySpan<char> token, int tokenId )

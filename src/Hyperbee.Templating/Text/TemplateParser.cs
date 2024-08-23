@@ -43,18 +43,18 @@ public class TemplateParser
     {
     }
 
-    public TemplateParser( TemplateConfig config )
+    public TemplateParser( TemplateOptions options )
     {
-        config ??= new TemplateConfig();
+        options ??= new TemplateOptions();
 
-        Tokens = new MemberDictionary( config.Validator, config.Tokens, (IReadOnlyDictionary<string, IMethodInvoker>) config.Methods );
+        Tokens = new MemberDictionary( options.Validator, options.Tokens, (IReadOnlyDictionary<string, IMethodInvoker>) options.Methods );
 
-        MaxTokenDepth = config.MaxTokenDepth;
+        MaxTokenDepth = options.MaxTokenDepth;
 
-        (TokenLeft, TokenRight) = config.TokenDelimiters();
+        (TokenLeft, TokenRight) = options.TokenDelimiters();
 
-        TokenParser = new TokenParser( config );
-        TokenProcessor = new TokenProcessor( Tokens, config );
+        TokenParser = new TokenParser( options );
+        TokenProcessor = new TokenProcessor( Tokens, options );
     }
 
     // Render - all the ways

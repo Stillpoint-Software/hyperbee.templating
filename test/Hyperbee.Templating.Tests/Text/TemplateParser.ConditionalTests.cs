@@ -19,7 +19,7 @@ public class TemplateParserConditionalTests
         const string expression = "{{if name}}{{name}}{{else}}not {{name}}{{/if}}";
         const string template = $"hello {expression}.";
 
-        var config = new TemplateConfig
+        var config = new TemplateOptions
         {
             Tokens =
             {
@@ -178,7 +178,7 @@ public class TemplateParserConditionalTests
             ["upper"] = "True"
         } );
 
-        var config = new TemplateConfig( source );
+        var config = new TemplateOptions( source );
         var parser = new TemplateParser( config );
 
         // act

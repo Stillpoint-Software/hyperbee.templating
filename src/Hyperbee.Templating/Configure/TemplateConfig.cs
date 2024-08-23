@@ -5,7 +5,7 @@ using Hyperbee.Templating.Text;
 
 namespace Hyperbee.Templating.Configure;
 
-public class TemplateConfig
+public class TemplateOptions
 {
     public IDictionary<string, IMethodInvoker> Methods { get; }
     public IDictionary<string, string> Tokens { get; init; }
@@ -20,24 +20,24 @@ public class TemplateConfig
     public ITokenExpressionProvider TokenExpressionProvider { get; set; } = new RoslynTokenExpressionProvider();
     public Action<TemplateParser, TemplateEventArgs> TokenHandler { get; set; } = null;
 
-    public TemplateConfig()
+    public TemplateOptions()
         : this( null )
     {
     }
 
-    public TemplateConfig( IDictionary<string, string> source )
+    public TemplateOptions( IDictionary<string, string> source )
     {
         Methods = new Dictionary<string, IMethodInvoker>( StringComparer.OrdinalIgnoreCase );
         Tokens = source ?? new Dictionary<string, string>( StringComparer.OrdinalIgnoreCase );
     }
 
-    public TemplateConfig AddToken( string key, string value )
+    public TemplateOptions AddToken( string key, string value )
     {
         Tokens[key] = value;
         return this;
     }
 
-    public TemplateConfig AddTokens( IEnumerable<KeyValuePair<string, string>> tokens )
+    public TemplateOptions AddTokens( IEnumerable<KeyValuePair<string, string>> tokens )
     {
         foreach ( var (key, value) in tokens )
         {
@@ -50,7 +50,7 @@ public class TemplateConfig
         return this;
     }
 
-    public TemplateConfig AddTokens( object tokenObject )
+    public TemplateOptions AddTokens( object tokenObject )
     {
         const BindingFlags bindingFlags = BindingFlags.Public | BindingFlags.Instance | BindingFlags.InvokeMethod | BindingFlags.IgnoreCase;
 

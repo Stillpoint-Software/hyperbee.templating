@@ -15,24 +15,24 @@ internal class TokenProcessor
 
     private readonly MemberDictionary _tokens;
 
-    public TokenProcessor( MemberDictionary tokens, TemplateConfig config )
+    public TokenProcessor( MemberDictionary tokens, TemplateOptions options )
     {
         ArgumentNullException.ThrowIfNull( tokens );
 
-        if ( config.Methods == null )
-            throw new ArgumentNullException( nameof( config ), $"{nameof( config.Methods )} cannot be null." );
+        if ( options.Methods == null )
+            throw new ArgumentNullException( nameof( options ), $"{nameof( options.Methods )} cannot be null." );
 
-        if ( config.TokenExpressionProvider == null )
-            throw new ArgumentNullException( nameof( config ), $"{nameof( config.TokenExpressionProvider )} cannot be null." );
+        if ( options.TokenExpressionProvider == null )
+            throw new ArgumentNullException( nameof( options ), $"{nameof( options.TokenExpressionProvider )} cannot be null." );
 
-        _tokenExpressionProvider = config.TokenExpressionProvider;
-        _tokenHandler = config.TokenHandler;
-        _ignoreMissingTokens = config.IgnoreMissingTokens;
-        _substituteEnvironmentVariables = config.SubstituteEnvironmentVariables;
+        _tokenExpressionProvider = options.TokenExpressionProvider;
+        _tokenHandler = options.TokenHandler;
+        _ignoreMissingTokens = options.IgnoreMissingTokens;
+        _substituteEnvironmentVariables = options.SubstituteEnvironmentVariables;
 
         _tokens = tokens;
 
-        (_tokenLeft, _tokenRight) = config.TokenDelimiters();
+        (_tokenLeft, _tokenRight) = options.TokenDelimiters();
     }
 
     public TokenAction ProcessToken( TokenDefinition token, TemplateState state, out string value )

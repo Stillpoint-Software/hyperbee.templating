@@ -16,12 +16,12 @@ public static class ResourceProviderExtensions
         using var resourceStream = provider.GetResourceStream( name );
         using var reader = new StreamReader( resourceStream );
 
-        var config = new TemplateConfig
+        var templateOptions = new TemplateOptions
         {
             IgnoreMissingTokens = options.IgnoreMissingTokensValue
         };
 
-        var parser = new TemplateParser( config );
+        var parser = new TemplateParser( templateOptions );
 
         parser.Tokens.Add( options.Parameters );
 
