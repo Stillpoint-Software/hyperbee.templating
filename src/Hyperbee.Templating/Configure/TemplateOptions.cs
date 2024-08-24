@@ -7,6 +7,8 @@ namespace Hyperbee.Templating.Configure;
 
 public class TemplateOptions
 {
+    public static TemplateOptions Create() => new();
+
     public IDictionary<string, IMethodInvoker> Methods { get; }
     public IDictionary<string, string> Variables { get; init; }
 

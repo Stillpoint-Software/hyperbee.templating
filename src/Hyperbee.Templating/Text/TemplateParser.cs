@@ -5,21 +5,6 @@ using Hyperbee.Templating.Core;
 
 namespace Hyperbee.Templating.Text;
 
-public enum TokenStyle
-{
-    // if you are considering implementing a new token style make sure the
-    // pattern doesn't interfere with token expression syntax. for example,
-    // a token pattern of "||" would cause problems with c# or expressions.
-    //
-    // || x => x.value == "1" || x.value == "2" ||
-
-    Default,
-    SingleBrace,    // {}
-    DoubleBrace,    // {{}}
-    PoundBrace,     // #{}
-    DollarBrace,    // ${}
-}
-
 public class TemplateParser
 {
     internal static int BufferSize = 1024;
