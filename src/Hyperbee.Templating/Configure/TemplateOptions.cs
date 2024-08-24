@@ -14,7 +14,7 @@ public class TemplateOptions
     public KeyValidator Validator { get; set; } = TemplateHelper.ValidateKey;
 
     public bool IgnoreMissingTokens { get; set; }
-    public bool SubstituteEnvironmentVariables { get; set; } 
+    public bool SubstituteEnvironmentVariables { get; set; }
     public int MaxTokenDepth { get; set; } = 20;
 
     public ITokenExpressionProvider TokenExpressionProvider { get; set; } = new RoslynTokenExpressionProvider();
@@ -103,7 +103,7 @@ public class TemplateOptions
         return this;
     }
 
-    public TemplateOptions  SetTokenExpressionProvider( ITokenExpressionProvider expressionProvider )
+    public TemplateOptions SetTokenExpressionProvider( ITokenExpressionProvider expressionProvider )
     {
         TokenExpressionProvider = expressionProvider;
         return this;
