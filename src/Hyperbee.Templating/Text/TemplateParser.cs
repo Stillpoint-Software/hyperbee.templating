@@ -1,4 +1,4 @@
-using System.Buffers;
+﻿using System.Buffers;
 using Hyperbee.Templating.Compiler;
 using Hyperbee.Templating.Configure;
 using Hyperbee.Templating.Core;
@@ -511,5 +511,5 @@ internal sealed class FrameStack
 
     public bool IsTruthy => _stack.Count == 0 || _stack.Peek().Truthy;
     public bool IsFalsy => !IsTruthy;
-    public IEnumerable<string> Iterator {get;set;}
+    public IEnumerable<string> Iterator { get; set; }
 }
