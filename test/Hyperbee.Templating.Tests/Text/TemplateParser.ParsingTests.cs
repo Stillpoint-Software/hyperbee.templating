@@ -52,7 +52,7 @@ public class TemplateParserParsingTests
 
         var parser = new TemplateParser
         {
-            Tokens =
+            Variables =
             {
                 ["thing"] = "base",
                 ["who"] = "us"

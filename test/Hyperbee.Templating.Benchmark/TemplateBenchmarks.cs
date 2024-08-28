@@ -2,7 +2,6 @@
 using Hyperbee.Templating.Tests.TestSupport;
 using Hyperbee.Templating.Text;
 
-
 namespace Hyperbee.Templating.Benchmark;
 
 public class TemplateBenchmarks
@@ -13,7 +12,7 @@ public class TemplateBenchmarks
 
 
     [Benchmark( Baseline = true )]
-    public void ParserSignal()
+    public void ParserSingleLine()
     {
         const string template = "hello. this is a single line template with no tokens.";
         var parser = new TemplateParser();
@@ -22,7 +21,7 @@ public class TemplateBenchmarks
     }
 
     [Benchmark]
-    public void ParserMulti()
+    public void ParserMultiLine()
     {
         const string template =
             """
@@ -43,7 +42,7 @@ public class TemplateBenchmarks
 
         var parser = new TemplateParser
         {
-            Tokens =
+            Variables =
             {
                 ["name"] = "{{first}} {{last_expression}}",
                 ["first"] = "hari",
@@ -63,7 +62,7 @@ public class TemplateBenchmarks
 
         var parser = new TemplateParser
         {
-            Tokens =
+            Variables =
             {
                 ["thing"] = "base",
                 ["who"] = "us"
@@ -93,7 +92,7 @@ public class TemplateBenchmarks
 
         var parser = new TemplateParser
         {
-            Tokens =
+            Variables =
             {
                 ["choice"] = "2"
             }

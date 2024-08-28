@@ -1,36 +1,13 @@
-# Hyperbee Templating
+---
+layout: default
+title: Examples
+parent: Syntax
+nav_order: 5
+---
+{% raw %}
+# Examples
 
-Hyperbee Templating is a lightweight templating and variable substitution syntax engine. The library supports value replacements, 
-code expressions, token nesting, in-line definitions, conditional flow, and looping. It is designed to be lightweight and fast, 
-and does not rely on any external dependencies.
-
-## Features
-
-* Variable substitution syntax engine
-* Value replacements
-* Expression replacements
-* Token nesting
-* Conditional tokens
-* Conditional flow
-* Iterators
-* User-defined methods
-
-## Getting Started
-
-To get started with Hyperbee.Templating, refer to the [documentation](https://stillpoint-software.github.io/hyperbee.templating) for 
-detailed instructions and examples. 
-
-Install via NuGet:
-
-```bash
-dotnet add package Hyperbee.Templating
-```
-
-## Basic Usage
-
-### Variable Substitution
-
-You can use the `TemplateParser` to perform variable substitutions.
+## Variable Substitution
 
 ```csharp
 var parser = new TemplateParser
@@ -47,7 +24,7 @@ var result = parser.Render(template);
 Console.WriteLine(result); // Output: hello me.
 ```
 
-### Expression Substitution
+## Expression Substitution
 
 ```csharp
 var parser = new TemplateParser
@@ -64,9 +41,7 @@ var result = parser.Render(template);
 Console.WriteLine(result); // Output: hello ME.
 ```
 
-### Token Nesting
-
-Token values can contain other tokens.
+## Token Nesting
 
 ```csharp
 var parser = new TemplateParser
@@ -85,9 +60,9 @@ var result = parser.Render(template);
 Console.WriteLine(result); // Output: hello Hari Seldon.
 ```
 
-### Conditional Tokens
+## Conditional Flow
 
-You can use conditional tokens to control the flow based on conditions.
+### If Statement
 
 ```csharp
 var parser = new TemplateParser
@@ -104,6 +79,8 @@ var template = "{{#if condition}}hello {{name}}.{{/if}}";
 var result = parser.Render(template);
 Console.WriteLine(result); // Output: hello me.
 ```
+
+### If-Else Statement
 
 ```csharp
 var parser = new TemplateParser
@@ -124,8 +101,6 @@ Console.WriteLine(result); // Output: hello you.
 
 ### While Statement
 
-You can use a while statement to repeat a block of text while a condition is true.
-
 ```csharp
 var parser = new TemplateParser
 {
@@ -141,29 +116,54 @@ var result = parser.Render(template);
 Console.WriteLine(result); // Output: 012. 
 ```
 
-### Methods
-
-You can invoke methods within token expressions.
+## Inline Definitions
 
 ```csharp
-var options = new TemplateOptions()
-    .AddVariable("name", "me")
-    .AddMethod("ToUpper").Expression<string,string>( value => value.ToUpper() );
+var template = """{{identity:"me"}} hello {{identity}}.""";
 
-var parser = new TemplateParser( options );
+var result = parser.Render(template);
+Console.WriteLine(result); // Output: hello me.
+```
 
-var template = "hello {{x => x.ToUpper( x.name )}}.";
+```csharp
+var template = """{{identity:{{x => "me"}} }} hello {{identity}}.""";
+
+var result = parser.Render(template);
+Console.WriteLine(result); // Output: hello me.
+```
+
+## Method Invocation
+
+### Framework Method
+
+```csharp
+var parser = new TemplateParser
+{
+    Variables =
+    {
+        ["name"] = "me"
+    }
+};
+
+var template = "hello {{x => x.name.ToUpper()}}.";
 
 var result = parser.Render(template);
 Console.WriteLine(result); // Output: hello ME.
 ```
 
-## Credits
+### User-Defined Method
 
-Special thanks to:
+```csharp
 
-- [Just The Docs](https://github.com/just-the-docs/just-the-docs) for the documentation theme.
+var options = new TemplateOptions()
+    .AddMethod("MyUpper").Expression<string,string>( input => input.ToUpper());
+    .AddVariable("name", "me");
 
-## Contributing
+var parser = new TemplateParser( options );
 
-We welcome contributions! Please see our [Contributing Guide](https://github.com/Stillpoint-Software/.github/blob/main/.github/CONTRIBUTING.md) for more details.
+var template = "hello {{x => x.MyUpper( x.name )}}.";
+
+var result = parser.Render(template);
+Console.WriteLine(result); // Output: hello ME.
+```
+{% endraw %}

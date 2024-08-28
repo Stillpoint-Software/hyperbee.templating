@@ -1,7 +1,8 @@
 ﻿using Hyperbee.Resources;
+using Hyperbee.Templating.Configure;
 using Hyperbee.Templating.Text;
 
-namespace Hyperbee.Templating.Extensions;
+namespace Hyperbee.Templating.Core;
 
 public static class ResourceProviderExtensions
 {
@@ -15,13 +16,11 @@ public static class ResourceProviderExtensions
         using var resourceStream = provider.GetResourceStream( name );
         using var reader = new StreamReader( resourceStream );
 
-        var parser = new TemplateParser
-        {
-            IgnoreMissingTokens = options.IgnoreMissingTokensValue
-        };
+        var templateOptions = new TemplateOptions()
+            .AddVariables( options.Parameters )
+            .SetIgnoreMissingTokens( options.IgnoreMissingTokensValue );
 
-        parser.Tokens.Add( options.Parameters );
-
+        var parser = new TemplateParser( templateOptions );
         var statement = parser.Render( reader );
 
         return statement;

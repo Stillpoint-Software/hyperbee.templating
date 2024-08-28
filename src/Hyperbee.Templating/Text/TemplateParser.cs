@@ -1,111 +1,47 @@
-﻿using System.Buffers;
-using Hyperbee.Templating.Collections;
+using System.Buffers;
 using Hyperbee.Templating.Compiler;
-using Hyperbee.Templating.Extensions;
+using Hyperbee.Templating.Configure;
+using Hyperbee.Templating.Core;
 
 namespace Hyperbee.Templating.Text;
-
-public enum TokenStyle
-{
-    // if you are considering implementing a new token style make sure the
-    // pattern doesn't interfere with token expression syntax. for example,
-    // a token pattern of "||" would cause problems with c# or expressions.
-    //
-    // || x => x.value == "1" || x.value == "2" ||
-
-    Default,
-    SingleBrace,    // {}
-    DoubleBrace,    // {{}}
-    PoundBrace,     // #{}
-    DollarBrace,    // ${}
-}
 
 public class TemplateParser
 {
     internal static int BufferSize = 1024;
 
-    public bool IgnoreMissingTokens { get; init; } = false;
-    public bool SubstituteEnvironmentVariables { get; init; } = false;
-    public int MaxTokenDepth { get; init; } = 20;
+    // ReSharper disable once ConvertToAutoPropertyWhenPossible
+    public MemberDictionary Variables => _members;
 
-    public ITokenExpressionProvider TokenExpressionProvider { get; init; } = new RoslynTokenExpressionProvider();
-    public IDictionary<string, DynamicMethod> Methods { get; init; } = new Dictionary<string, DynamicMethod>( StringComparer.OrdinalIgnoreCase );
-    public TemplateDictionary Tokens { get; init; }
-    public Action<TemplateParser, TemplateEventArgs> TokenHandler { get; init; }
+    internal TokenParser TokenParser { get; }
+    internal TokenProcessor TokenProcessor { get; }
 
-    private string TokenLeft { get; }
-    private string TokenRight { get; }
+    private readonly MemberDictionary _members;
+    private readonly int _maxTokenDepth;
+    private readonly string _tokenLeft;
+    private readonly string _tokenRight;
 
-    private TokenParser _tokenParser;
-    internal TokenParser TokenParser => _tokenParser ??= new TokenParser( Tokens.Validator, TokenLeft, TokenRight );
-
-    private readonly Lazy<TokenProcessor> _lazyTokenProcessor;
-    private TokenProcessor TokenProcessor => _lazyTokenProcessor.Value;
+    private enum TemplateScanner
+    {
+        Text,
+        Token
+    }
 
     public TemplateParser()
-        : this( TokenStyle.Default )
+        : this( null )
     {
     }
 
-    public TemplateParser( IDictionary<string, string> source )
-        : this( TokenStyle.Default, source, default )
+    public TemplateParser( TemplateOptions options )
     {
-    }
+        options ??= new TemplateOptions();
 
-    public TemplateParser( TokenStyle style )
-        : this( style, default, (KeyValidator) default )
-    {
-    }
+        _members = new MemberDictionary( options.Validator, options.Variables, (IReadOnlyDictionary<string, IMethodInvoker>) options.Methods );
+        _maxTokenDepth = options.MaxTokenDepth;
 
-    public TemplateParser( TokenStyle style, KeyValidator validator, IDictionary<string, string> source = default )
-        : this( style, source, validator )
-    {
-    }
+        (_tokenLeft, _tokenRight) = options.TokenDelimiters();
 
-    public TemplateParser( TokenStyle style, IDictionary<string, string> source, KeyValidator validator )
-        : this( style, new TemplateDictionary( validator ?? TemplateHelper.ValidateKey, source ) )
-    {
-    }
-
-    public TemplateParser( TokenStyle style, TemplateDictionary source )
-    {
-        ArgumentNullException.ThrowIfNull( source );
-
-        Tokens = source;
-
-        _lazyTokenProcessor = new Lazy<TokenProcessor>( () => new TokenProcessor(
-            Tokens,
-            Methods,
-            TokenHandler,
-            TokenExpressionProvider,
-            IgnoreMissingTokens,
-            SubstituteEnvironmentVariables,
-            TokenLeft,
-            TokenRight
-        ) );
-
-        switch ( style )
-        {
-            case TokenStyle.Default:
-            case TokenStyle.DoubleBrace:
-                TokenLeft = "{{";
-                TokenRight = "}}";
-                break;
-            case TokenStyle.SingleBrace:
-                TokenLeft = "{";
-                TokenRight = "}";
-                break;
-            case TokenStyle.PoundBrace:
-                TokenLeft = "#{";
-                TokenRight = "}";
-                break;
-            case TokenStyle.DollarBrace:
-                TokenLeft = "${";
-                TokenRight = "}";
-                break;
-            default:
-                throw new ArgumentOutOfRangeException( nameof( style ), style, null );
-        }
+        TokenParser = new TokenParser( options );
+        TokenProcessor = new TokenProcessor( _members, options );
     }
 
     // Render - all the ways
@@ -125,11 +61,12 @@ public class TemplateParser
     public string Render( ReadOnlySpan<char> template )
     {
         // quick out
-        var pos = template.IndexOf( TokenLeft );
+        var pos = template.IndexOf( _tokenLeft );
 
         if ( pos < 0 )
             return template.ToString();
 
+        // write content before first token and parse remainder
         using var writer = new StringWriter();
         writer.Write( template[..pos] );
 
@@ -139,7 +76,18 @@ public class TemplateParser
 
     public void Render( ReadOnlySpan<char> template, TextWriter writer )
     {
-        ParseTemplate( template, writer );
+        // quick out
+        var pos = template.IndexOf( _tokenLeft );
+
+        if ( pos < 0 )
+        {
+            writer.Write( template );
+            return;
+        }
+
+        // write content before first token and parse remainder
+        writer.Write( template[..pos] );
+        ParseTemplate( template[pos..], writer );
     }
 
     public string Render( TextReader reader )
@@ -164,10 +112,10 @@ public class TemplateParser
 
     public string Resolve( string identifier )
     {
-        if ( !Tokens.TryGetValue( identifier, out var value ) )
+        if ( !_members.TryGetValue( identifier, out var value ) )
             return string.Empty;
 
-        if ( string.IsNullOrWhiteSpace( value ) || !value.Contains( TokenLeft ) )
+        if ( string.IsNullOrWhiteSpace( value ) || !value.Contains( _tokenLeft ) )
             return value;
 
         var result = Render( value );
@@ -175,11 +123,6 @@ public class TemplateParser
     }
 
     // Parse template
-    private enum TemplateScanner
-    {
-        Text,
-        Token
-    }
 
     private void ParseTemplate( ReadOnlySpan<char> templateSpan, TextWriter writer )
     {
@@ -189,7 +132,7 @@ public class TemplateParser
 
     private void ParseTemplate( TextReader reader, TextWriter writer )
     {
-        var bufferSize = GetScopedBufferSize( BufferSize, TokenLeft.Length, TokenRight.Length );
+        var bufferSize = GetScopedBufferSize( BufferSize, _tokenLeft.Length, _tokenRight.Length );
         var bufferManager = new BufferManager( bufferSize );
 
         ParseTemplate( ref bufferManager, reader, writer );
@@ -222,10 +165,11 @@ public class TemplateParser
             while ( true )
             {
                 var span = bufferManager.ReadSpan( reader );
-                var lastReadBytes = span.Length;
 
                 if ( span.IsEmpty )
                     break;
+
+                var bytesRead = span.Length;
 
                 while ( !span.IsEmpty )
                 {
@@ -236,7 +180,7 @@ public class TemplateParser
                     {
                         case TemplateScanner.Text:
                             {
-                                pos = span.IndexOf( TokenLeft );
+                                pos = span.IndexOf( _tokenLeft );
 
                                 // match: write to start of token
                                 if ( pos >= 0 )
@@ -245,7 +189,7 @@ public class TemplateParser
                                     if ( !ignore )
                                         writer.Write( span[..pos] );
 
-                                    span = bufferManager.GetCurrentSpan( pos + TokenLeft.Length );
+                                    span = bufferManager.GetCurrentSpan( pos + _tokenLeft.Length );
 
                                     // transition state
                                     scanner = TemplateScanner.Token;
@@ -253,17 +197,17 @@ public class TemplateParser
                                 }
 
                                 // no-match eof: write final content
-                                if ( bufferManager.IsFixed || lastReadBytes < bufferManager.BufferSize )
+                                if ( bufferManager.IsFixed || bytesRead < bufferManager.BufferSize )
                                 {
                                     if ( !ignore )
                                         writer.Write( span ); // write final content
                                     return;
                                 }
 
-                                // no-match: write content less remainder
+                                // no-match eob: write content less remainder
                                 if ( !ignore )
                                 {
-                                    var writeLength = span.Length - TokenLeft.Length;
+                                    var writeLength = span.Length - _tokenLeft.Length;
 
                                     if ( writeLength > 0 )
                                     {
@@ -272,7 +216,7 @@ public class TemplateParser
                                     }
                                 }
 
-                                span = [];
+                                span = []; // clear span for read
                                 break;
                             }
 
@@ -280,17 +224,17 @@ public class TemplateParser
                             {
                                 // scan: find closing token pattern
                                 // token may span multiple reads so track search state
-                                pos = IndexOfIgnoreContent( span, TokenRight, ref indexOfState );
+                                pos = IndexOfIgnoreQuotedContent( span, _tokenRight, ref indexOfState );
 
                                 // match: process completed token
                                 if ( pos >= 0 )
                                 {
                                     // update CurrentPos to point to the first character after the token
-                                    state.CurrentPos += pos + TokenRight.Length;
+                                    state.CurrentPos += pos + _tokenRight.Length;
 
                                     // process token
                                     tokenWriter.Write( span[..pos] );
-                                    span = bufferManager.GetCurrentSpan( pos + TokenRight.Length );
+                                    span = bufferManager.GetCurrentSpan( pos + _tokenRight.Length );
 
                                     var token = TokenParser.ParseToken( tokenWriter.WrittenSpan, state.NextTokenId++ );
                                     var tokenAction = TokenProcessor.ProcessToken( token, state, out var tokenValue );
@@ -299,7 +243,9 @@ public class TemplateParser
                                     scanner = TemplateScanner.Text;
 
                                     // loop handling
-                                    if ( ProcessLoop( tokenAction, token, state, ref span, ref bufferManager, ref loopDepth ) )
+                                    ProcessFrame( state.CurrentFrame(), tokenAction, token.TokenType, ref span, ref bufferManager, ref loopDepth );
+
+                                    if ( tokenAction == TokenAction.ContinueLoop )
                                         continue;
 
                                     // write value
@@ -311,11 +257,11 @@ public class TemplateParser
                                 }
 
                                 // no-match eof: incomplete token
-                                if ( bufferManager.IsFixed || lastReadBytes < bufferManager.BufferSize )
+                                if ( bufferManager.IsFixed || bytesRead < bufferManager.BufferSize )
                                     throw new TemplateException( "Missing right token delimiter." );
 
-                                // no-match: save partial token less remainder
-                                var writeLength = span.Length - TokenRight.Length;
+                                // no-match eob: save partial token less remainder
+                                var writeLength = span.Length - _tokenRight.Length;
 
                                 if ( writeLength > 0 )
                                 {
@@ -323,7 +269,7 @@ public class TemplateParser
                                     bufferManager.AdvanceCurrentSpan( writeLength );
                                 }
 
-                                span = [];
+                                span = []; // clear span for read
                                 break;
                             }
 
@@ -332,7 +278,7 @@ public class TemplateParser
                     }
                 }
 
-                if ( bufferManager.IsFixed || lastReadBytes < bufferManager.BufferSize )
+                if ( bufferManager.IsFixed || bytesRead < bufferManager.BufferSize )
                     break;
             }
 
@@ -351,38 +297,38 @@ public class TemplateParser
 
         return;
 
-        static bool ProcessLoop( TokenAction tokenAction, TokenDefinition token, TemplateState state, ref ReadOnlySpan<char> span, ref BufferManager bufferManager, ref int loopDepth )
+        static void ProcessFrame( FrameStack.Frame frame, TokenAction tokenAction, TokenType tokenType, ref ReadOnlySpan<char> span, ref BufferManager bufferManager, ref int loopDepth )
         {
             // loop handling
 
-            if ( tokenAction == TokenAction.Loop )
+            if ( tokenAction == TokenAction.ContinueLoop )
             {
                 // Reset position to the start of the loop block
-                bufferManager.Position( state.CurrentFrame().StartPos );
+                bufferManager.Position( frame.StartPos );
                 span = bufferManager.GetCurrentSpan();
-                return true;
+                return;
             }
+
+            // no loop buffer management required for fixed buffer
+
+            if ( bufferManager.IsFixed )
+                return;
 
             // loop buffer management
 
-            if ( bufferManager.IsFixed )
-                return false;
-
-            if ( token.TokenType.HasFlag( TokenType.LoopStart ) )
+            if ( tokenType.HasFlag( TokenType.LoopStart ) )
             {
                 if ( loopDepth++ == 0 )
                     bufferManager.SetGrow( true );
             }
-            else if ( token.TokenType.HasFlag( TokenType.LoopEnd ) )
+            else if ( tokenType.HasFlag( TokenType.LoopEnd ) )
             {
                 if ( --loopDepth != 0 )
-                    return false;
+                    return;
 
                 bufferManager.SetGrow( false );
                 bufferManager.TrimBuffers();
             }
-
-            return false;
         }
     }
 
@@ -390,7 +336,7 @@ public class TemplateParser
     {
         // infinite recursion guard
 
-        if ( recursionCount++ == MaxTokenDepth )
+        if ( recursionCount++ == _maxTokenDepth )
             throw new TemplateException( "Recursion depth exceeded." );
 
         // quick outs
@@ -405,7 +351,7 @@ public class TemplateParser
                 return;
         }
 
-        var start = value.IndexOfIgnoreEscaped( TokenLeft );
+        var start = value.IndexOfIgnoreEscaped( _tokenLeft );
 
         if ( start == -1 ) // token is literal
         {
@@ -416,20 +362,22 @@ public class TemplateParser
         // nested token processing
         do
         {
+            // write any leading literal
+
             if ( start > 0 && state.Frames.IsTruthy )
                 writer.Write( value[..start] );
 
-            value = value[(start + TokenLeft.Length)..];
+            value = value[(start + _tokenLeft.Length)..];
 
             // find token end
 
-            var stop = IndexOfIgnoreContent( value, TokenRight );
+            var stop = IndexOfIgnoreQuotedContent( value, _tokenRight );
 
             if ( stop == -1 )
                 throw new TemplateException( "Missing right token delimiter." );
 
             var innerValue = value[..stop];
-            value = value[(stop + TokenRight.Length)..];
+            value = value[(stop + _tokenRight.Length)..];
 
             // process token
             var innerToken = TokenParser.ParseToken( innerValue, state.NextTokenId++ );
@@ -440,7 +388,7 @@ public class TemplateParser
 
             // find next token start
 
-            start = !value.IsEmpty ? value.IndexOfIgnoreEscaped( TokenLeft ) : -1;
+            start = !value.IsEmpty ? value.IndexOfIgnoreEscaped( _tokenLeft ) : -1;
 
             if ( start == -1 && !value.IsEmpty && state.Frames.IsTruthy )
                 writer.Write( value );
@@ -458,19 +406,21 @@ public class TemplateParser
         public int BraceCount = 0;
     }
 
-    private static int IndexOfIgnoreContent( ReadOnlySpan<char> span, ReadOnlySpan<char> value )
+    private int IndexOfIgnoreQuotedContent( ReadOnlySpan<char> span, ReadOnlySpan<char> value )
     {
         IndexOfState state = default;
-        return IndexOfIgnoreContent( span, value, ref state );
+        return IndexOfIgnoreQuotedContent( span, value, ref state );
     }
 
-    private static int IndexOfIgnoreContent( ReadOnlySpan<char> span, ReadOnlySpan<char> value, ref IndexOfState state )
+    private int IndexOfIgnoreQuotedContent( ReadOnlySpan<char> span, ReadOnlySpan<char> value, ref IndexOfState state )
     {
-        // look for value pattern in span ignoring quoted strings and code expression braces
+        // Look for value pattern in span ignoring quoted strings and code expression braces
 
         const char quoteChar = '"';
+        var tokenLeftSpan = _tokenLeft.AsSpan();
+        var tokenRightSpan = _tokenRight.AsSpan();
 
-        var limit = span.Length - (value.Length - 1); // optimize end range 
+        var limit = span.Length - (value.Length - 1); // Optimize end range
 
         for ( var i = 0; i < limit; i++ )
         {
@@ -482,23 +432,48 @@ public class TemplateParser
                     state.Quoted = false;
 
                 state.Escape = c == '\\' && !state.Escape;
+                continue;
             }
-            else if ( c == quoteChar )
+
+            switch ( c )
             {
-                state.Quoted = true;
-                state.Escape = false;
-            }
-            else if ( c == '{' ) // we need to track braces to prevent 'false' end-of-token identification
-            {
-                state.BraceCount++;
-            }
-            else if ( c == '}' && state.BraceCount > 0 )
-            {
-                state.BraceCount--;
-            }
-            else if ( span[i..].StartsWith( value ) )
-            {
-                return i;
+                case quoteChar:
+                    state.Quoted = true;
+                    state.Escape = false;
+                    break;
+
+                case var _ when c == tokenLeftSpan[0]:
+                    switch ( tokenLeftSpan.Length )
+                    {
+                        case 1:
+                            state.BraceCount++;
+                            break;
+                        case 2 when i + 1 < span.Length && span[i + 1] == tokenLeftSpan[1]:
+                            state.BraceCount++;
+                            i++;
+                            break;
+                    }
+
+                    break;
+
+                case var _ when c == tokenRightSpan[0] && state.BraceCount > 0:
+                    switch ( tokenRightSpan.Length )
+                    {
+                        case 1:
+                            state.BraceCount--;
+                            break;
+                        case 2 when i + 1 < span.Length && span[i + 1] == tokenRightSpan[1]:
+                            state.BraceCount--;
+                            i++;
+                            break;
+                    }
+
+                    break;
+
+                default:
+                    if ( span[i..].StartsWith( value ) )
+                        return i;
+                    break;
             }
         }
 
@@ -508,9 +483,19 @@ public class TemplateParser
 
 // Minimal frame management for flow control
 
-internal sealed class TemplateStack
+internal sealed class TemplateState
 {
-    public record Frame( TokenDefinition Token, bool Truthy, IEnumerable<string> Iterator = null, int StartPos = -1 );
+    public FrameStack Frames { get; } = new();
+    public int NextTokenId { get; set; } = 1;
+    public int CurrentPos { get; set; }
+
+    public FrameStack.Frame CurrentFrame() =>
+        Frames.Depth > 0 ? Frames.Peek() : default;
+}
+
+internal sealed class FrameStack
+{
+    public record Frame( TokenDefinition Token, bool Truthy, IEnumerable<string> Iterator, int StartPos = -1 );
 
     private readonly Stack<Frame> _stack = new();
 
@@ -521,17 +506,10 @@ internal sealed class TemplateStack
     public void Pop() => _stack.Pop();
     public int Depth => _stack.Count;
 
-    public bool IsTokenType( TokenType compare ) => _stack.Count > 0 && _stack.Peek().Token.TokenType == compare;
+    public bool IsTokenType( TokenType compare )
+        => _stack.Count > 0 && _stack.Peek().Token.TokenType == compare;
+
     public bool IsTruthy => _stack.Count == 0 || _stack.Peek().Truthy;
     public bool IsFalsy => !IsTruthy;
-    public IEnumerable<string> Iterator { get; set; }
-
-}
-
-internal sealed class TemplateState
-{
-    public TemplateStack Frames { get; } = new();
-    public int NextTokenId { get; set; } = 1;
-    public int CurrentPos { get; set; }
-    public TemplateStack.Frame CurrentFrame() => Frames.Peek();
+    public IEnumerable<string> Iterator {get;set;}
 }

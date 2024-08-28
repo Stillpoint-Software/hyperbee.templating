@@ -1,51 +1,23 @@
-﻿using Hyperbee.Templating.Collections;
-using Hyperbee.Templating.Extensions;
+using Hyperbee.Templating.Configure;
+using Hyperbee.Templating.Core;
 
 namespace Hyperbee.Templating.Text;
 
-[Flags]
-internal enum TokenType
-{
-    None = 0x00,
-    Define = 0x01,
-    Value = 0x02,
-    If = 0x03,
-    Else = 0x04,
-    Endif = 0x05,
-
-    LoopStart = 0x10, // loop category
-    LoopEnd = 0x20,
-
-    While = 0x11,
-    EndWhile = 0x21,
-    Each = 0x12,
-    EndEach = 0x22
-}
-
-internal enum TokenEvaluation
-{
-    None,
-    Truthy,
-    Falsy,
-    Expression
-}
-
 internal class TokenParser
 {
-    private KeyValidator ValidateKey { get; }
-    private string TokenLeft { get; }
-    private string TokenRight { get; }
+    private readonly KeyValidator _validateKey;
+    private readonly string _tokenLeft;
+    private readonly string _tokenRight;
 
-    internal TokenParser( KeyValidator validator, string tokenLeft, string tokenRight )
+    internal TokenParser( TemplateOptions options )
     {
-        ValidateKey = validator ?? throw new ArgumentNullException( nameof( validator ) );
-        TokenLeft = tokenLeft ?? throw new ArgumentNullException( nameof( tokenLeft ) );
-        TokenRight = tokenRight ?? throw new ArgumentNullException( nameof( tokenRight ) );
+        _validateKey = options.Validator ?? throw new ArgumentNullException( nameof( options.Validator ) );
+        (_tokenLeft, _tokenRight) = options.TokenDelimiters();
     }
 
     public TokenDefinition ParseToken( ReadOnlySpan<char> token, int tokenId )
     {
-        // parse tokens like
+        // token syntax:
         //
         // {{token:definition}}
         //
@@ -58,8 +30,9 @@ internal class TokenParser
         // {{else}
         // {{/if}}
         //
-        // {{each}}
-        // {{/each}}
+        // {{while [!]token}}
+        // {{while x => x.token}}
+        // {{/while}}
 
         var span = token.Trim();
 
@@ -95,7 +68,7 @@ internal class TokenParser
                 if ( span.IsEmpty )
                     throw new TemplateException( "Invalid `if` statement. Missing identifier." );
 
-                if ( !isFatArrow && !ValidateKey( span ) )
+                if ( !isFatArrow && !_validateKey( span ) )
                     throw new TemplateException( "Invalid `if` statement. Invalid identifier in truthy expression." );
 
                 if ( bang && isFatArrow )
@@ -137,6 +110,59 @@ internal class TokenParser
             tokenType = TokenType.Endif;
         }
 
+        // while handling
+
+        if ( span.StartsWith( "while", StringComparison.OrdinalIgnoreCase ) )
+        {
+            if ( span.Length == 5 || char.IsWhiteSpace( span[5] ) )
+            {
+                tokenType = TokenType.While;
+                span = span[5..].Trim(); // eat the 'while'
+
+                // parse for bang
+                var bang = false;
+
+                if ( span[0] == '!' )
+                {
+                    bang = true;
+                    span = span[1..].Trim(); // eat the '!'
+                }
+
+                // detect expression syntax
+                var isFatArrow = span.IndexOfIgnoreDelimitedRanges( "=>", "\"" ) != -1;
+
+                // validate
+                if ( span.IsEmpty )
+                    throw new TemplateException( "Invalid `while` statement. Missing identifier." );
+
+                if ( !isFatArrow && !_validateKey( span ) )
+                    throw new TemplateException( "Invalid `while` statement. Invalid identifier in truthy expression." );
+
+                if ( bang && isFatArrow )
+                    throw new TemplateException( "Invalid `while` statement. The '!' operator is not supported for token expressions." );
+
+                // results
+                if ( isFatArrow )
+                {
+                    tokenEvaluation = TokenEvaluation.Expression;
+                    tokenExpression = span;
+                }
+                else
+                {
+                    tokenEvaluation = bang ? TokenEvaluation.Falsy : TokenEvaluation.Truthy;
+                    name = span;
+                }
+            }
+        }
+        else if ( span.StartsWith( "/while", StringComparison.OrdinalIgnoreCase ) )
+        {
+            if ( span.Length != 6 )
+                throw new TemplateException( "Invalid `/while` statement. Invalid characters." );
+
+            tokenType = TokenType.EndWhile;
+        }
+
+        // value handling
 
         // while handling
 
@@ -251,9 +277,9 @@ internal class TokenParser
                     tokenEvaluation = TokenEvaluation.Expression;
 
                     // Check and remove surrounding token delimiters (e.g., {{ and }})
-                    if ( tokenExpression.StartsWith( TokenLeft ) && tokenExpression.EndsWith( TokenRight ) )
+                    if ( tokenExpression.StartsWith( _tokenLeft ) && tokenExpression.EndsWith( _tokenRight ) )
                     {
-                        tokenExpression = tokenExpression[TokenLeft.Length..^TokenRight.Length].Trim();
+                        tokenExpression = tokenExpression[_tokenLeft.Length..^_tokenRight.Length].Trim();
                     }
                 }
             }
@@ -269,7 +295,7 @@ internal class TokenParser
             {
                 // identifier value
 
-                if ( !ValidateKey( span ) )
+                if ( !_validateKey( span ) )
                     throw new TemplateException( "Invalid token name." );
 
                 tokenType = TokenType.Value;

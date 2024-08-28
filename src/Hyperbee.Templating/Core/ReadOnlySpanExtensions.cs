@@ -1,8 +1,11 @@
 ﻿// FIX: Pulled from Hyperbee.Text.Extensions which is not OpenSource yet.
-// (WARNING: only subset of helpers)
-namespace Hyperbee.Templating.Extensions;
+// WARNING: only subset of helpers.
 
-public static class ReadOnlySpanExtensions
+// FIX: Pulled from Hyperbee.Text.Extensions which is not OpenSource yet.
+// WARNING: only subset of helpers.
+namespace Hyperbee.Templating.Core;
+
+internal static class ReadOnlySpanExtensions
 {
     public static int IndexOfIgnoreEscaped( this ReadOnlySpan<char> span, ReadOnlySpan<char> value )
     {
