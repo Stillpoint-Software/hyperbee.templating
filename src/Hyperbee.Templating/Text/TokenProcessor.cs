@@ -1,4 +1,4 @@
-using System.Globalization;
+﻿using System.Globalization;
 using Hyperbee.Templating.Compiler;
 using Hyperbee.Templating.Configure;
 
@@ -64,12 +64,13 @@ internal class TokenProcessor
 
             case TokenType.EndWhile:
                 return ProcessEndWhileToken( frames );
-          
+
             case TokenType.Each:
-                 //Fall through to resolve value.
-                 break;
+                //Fall through to resolve value.
+                break;
+
             case TokenType.EndEach:
-                 return ProcessEndEachToken(frames);
+                return ProcessEndEachToken( frames );
 
             case TokenType.Define:
                 return ProcessDefineToken( token );
@@ -81,7 +82,7 @@ internal class TokenProcessor
 
         // Resolve value
 
-        ResolveValue( token, out value, out var defined, out var ifResult, out var expressionError );
+        ResolveValue( token, out value, out var defined, out var ifResult, out IEnumerable<string> iterator, out var expressionError );
 
         // Frame handling: post-value processing
 
@@ -93,7 +94,7 @@ internal class TokenProcessor
                     var frameIsTruthy = token.TokenEvaluation == TokenEvaluation.Falsy ? !ifResult : ifResult;
                     var startPos = token.TokenType == TokenType.While ? state.CurrentPos : -1;
 
-                    frames.Push( token, frameIsTruthy, startPos );
+                    frames.Push( token, frameIsTruthy, null, startPos );
 
                     return TokenAction.Ignore;
                 }
@@ -169,26 +170,24 @@ internal class TokenProcessor
         return TokenAction.Ignore;
     }
 
-    private TokenAction ProcessEndEachToken(TemplateStack frames)
+    private TokenAction ProcessEndEachToken( FrameStack frames )
     {
-        if( frames.Depth ==0 || !frames.IsTokenType(TokenType.Each))
-             throw new TemplateException( "Syntax error. Invalie `/endEach` without matching `each`. ");
+        if ( frames.Depth == 0 || !frames.IsTokenType( TokenType.Each ) )
+            throw new TemplateException( "Syntax error. Invalid `/each` without matching `each`. " );
 
         var eachToken = frames.Peek().Token;
         string expressionError = null;
 
         var conditionIsTrue = eachToken.TokenEvaluation switch
         {
-            TokenEvaluation.Expression when TryInvokeTokenExpression( eachToken, out var expressionResult, out expressionError) =>
-               frames.Iterator = expressionResult.GetType().GetProperties().Select(prop => prop.GetValue(expressionResult)?.ToString).ToList,
+            TokenEvaluation.Expression when TryInvokeTokenExpression( eachToken, out var expressionResult, out expressionError ) => Convert.ToBoolean( expressionResult ),
+            TokenEvaluation.Expression => throw new TemplateException( $"{_tokenLeft}Error ({eachToken.Id}):{expressionError ?? "Error in each condition."}{_tokenRight}" ),
+            _ => Truthy( _members[eachToken.Name] ) // Re-evaluate the condition
 
-            TokenEvaluation.Expression => throw new TemplateException( $"{_tokenLeft}Error ({eachToken.Id}):{expressionError ?? "Error in each condition."}{_tokenRight}"),
-            _=> TemplateHelper.Truthy(_tokens[eachToken.Name]) // re-evaluated the condition
-               
         };
 
-        if(conditionIsTrue) // If the condition is true, replay the each block
-            return TokenAction.Loop;
+        if ( conditionIsTrue ) // If the condition is true, replay the each block
+            return TokenAction.ContinueLoop;
 
         //Otherwise, pop the frame and exit the loop
         frames.Pop();
@@ -211,11 +210,12 @@ internal class TokenProcessor
         return TokenAction.Ignore;
     }
 
-    private void ResolveValue( TokenDefinition token, out string value, out bool defined, out bool ifResult, out string expressionError )
+    private void ResolveValue( TokenDefinition token, out string value, out bool defined, out bool ifResult, out IEnumerable<string> iterator, out string expressionError )
     {
         value = default;
         defined = false;
         ifResult = false;
+        iterator = null;
         expressionError = null;
 
         switch ( token.TokenType )
@@ -223,7 +223,7 @@ internal class TokenProcessor
             case TokenType.Value when token.TokenEvaluation != TokenEvaluation.Expression:
             case TokenType.If when token.TokenEvaluation != TokenEvaluation.Expression:
             case TokenType.While when token.TokenEvaluation != TokenEvaluation.Expression:
-            case TokenType.Each When token.TokenEvaluation != TokenEvaluation.Expression:
+            case TokenType.Each when token.TokenEvaluation != TokenEvaluation.Expression:
                 defined = _members.TryGetValue( token.Name, out value );
 
                 if ( !defined && _substituteEnvironmentVariables )
@@ -253,14 +253,15 @@ internal class TokenProcessor
                     throw new TemplateException( $"{_tokenLeft}Error ({token.Id}):{error ?? "Error in if condition."}{_tokenRight}" );
                 break;
             case TokenType.Each when token.TokenEvaluation == TokenEvaluation.Expression:
-              if( TryInvokeTokenExpression (token, out var eachExprResult, out var errorEach))
-              {
-                var results = (string) eachExprResult;
-                iterator = results.Split(',').Select(v=> v.Trim());
-              }
-              else  
-                throw new TemplateException( $"{_tokenLeft}Error ({token.Id}):{errorEach ?? "Error in each condition."}{_tokenRight}");
+                if ( TryInvokeTokenExpression( token, out var eachExprResult, out var errorEach ) )
+                {
+                    var results = (string) eachExprResult;
+                    iterator = results.Split( ',' ).Select( v => v.Trim() );
+                }
+                else
+                    throw new TemplateException( $"{_tokenLeft}Error ({token.Id}):{errorEach ?? "Error in each condition."}{_tokenRight}" );
                 break;
+
         }
     }
 

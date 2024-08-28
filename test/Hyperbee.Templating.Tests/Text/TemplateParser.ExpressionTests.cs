@@ -1,4 +1,4 @@
-using Hyperbee.Templating.Tests.TestSupport;
+﻿using Hyperbee.Templating.Tests.TestSupport;
 using Hyperbee.Templating.Text;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
@@ -16,7 +16,7 @@ public class TemplateParserExpressionTests
         const string expression = "{{while x => int.Parse(x.counter) < 3}}{{counter}}{{counter:{{x => int.Parse(x.counter) + 1}}}}{{/while}}";
         const string template = $"count: {expression}.";
 
-        var parser = new TemplateParser { Tokens = { ["counter"] = "0" } };
+        var parser = new TemplateParser { Variables = { ["counter"] = "0" } };
 
         // act
         var result = parser.Render( template, parseMethod );
@@ -48,13 +48,7 @@ public class TemplateParserExpressionTests
 
         const string template = $"hello {expression}.";
 
-        var parser = new TemplateParser
-        {
-            Variables =
-            {
-                ["choice"] = "2"
-            }
-        };
+        var parser = new TemplateParser { Variables = { ["choice"] = "2" } };
 
         // act
 
@@ -111,13 +105,7 @@ public class TemplateParserExpressionTests
 
         const string template = $"{definition}hello {expression}.";
 
-        var parser = new TemplateParser
-        {
-            Variables =
-            {
-                ["choice"] = "2"
-            }
-        };
+        var parser = new TemplateParser { Variables = { ["choice"] = "2" } };
 
         // act
         var result = parser.Render( template, parseMethod );
@@ -129,6 +117,7 @@ public class TemplateParserExpressionTests
 
         Assert.AreEqual( expected, result );
     }
+
     [DataTestMethod]
 
     [DataRow( ParseTemplateMethod.Buffered )]
@@ -140,18 +129,15 @@ public class TemplateParserExpressionTests
 
         const string template = $"hello {expression}.";
         {
-        var parser = new TemplateParser
-            Tokens = {
-            }
-                ["list"] = "1,2,3"
-        };
+            var parser = new TemplateParser { Variables = { ["list"] = "1,2,3" } };
 
-        var result = parser.Render( template, parseMethod );
-        // act
+            var result = parser.Render( template, parseMethod );
+            // act
 
-        // assert
-        var expected = "hello World 1,World 2,World 3,.";
+            // assert
+            var expected = "hello World 1,World 2,World 3,.";
 
-        Assert.AreEqual( expected, result );
+            Assert.AreEqual( expected, result );
+        }
     }
 }

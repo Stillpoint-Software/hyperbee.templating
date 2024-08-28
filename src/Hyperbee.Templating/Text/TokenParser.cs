@@ -1,4 +1,4 @@
-using Hyperbee.Templating.Configure;
+﻿using Hyperbee.Templating.Configure;
 using Hyperbee.Templating.Core;
 
 namespace Hyperbee.Templating.Text;
@@ -189,7 +189,7 @@ internal class TokenParser
                 if ( span.IsEmpty )
                     throw new TemplateException( "Invalid `while` statement. Missing identifier." );
 
-                if ( !isFatArrow && !ValidateKey( span ) )
+                if ( !isFatArrow && !_validateKey( span ) )
                     throw new TemplateException( "Invalid `while` statement. Invalid identifier in truthy expression." );
 
                 if ( bang && isFatArrow )
@@ -233,7 +233,7 @@ internal class TokenParser
                 if ( span.IsEmpty )
                     throw new TemplateException( "Invalid `each` statement. Missing identifier." );
 
-                if ( !isFatArrow && !ValidateKey( span ) )
+                if ( !isFatArrow && !_validateKey( span ) )
                     throw new TemplateException( "Invalid `each` statement. Invalid identifier in truthy expression." );
 
                 // results
