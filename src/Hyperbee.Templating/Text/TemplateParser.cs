@@ -1,4 +1,4 @@
-using System.Buffers;
+﻿using System.Buffers;
 using Hyperbee.Templating.Compiler;
 using Hyperbee.Templating.Configure;
 using Hyperbee.Templating.Core;
