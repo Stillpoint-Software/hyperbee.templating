@@ -33,6 +33,10 @@ internal class TokenParser
         // {{while [!]token}}
         // {{while x => x.token}}
         // {{/while}}
+        //
+        // {{each [!]token}}
+        // {{each x => x.token}}
+        // {{/each}}
 
         var span = token.Trim();
 
@@ -162,65 +166,9 @@ internal class TokenParser
             tokenType = TokenType.EndWhile;
         }
 
-        // value handling
-
-        // while handling
-
-        if ( span.StartsWith( "while", StringComparison.OrdinalIgnoreCase ) )
-        {
-            if ( span.Length == 5 || char.IsWhiteSpace( span[5] ) )
-            {
-                tokenType = TokenType.While;
-                span = span[5..].Trim(); // eat the 'while'
-
-                // parse for bang
-                var bang = false;
-
-                if ( span[0] == '!' )
-                {
-                    bang = true;
-                    span = span[1..].Trim(); // eat the '!'
-                }
-
-                // detect expression syntax
-                var isFatArrow = span.IndexOfIgnoreDelimitedRanges( "=>", "\"" ) != -1;
-
-                // validate
-                if ( span.IsEmpty )
-                    throw new TemplateException( "Invalid `while` statement. Missing identifier." );
-
-                if ( !isFatArrow && !_validateKey( span ) )
-                    throw new TemplateException( "Invalid `while` statement. Invalid identifier in truthy expression." );
-
-                if ( bang && isFatArrow )
-                    throw new TemplateException( "Invalid `while` statement. The '!' operator is not supported for token expressions." );
-
-                // results
-                if ( isFatArrow )
-                {
-                    tokenEvaluation = TokenEvaluation.Expression;
-                    tokenExpression = span;
-                }
-                else
-                {
-                    tokenEvaluation = bang ? TokenEvaluation.Falsy : TokenEvaluation.Truthy;
-                    name = span;
-                }
-            }
-        }
-        else if ( span.StartsWith( "/while", StringComparison.OrdinalIgnoreCase ) )
-        {
-            if ( span.Length != 6 )
-                throw new TemplateException( "Invalid `/while` statement. Invalid characters." );
-
-            tokenType = TokenType.EndWhile;
-        }
-
         // each handling
         if ( span.StartsWith( "each", StringComparison.OrdinalIgnoreCase ) )
         {
-            //TODO: AF
-
             tokenType = TokenType.Each;
             span = span[4..].Trim(); // eat the 'each'
 
@@ -256,8 +204,6 @@ internal class TokenParser
 
             tokenType = TokenType.EndEach;
         }
-
-
 
         if ( tokenType == TokenType.None )
         {

@@ -98,6 +98,14 @@ internal class TokenProcessor
 
                     return TokenAction.Ignore;
                 }
+            case TokenType.Each:
+                {
+                    var startPos = token.TokenType == TokenType.Each ? state.CurrentPos : -1;
+
+                    frames.Push( token, false, iterator, startPos );
+
+                    return TokenAction.ContinueLoop;
+                }
         }
 
         // Token handling: user-defined token action
@@ -180,14 +188,14 @@ internal class TokenProcessor
 
         var conditionIsTrue = eachToken.TokenEvaluation switch
         {
-            TokenEvaluation.Expression when TryInvokeTokenExpression( eachToken, out var expressionResult, out expressionError ) => Convert.ToBoolean( expressionResult ),
+            TokenEvaluation.Expression when TryInvokeTokenExpression( eachToken, out var expressionResult, out expressionError ) => expressionResult,
             TokenEvaluation.Expression => throw new TemplateException( $"{_tokenLeft}Error ({eachToken.Id}):{expressionError ?? "Error in each condition."}{_tokenRight}" ),
             _ => Truthy( _members[eachToken.Name] ) // Re-evaluate the condition
 
         };
 
-        if ( conditionIsTrue ) // If the condition is true, replay the each block
-            return TokenAction.ContinueLoop;
+        if ( conditionIsTrue != null ) // If the condition is true, replay the each block
+            return TokenAction.Ignore;
 
         //Otherwise, pop the frame and exit the loop
         frames.Pop();
