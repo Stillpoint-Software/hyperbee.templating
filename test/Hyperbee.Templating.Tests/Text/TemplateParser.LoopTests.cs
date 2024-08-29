@@ -32,4 +32,26 @@ public class TemplateParserLoopTests
 
         Assert.AreEqual( expected, result );
     }
+
+    [DataTestMethod]
+    [DataRow( ParseTemplateMethod.Buffered )]
+    [DataRow( ParseTemplateMethod.InMemory )]
+    public void Should_honor_each_expression( ParseTemplateMethod parseMethod )
+    {
+        // arrange
+        const string expression = "{{each x=>x.list}}World {{i}},{{/each}}";
+
+        const string template = $"hello {expression}.";
+        {
+            var parser = new TemplateParser { Variables = { ["list"] = "1,2,3" } };
+
+            var result = parser.Render( template, parseMethod );
+            // act
+
+            // assert
+            var expected = "hello World 1,World 2,World 3,.";
+
+            Assert.AreEqual( expected, result );
+        }
+    }
 }
