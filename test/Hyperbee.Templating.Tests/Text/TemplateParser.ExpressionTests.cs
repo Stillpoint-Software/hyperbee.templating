@@ -9,6 +9,27 @@ public class TemplateParserExpressionTests
 {
     [DataTestMethod]
     [DataRow( ParseTemplateMethod.Buffered )]
+    //[DataRow( ParseTemplateMethod.InMemory )]
+    public void Should_honor_while_condition( ParseTemplateMethod parseMethod )
+    {
+        // arrange
+        const string expression = "{{while x => int.Parse(x.counter) < 3}}{{counter}}{{counter:{{x => int.Parse(x.counter) + 1}}}}{{/while}}";
+        const string template = $"count: {expression}.";
+
+        var parser = new TemplateParser { Variables = { ["counter"] = "0" } };
+
+        // act
+        var result = parser.Render( template, parseMethod );
+
+        // assert
+        var expected = "count: 012.";
+
+        Assert.AreEqual( expected, result );
+    }
+
+
+    [DataTestMethod]
+    [DataRow( ParseTemplateMethod.Buffered )]
     [DataRow( ParseTemplateMethod.InMemory )]
     public void Should_honor_block_expression( ParseTemplateMethod parseMethod )
     {
@@ -27,13 +48,7 @@ public class TemplateParserExpressionTests
 
         const string template = $"hello {expression}.";
 
-        var parser = new TemplateParser
-        {
-            Variables =
-            {
-                ["choice"] = "2"
-            }
-        };
+        var parser = new TemplateParser { Variables = { ["choice"] = "2" } };
 
         // act
 
@@ -90,13 +105,7 @@ public class TemplateParserExpressionTests
 
         const string template = $"{definition}hello {expression}.";
 
-        var parser = new TemplateParser
-        {
-            Variables =
-            {
-                ["choice"] = "2"
-            }
-        };
+        var parser = new TemplateParser { Variables = { ["choice"] = "2" } };
 
         // act
         var result = parser.Render( template, parseMethod );
@@ -108,4 +117,5 @@ public class TemplateParserExpressionTests
 
         Assert.AreEqual( expected, result );
     }
+
 }

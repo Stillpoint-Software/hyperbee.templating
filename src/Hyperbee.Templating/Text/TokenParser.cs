@@ -33,13 +33,16 @@ internal class TokenParser
         // {{while [!]token}}
         // {{while x => x.token}}
         // {{/while}}
+        //
+        // {{each [!]token}}
+        // {{each x => x.token}}
+        // {{/each}}
 
         var span = token.Trim();
 
         var tokenType = TokenType.None;
         var tokenEvaluation = TokenEvaluation.None;
         var tokenExpression = ReadOnlySpan<char>.Empty;
-
         var name = ReadOnlySpan<char>.Empty;
 
         // if handling
@@ -163,7 +166,44 @@ internal class TokenParser
             tokenType = TokenType.EndWhile;
         }
 
-        // value handling
+        // each handling
+        if ( span.StartsWith( "each", StringComparison.OrdinalIgnoreCase ) )
+        {
+            tokenType = TokenType.Each;
+            span = span[4..].Trim(); // eat the 'each'
+
+            if ( span.Length >= 4 )
+            {
+                // detect expression syntax
+                var isFatArrow = span.IndexOfIgnoreDelimitedRanges( "=>", "\"" ) != -1;
+
+                // validate
+                if ( span.IsEmpty )
+                    throw new TemplateException( "Invalid `each` statement. Missing identifier." );
+
+                if ( !isFatArrow && !_validateKey( span ) )
+                    throw new TemplateException( "Invalid `each` statement. Invalid identifier in expression." );
+
+                // results
+                if ( isFatArrow )
+                {
+                    tokenEvaluation = TokenEvaluation.Expression;
+                    tokenExpression = span; //x=>x.list
+                }
+                else
+                {
+                    tokenEvaluation = TokenEvaluation.Falsy;
+                    name = span;
+                }
+            }
+        }
+        else if ( span.StartsWith( "/each", StringComparison.OrdinalIgnoreCase ) )
+        {
+            if ( span.Length != 5 )
+                throw new TemplateException( "Invalid `/each` statement. Invalid characters." );
+
+            tokenType = TokenType.EndEach;
+        }
 
         if ( tokenType == TokenType.None )
         {

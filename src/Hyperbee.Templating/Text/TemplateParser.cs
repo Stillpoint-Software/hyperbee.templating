@@ -45,7 +45,6 @@ public class TemplateParser
     }
 
     // Render - all the ways
-
     public void Render( string templateFile, string outputFile )
     {
         using var reader = new StreamReader( templateFile );
@@ -361,7 +360,6 @@ public class TemplateParser
         }
 
         // nested token processing
-
         do
         {
             // write any leading literal
@@ -382,7 +380,6 @@ public class TemplateParser
             value = value[(stop + _tokenRight.Length)..];
 
             // process token
-
             var innerToken = TokenParser.ParseToken( innerValue, state.NextTokenId++ );
             tokenAction = TokenProcessor.ProcessToken( innerToken, state, out var tokenValue );
 
@@ -398,6 +395,7 @@ public class TemplateParser
 
         } while ( start != -1 );
     }
+
 
     // IndexOf helper
 
@@ -490,19 +488,18 @@ internal sealed class TemplateState
     public FrameStack Frames { get; } = new();
     public int NextTokenId { get; set; } = 1;
     public int CurrentPos { get; set; }
-
     public FrameStack.Frame CurrentFrame() =>
         Frames.Depth > 0 ? Frames.Peek() : default;
 }
 
 internal sealed class FrameStack
 {
-    public record Frame( TokenDefinition Token, bool Truthy, int StartPos = -1 );
+    public record Frame( TokenDefinition Token, bool Truthy, IEnumerator<string> Enumerator, int StartPos = -1 );
 
     private readonly Stack<Frame> _stack = new();
 
-    public void Push( TokenDefinition token, bool truthy, int startPos = -1 )
-        => _stack.Push( new Frame( token, truthy, startPos ) );
+    public void Push( TokenDefinition token, bool truthy, IEnumerator<string> enumerator, int startPos = -1 )
+        => _stack.Push( new Frame( token, truthy, enumerator, startPos ) );
 
     public Frame Peek() => _stack.Peek();
     public void Pop() => _stack.Pop();
