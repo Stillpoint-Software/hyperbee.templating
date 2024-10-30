@@ -101,10 +101,8 @@ internal class TokenProcessor
             case TokenType.Each:
                 {
                     var startPos = token.TokenType == TokenType.Each ? state.CurrentPos : -1;
-
-                    frames.Push( token, false, iterator, startPos );
-
-                    return TokenAction.ContinueLoop;
+                    frames.Push( token, false, null, startPos );
+                    return TokenAction.Ignore;
                 }
         }
 
@@ -136,7 +134,7 @@ internal class TokenProcessor
         if ( !frames.IsTokenType( TokenType.If ) )
             throw new TemplateException( "Syntax error. Invalid `else` without matching `if`." );
 
-        frames.Push( token, !frames.IsTruthy );
+        frames.Push( token, !frames.IsTruthy, null );
         return TokenAction.Ignore;
     }
 
@@ -184,23 +182,41 @@ internal class TokenProcessor
             throw new TemplateException( "Syntax error. Invalid `/each` without matching `each`. " );
 
         var eachToken = frames.Peek().Token;
-        string expressionError = null;
 
-        var conditionIsTrue = eachToken.TokenEvaluation switch
+        var currentFrame = frames.Peek();
+        if ( currentFrame.Enumerator == null )
         {
-            TokenEvaluation.Expression when TryInvokeTokenExpression( eachToken, out var expressionResult, out expressionError ) => expressionResult,
-            TokenEvaluation.Expression => throw new TemplateException( $"{_tokenLeft}Error ({eachToken.Id}):{expressionError ?? "Error in each condition."}{_tokenRight}" ),
-            _ => Truthy( _members[eachToken.Name] ) // Re-evaluate the condition
+            string expressionError = null;
+            var values = eachToken.TokenEvaluation switch
+            {
+                TokenEvaluation.Expression when TryInvokeTokenExpression( eachToken, out var expressionResult, out expressionError ) =>
+                    expressionResult.ToString()!.Split( ',' ).Select( v => v.Trim() ),
+                TokenEvaluation.Expression => throw new TemplateException( $"{_tokenLeft}Error ({eachToken.Id}):{expressionError ?? "Error in each condition."}{_tokenRight}" ),
+                _ => _members[eachToken.Name].Split( ',' ).Select( v => v.Trim() )
+            };
 
-        };
+            currentFrame = currentFrame with { Enumerator = values.GetEnumerator() };
+            frames.Push( currentFrame.Token, currentFrame.Truthy, currentFrame.Enumerator, currentFrame.StartPos );
+            return TokenAction.ContinueLoop;
 
-        if ( conditionIsTrue != null ) // If the condition is true, replay the each block
-            return TokenAction.Ignore;
+        }
+
+        // Iterate over the collection
+        var items = currentFrame.Enumerator;
+        while ( items.MoveNext() )
+        {
+            var item = items.Current;
+            _members.Add( "x", item );
+            frames.Push( currentFrame.Token, true, currentFrame.Enumerator, currentFrame.StartPos );
+            return TokenAction.ContinueLoop;
+        }
 
         //Otherwise, pop the frame and exit the loop
         frames.Pop();
         return TokenAction.Ignore;
     }
+
+
 
     private TokenAction ProcessDefineToken( TokenDefinition token )
     {
@@ -240,7 +256,7 @@ internal class TokenProcessor
                     defined = value != null;
                 }
 
-                if ( token.TokenType == TokenType.If || token.TokenType == TokenType.While )
+                if ( token.TokenType == TokenType.If || token.TokenType == TokenType.While || token.TokenType == TokenType.Each )
                     ifResult = defined && Truthy( value );
                 break;
 

@@ -488,19 +488,18 @@ internal sealed class TemplateState
     public FrameStack Frames { get; } = new();
     public int NextTokenId { get; set; } = 1;
     public int CurrentPos { get; set; }
-
     public FrameStack.Frame CurrentFrame() =>
         Frames.Depth > 0 ? Frames.Peek() : default;
 }
 
 internal sealed class FrameStack
 {
-    public record Frame( TokenDefinition Token, bool Truthy, IEnumerable<string> Iterator, int StartPos = -1 );
+    public record Frame( TokenDefinition Token, bool Truthy, IEnumerator<string> Enumerator, int StartPos = -1 );
 
     private readonly Stack<Frame> _stack = new();
 
-    public void Push( TokenDefinition token, bool truthy, IEnumerable<string> iterator = null, int startPos = -1 )
-        => _stack.Push( new Frame( token, truthy, iterator, startPos ) );
+    public void Push( TokenDefinition token, bool truthy, IEnumerator<string> enumerator, int startPos = -1 )
+        => _stack.Push( new Frame( token, truthy, enumerator, startPos ) );
 
     public Frame Peek() => _stack.Peek();
     public void Pop() => _stack.Pop();

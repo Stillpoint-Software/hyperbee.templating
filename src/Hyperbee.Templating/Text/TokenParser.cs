@@ -182,7 +182,7 @@ internal class TokenParser
                     throw new TemplateException( "Invalid `each` statement. Missing identifier." );
 
                 if ( !isFatArrow && !_validateKey( span ) )
-                    throw new TemplateException( "Invalid `each` statement. Invalid identifier in truthy expression." );
+                    throw new TemplateException( "Invalid `each` statement. Invalid identifier in expression." );
 
                 // results
                 if ( isFatArrow )
