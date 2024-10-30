@@ -196,7 +196,7 @@ internal class TokenProcessor
             };
 
             currentFrame = currentFrame with { Enumerator = values.GetEnumerator() };
-            frames.Push( currentFrame.Token, currentFrame.Truthy, currentFrame.Enumerator, currentFrame.StartPos );
+            frames.Push( currentFrame.Token, true, currentFrame.Enumerator, currentFrame.StartPos );
             return TokenAction.ContinueLoop;
 
         }
