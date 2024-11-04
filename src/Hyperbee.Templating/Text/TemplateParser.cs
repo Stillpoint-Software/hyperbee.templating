@@ -494,11 +494,13 @@ internal sealed class TemplateState
 
 internal sealed class FrameStack
 {
-    public record Frame( TokenDefinition Token, bool Truthy, IEnumerator<string> Enumerator, int StartPos = -1 );
+    // Updated Frame to include an IEnumerator<string>
+    public record Frame( TokenDefinition Token, bool Truthy, IEnumerator<string> Enumerator = null, int StartPos = -1 );
 
     private readonly Stack<Frame> _stack = new();
 
-    public void Push( TokenDefinition token, bool truthy, IEnumerator<string> enumerator, int startPos = -1 )
+    // Updated Push method to accept an IEnumerator<string> parameter
+    public void Push( TokenDefinition token, bool truthy, IEnumerator<string> enumerator = null, int startPos = -1 )
         => _stack.Push( new Frame( token, truthy, enumerator, startPos ) );
 
     public Frame Peek() => _stack.Peek();

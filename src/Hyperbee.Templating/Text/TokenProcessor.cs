@@ -82,7 +82,7 @@ internal class TokenProcessor
 
         // Resolve value
 
-        ResolveValue( token, out value, out var defined, out var ifResult, out IEnumerable<string> iterator, out var expressionError );
+        ResolveValue( token, out value, out var defined, out var ifResult, out IEnumerable<string> enumerator, out var expressionError );
 
         // Frame handling: post-value processing
 
@@ -100,8 +100,11 @@ internal class TokenProcessor
                 }
             case TokenType.Each:
                 {
+                    var result = enumerator.GetEnumerator();
                     var startPos = token.TokenType == TokenType.Each ? state.CurrentPos : -1;
-                    frames.Push( token, false, null, startPos );
+
+                    frames.Push( token, true, result, startPos );
+
                     return TokenAction.Ignore;
                 }
         }
@@ -134,7 +137,7 @@ internal class TokenProcessor
         if ( !frames.IsTokenType( TokenType.If ) )
             throw new TemplateException( "Syntax error. Invalid `else` without matching `if`." );
 
-        frames.Push( token, !frames.IsTruthy, null );
+        frames.Push( token, !frames.IsTruthy );
         return TokenAction.Ignore;
     }
 
@@ -182,40 +185,30 @@ internal class TokenProcessor
             throw new TemplateException( "Syntax error. Invalid `/each` without matching `each`. " );
 
         var eachToken = frames.Peek().Token;
-
         var currentFrame = frames.Peek();
-        if ( currentFrame.Enumerator == null )
+
+        string expressionError = null;
+
+        var conditionIsTrue = eachToken.TokenEvaluation switch
         {
-            string expressionError = null;
-            var values = eachToken.TokenEvaluation switch
-            {
-                TokenEvaluation.Expression when TryInvokeTokenExpression( eachToken, out var expressionResult, out expressionError ) =>
-                    expressionResult.ToString()!.Split( ',' ).Select( v => v.Trim() ),
-                TokenEvaluation.Expression => throw new TemplateException( $"{_tokenLeft}Error ({eachToken.Id}):{expressionError ?? "Error in each condition."}{_tokenRight}" ),
-                _ => _members[eachToken.Name].Split( ',' ).Select( v => v.Trim() )
-            };
+            TokenEvaluation.Expression when TryInvokeTokenExpression( eachToken, out var expressionResult, out expressionError ) =>
+                expressionResult.ToString()!.Split( ',' ).Select( v => v.Trim() ).Any(),
+            TokenEvaluation.Expression => throw new TemplateException( $"{_tokenLeft}Error ({eachToken.Id}):{expressionError ?? "Error in while condition."}{_tokenRight}" ),
+            _ => Truthy( _members[eachToken.Name] ) // Re-evaluate the condition
+        };
 
-            currentFrame = currentFrame with { Enumerator = values.GetEnumerator() };
-            frames.Push( currentFrame.Token, true, currentFrame.Enumerator, currentFrame.StartPos );
-            return TokenAction.ContinueLoop;
-
-        }
-
-        // Iterate over the collection
-        var items = currentFrame.Enumerator;
-        while ( items.MoveNext() )
+        if ( conditionIsTrue && currentFrame.Enumerator.MoveNext() && currentFrame.Enumerator.Current != null )
         {
-            var item = items.Current;
-            _members.Add( "x", item );
-            frames.Push( currentFrame.Token, true, currentFrame.Enumerator, currentFrame.StartPos );
+            _members["x"] = currentFrame.Enumerator.Current;
             return TokenAction.ContinueLoop;
         }
+
+
 
         //Otherwise, pop the frame and exit the loop
         frames.Pop();
         return TokenAction.Ignore;
     }
-
 
 
     private TokenAction ProcessDefineToken( TokenDefinition token )
@@ -234,12 +227,12 @@ internal class TokenProcessor
         return TokenAction.Ignore;
     }
 
-    private void ResolveValue( TokenDefinition token, out string value, out bool defined, out bool ifResult, out IEnumerable<string> iterator, out string expressionError )
+    private void ResolveValue( TokenDefinition token, out string value, out bool defined, out bool ifResult, out IEnumerable<string> enumerator, out string expressionError )
     {
         value = default;
         defined = false;
         ifResult = false;
-        iterator = null;
+        enumerator = null;
         expressionError = null;
 
         switch ( token.TokenType )
@@ -280,7 +273,7 @@ internal class TokenProcessor
                 if ( TryInvokeTokenExpression( token, out var eachExprResult, out var errorEach ) )
                 {
                     var results = (string) eachExprResult;
-                    iterator = results.Split( ',' ).Select( v => v.Trim() );
+                    enumerator = results.Split( ',' ).Select( v => v.Trim() );
                 }
                 else
                     throw new TemplateException( $"{_tokenLeft}Error ({token.Id}):{errorEach ?? "Error in each condition."}{_tokenRight}" );
