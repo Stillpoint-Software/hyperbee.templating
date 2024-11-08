@@ -66,14 +66,14 @@ internal class TokenProcessor
                 return ProcessEndWhileToken( frames );
 
             case TokenType.Each:
-                //Fall through to resolve value.
+                // Fall through to resolve value.
                 break;
 
             case TokenType.EndEach:
                 return ProcessEndEachToken( frames );
 
             case TokenType.Define:
-                return ProcessDefineToken( token );
+                return ProcessDefineToken( token ); //inserts value
 
             case TokenType.None:
             default:
@@ -82,7 +82,7 @@ internal class TokenProcessor
 
         // Resolve value
 
-        ResolveValue( token, out value, out var defined, out var ifResult, out IEnumerable<string> enumerator, out var expressionError );
+        ResolveValue( token, out value, out var defined, out var ifResult, out var expressionError );
 
         // Frame handling: post-value processing
 
@@ -100,10 +100,13 @@ internal class TokenProcessor
                 }
             case TokenType.Each:
                 {
-                    var result = enumerator.GetEnumerator();
+                    //AF
+                    var enumerator = value.Split( "," ).AsEnumerable().GetEnumerator();
+                    var enumeratorDefinition = new FrameStack.EnumeratorDefinition( Name: token.Name, Enumerator: enumerator );
+
                     var startPos = token.TokenType == TokenType.Each ? state.CurrentPos : -1;
 
-                    frames.Push( token, true, result, startPos );
+                    frames.Push( token, false, enumeratorDefinition, state.CurrentPos ); //AF set value to name
 
                     return TokenAction.Ignore;
                 }
@@ -197,19 +200,17 @@ internal class TokenProcessor
             _ => Truthy( _members[eachToken.Name] ) // Re-evaluate the condition
         };
 
-        if ( conditionIsTrue && currentFrame.Enumerator.MoveNext() && currentFrame.Enumerator.Current != null )
+        //AF Adding enumerator to the members
+        if ( conditionIsTrue && currentFrame.EnumeratorDefinition.Enumerator.MoveNext() && currentFrame.EnumeratorDefinition.Enumerator.Current != null )
         {
-            _members["x"] = currentFrame.Enumerator.Current;
+            _members[currentFrame.EnumeratorDefinition.Name] = currentFrame.EnumeratorDefinition.Enumerator.Current;
             return TokenAction.ContinueLoop;
         }
-
-
 
         //Otherwise, pop the frame and exit the loop
         frames.Pop();
         return TokenAction.Ignore;
     }
-
 
     private TokenAction ProcessDefineToken( TokenDefinition token )
     {
@@ -224,15 +225,16 @@ internal class TokenProcessor
                 => throw new TemplateException( $"Error evaluating define expression for {token.Name}: {expressionError}" ),
             _ => token.TokenExpression
         };
+
+
         return TokenAction.Ignore;
     }
 
-    private void ResolveValue( TokenDefinition token, out string value, out bool defined, out bool ifResult, out IEnumerable<string> enumerator, out string expressionError )
+    private void ResolveValue( TokenDefinition token, out string value, out bool defined, out bool ifResult, out string expressionError )
     {
         value = default;
         defined = false;
         ifResult = false;
-        enumerator = null;
         expressionError = null;
 
         switch ( token.TokenType )
@@ -272,18 +274,18 @@ internal class TokenProcessor
             case TokenType.Each when token.TokenEvaluation == TokenEvaluation.Expression:
                 if ( TryInvokeTokenExpression( token, out var eachExprResult, out var errorEach ) )
                 {
-                    var results = (string) eachExprResult;
-                    enumerator = results.Split( ',' ).Select( v => v.Trim() );
+                    value = (string) eachExprResult;
+                    //enumerator = results.Split( ',' ).Select( v => v.Trim() );
                 }
                 else
                     throw new TemplateException( $"{_tokenLeft}Error ({token.Id}):{errorEach ?? "Error in each condition."}{_tokenRight}" );
                 break;
-
         }
     }
 
     private bool TryInvokeTokenHandler( TokenDefinition token, bool defined, ref string value, out TokenAction tokenAction )
     {
+
         tokenAction = defined ? TokenAction.Replace : (_ignoreMissingTokens ? TokenAction.Ignore : TokenAction.Error);
 
         // Invoke any token handler

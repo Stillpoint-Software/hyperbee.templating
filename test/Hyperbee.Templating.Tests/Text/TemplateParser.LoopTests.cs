@@ -39,7 +39,9 @@ public class TemplateParserLoopTests
     public void Should_honor_each_expression( ParseTemplateMethod parseMethod )
     {
         // arrange
-        const string expression = "{{each x=>x.list}}World {{x}},{{/each}}";
+        //AF original expression
+        //const string expression = "{{each x=>x.list}}World {{x}},{{/each}}";
+        const string expression = "{{each n:x => x.list}}World {{n}},{{/each}}";
 
         const string template = $"hello {expression}.";
         {

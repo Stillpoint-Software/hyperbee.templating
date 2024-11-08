@@ -19,7 +19,6 @@ public class TemplateParser
     private readonly int _maxTokenDepth;
     private readonly string _tokenLeft;
     private readonly string _tokenRight;
-
     private enum TemplateScanner
     {
         Text,
@@ -253,6 +252,7 @@ public class TemplateParser
                                         WriteTokenValue( writer, tokenValue, tokenAction, state );
 
                                     ignore = state.Frames.IsFalsy;
+
                                     continue;
                                 }
 
@@ -494,14 +494,14 @@ internal sealed class TemplateState
 
 internal sealed class FrameStack
 {
-    // Updated Frame to include an IEnumerator<string>
-    public record Frame( TokenDefinition Token, bool Truthy, IEnumerator<string> Enumerator = null, int StartPos = -1 );
+    public record Frame( TokenDefinition Token, bool Truthy, EnumeratorDefinition EnumeratorDefinition = null, int StartPos = -1 );
+
+    public record EnumeratorDefinition( string Name, IEnumerator<string> Enumerator );
 
     private readonly Stack<Frame> _stack = new();
 
-    // Updated Push method to accept an IEnumerator<string> parameter
-    public void Push( TokenDefinition token, bool truthy, IEnumerator<string> enumerator = null, int startPos = -1 )
-        => _stack.Push( new Frame( token, truthy, enumerator, startPos ) );
+    public void Push( TokenDefinition token, bool truthy, EnumeratorDefinition enumeratorDefinition = null, int startPos = -1 )
+        => _stack.Push( new Frame( token, truthy, enumeratorDefinition, startPos ) );
 
     public Frame Peek() => _stack.Peek();
     public void Pop() => _stack.Pop();
