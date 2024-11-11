@@ -204,6 +204,8 @@ internal class TokenProcessor
         if ( conditionIsTrue && currentFrame.EnumeratorDefinition.Enumerator.MoveNext() && currentFrame.EnumeratorDefinition.Enumerator.Current != null )
         {
             _members[currentFrame.EnumeratorDefinition.Name] = currentFrame.EnumeratorDefinition.Enumerator.Current;
+            frames.Pop();
+            frames.Push( eachToken, true, currentFrame.EnumeratorDefinition, currentFrame.StartPos );
             return TokenAction.ContinueLoop;
         }
 

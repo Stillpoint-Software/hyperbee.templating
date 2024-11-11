@@ -245,7 +245,10 @@ public class TemplateParser
                                     ProcessFrame( state.CurrentFrame(), tokenAction, token.TokenType, ref span, ref bufferManager, ref loopDepth );
 
                                     if ( tokenAction == TokenAction.ContinueLoop )
+                                    {
+                                        ignore = false;
                                         continue;
+                                    }
 
                                     // write value
                                     if ( tokenAction != TokenAction.Ignore )
