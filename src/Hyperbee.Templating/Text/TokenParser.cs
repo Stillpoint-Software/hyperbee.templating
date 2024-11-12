@@ -174,7 +174,7 @@ internal class TokenParser
             //Planned on cleaning up with Define later
             if ( span.Length == 4 || char.IsWhiteSpace( span[4] ) )
             {
-                tokenType = TokenType.Define;
+                tokenType = TokenType.Each;
                 span = span[4..].Trim(); // eat the 'each'
                 // Define value
                 var defineTokenPos = span.IndexOfIgnoreDelimitedRanges( ":", "\"" );

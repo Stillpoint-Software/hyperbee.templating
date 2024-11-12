@@ -246,7 +246,7 @@ public class TemplateParser
 
                                     if ( tokenAction == TokenAction.ContinueLoop )
                                     {
-                                        ignore = false;
+                                        ignore = state.Frames.IsFalsy;
                                         continue;
                                     }
 
@@ -513,6 +513,18 @@ internal sealed class FrameStack
     public bool IsTokenType( TokenType compare )
         => _stack.Count > 0 && _stack.Peek().Token.TokenType == compare;
 
-    public bool IsTruthy => _stack.Count == 0 || _stack.Peek().Truthy;
+    public bool IsTruthy
+    {
+        get => _stack.Count == 0 || _stack.Peek().Truthy;
+        set
+        {
+            if ( _stack.Count > 0 )
+            {
+                // Modify the Truthy value of the top frame
+                var topFrame = _stack.Pop();
+                _stack.Push( topFrame with { Truthy = value } );
+            }
+        }
+    }
     public bool IsFalsy => !IsTruthy;
 }

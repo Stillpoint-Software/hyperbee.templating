@@ -200,12 +200,11 @@ internal class TokenProcessor
             _ => Truthy( _members[eachToken.Name] ) // Re-evaluate the condition
         };
 
-        //AF Adding enumerator to the members
+        //AF Adding enumerator to the members; needed to update truthy to true so the value gets replaced.
         if ( conditionIsTrue && currentFrame.EnumeratorDefinition.Enumerator.MoveNext() && currentFrame.EnumeratorDefinition.Enumerator.Current != null )
         {
             _members[currentFrame.EnumeratorDefinition.Name] = currentFrame.EnumeratorDefinition.Enumerator.Current;
-            frames.Pop();
-            frames.Push( eachToken, true, currentFrame.EnumeratorDefinition, currentFrame.StartPos );
+            frames.IsTruthy = true;
             return TokenAction.ContinueLoop;
         }
 
@@ -275,10 +274,7 @@ internal class TokenProcessor
                 break;
             case TokenType.Each when token.TokenEvaluation == TokenEvaluation.Expression:
                 if ( TryInvokeTokenExpression( token, out var eachExprResult, out var errorEach ) )
-                {
                     value = (string) eachExprResult;
-                    //enumerator = results.Split( ',' ).Select( v => v.Trim() );
-                }
                 else
                     throw new TemplateException( $"{_tokenLeft}Error ({token.Id}):{errorEach ?? "Error in each condition."}{_tokenRight}" );
                 break;
