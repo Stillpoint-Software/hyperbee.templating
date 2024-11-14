@@ -71,7 +71,7 @@ internal class TokenProcessor
             case TokenType.LoopStart: // loop category
             case TokenType.LoopEnd: // loop category
             default:
-                throw new NotSupportedException( $"{nameof(ProcessToken)}: Invalid {nameof(TokenType)} {token.TokenType}." );
+                throw new NotSupportedException( $"{nameof( ProcessToken )}: Invalid {nameof( TokenType )} {token.TokenType}." );
         }
 
         // Resolve value 
@@ -170,7 +170,7 @@ internal class TokenProcessor
 
         string expressionError = null;
         var whileToken = frames.Peek().Token;
-        
+
         var conditionIsTrue = whileToken.TokenEvaluation switch
         {
             TokenEvaluation.Expression when TryInvokeTokenExpression( whileToken, out var expressionResult, out expressionError )
@@ -321,7 +321,7 @@ internal class TokenProcessor
         }
     }
 
-    private static readonly HashSet<string> FalsyStrings = new(["False", "No", "Off", "0"], StringComparer.OrdinalIgnoreCase );
+    private static readonly HashSet<string> FalsyStrings = new( ["False", "No", "Off", "0"], StringComparer.OrdinalIgnoreCase );
 
     private static bool Truthy( ReadOnlySpan<char> value )
     {
