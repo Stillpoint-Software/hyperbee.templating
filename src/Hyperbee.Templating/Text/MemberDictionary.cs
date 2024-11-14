@@ -1,5 +1,6 @@
 ﻿using System.Collections;
 using Hyperbee.Templating.Compiler;
+using Hyperbee.Templating.Core;
 
 namespace Hyperbee.Templating.Text;
 
@@ -17,7 +18,7 @@ public class MemberDictionary : IReadOnlyMemberDictionary
     public KeyValidator Validator { get; }
 
     public MemberDictionary( IDictionary<string, string> source, IReadOnlyDictionary<string, IMethodInvoker> methods = default )
-        : this( TemplateHelper.ValidateKey, source, methods )
+        : this( KeyHelper.ValidateKey, source, methods )
     {
     }
 

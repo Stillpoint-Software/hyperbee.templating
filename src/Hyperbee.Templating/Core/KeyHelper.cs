@@ -1,8 +1,8 @@
-﻿namespace Hyperbee.Templating.Text;
+﻿namespace Hyperbee.Templating.Core;
 
 public delegate bool KeyValidator( ReadOnlySpan<char> key );
 
-internal static class TemplateHelper
+internal static class KeyHelper
 {
     public static bool ValidateKey( string key )
     {

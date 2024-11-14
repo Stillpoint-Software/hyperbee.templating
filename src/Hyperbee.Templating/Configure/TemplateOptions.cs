@@ -1,6 +1,7 @@
 ﻿using System.ComponentModel;
 using System.Reflection;
 using Hyperbee.Templating.Compiler;
+using Hyperbee.Templating.Core;
 using Hyperbee.Templating.Text;
 
 namespace Hyperbee.Templating.Configure;
@@ -13,7 +14,7 @@ public class TemplateOptions
     public IDictionary<string, string> Variables { get; init; }
 
     public TokenStyle TokenStyle { get; set; } = TokenStyle.Default;
-    public KeyValidator Validator { get; set; } = TemplateHelper.ValidateKey;
+    public KeyValidator Validator { get; set; } = KeyHelper.ValidateKey;
 
     public bool IgnoreMissingTokens { get; set; }
     public bool SubstituteEnvironmentVariables { get; set; }
