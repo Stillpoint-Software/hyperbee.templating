@@ -2,6 +2,8 @@
 using System.Globalization;
 using Hyperbee.Templating.Compiler;
 using Hyperbee.Templating.Configure;
+using Hyperbee.Templating.Core;
+
 // ReSharper disable RedundantAssignment
 
 namespace Hyperbee.Templating.Text;
@@ -328,22 +330,4 @@ internal class TokenProcessor
         var trimmed = value.Trim();
         return !trimmed.IsEmpty && !FalsyStrings.Contains( trimmed.ToString() );
     }
-}
-
-internal sealed class EnumeratorAdapter : IEnumerator<string>
-{
-    private readonly IEnumerator _inner;
-
-    internal EnumeratorAdapter( IEnumerable enumerable )
-    {
-        // ReSharper disable once GenericEnumeratorNotDisposed
-        _inner = enumerable?.GetEnumerator() ?? throw new ArgumentNullException( nameof( enumerable ) );
-    }
-
-    public string Current => (string) _inner.Current;
-    object IEnumerator.Current => _inner.Current;
-
-    public bool MoveNext() => _inner.MoveNext();
-    public void Reset() => _inner.Reset();
-    public void Dispose() => (_inner as IDisposable)?.Dispose();
 }

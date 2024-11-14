@@ -215,7 +215,6 @@ public class TemplateParser
                                     }
                                 }
 
-                                span = []; // clear span for read
                                 break;
                             }
 
@@ -270,13 +269,14 @@ public class TemplateParser
                                     bufferManager.AdvanceCurrentSpan( writeLength );
                                 }
 
-                                span = []; // clear span for read
                                 break;
                             }
 
                         default:
                             throw new ArgumentOutOfRangeException( scanner.ToString(), $"Invalid scanner state: {scanner}." );
                     }
+
+                    span = []; // clear span for read
                 }
 
                 if ( bufferManager.IsFixed || bytesRead < bufferManager.BufferSize )
@@ -298,7 +298,7 @@ public class TemplateParser
 
         return;
 
-        static void ProcessFrame( FrameStack.Frame frame, TokenAction tokenAction, TokenType tokenType, ref ReadOnlySpan<char> span, ref BufferManager bufferManager, ref int loopDepth )
+        static void ProcessFrame( Frame frame, TokenAction tokenAction, TokenType tokenType, ref ReadOnlySpan<char> span, ref BufferManager bufferManager, ref int loopDepth )
         {
             // loop handling
 
@@ -480,38 +480,4 @@ public class TemplateParser
 
         return -1;
     }
-}
-
-// Minimal frame management for flow control
-
-internal sealed class TemplateState
-{
-    public FrameStack Frames { get; } = new();
-    public int NextTokenId { get; set; } = 1;
-    public int CurrentPos { get; set; }
-    public FrameStack.Frame CurrentFrame() =>
-        Frames.Depth > 0 ? Frames.Peek() : default;
-}
-
-internal record EnumeratorDefinition( string Name, IEnumerator<string> Enumerator );
-
-internal sealed class FrameStack
-{
-    public record Frame( TokenDefinition Token, bool Truthy, EnumeratorDefinition EnumeratorDefinition = null, int StartPos = -1 );
-
-    private readonly Stack<Frame> _stack = new();
-
-    public void Push( TokenDefinition token, bool truthy, EnumeratorDefinition enumeratorDefinition = null, int startPos = -1 )
-        => _stack.Push( new Frame( token, truthy, enumeratorDefinition, startPos ) );
-
-    public Frame Peek() => _stack.Peek();
-    public void Pop() => _stack.Pop();
-    public int Depth => _stack.Count;
-
-    public bool IsTokenType( TokenType compare )
-        => _stack.Count > 0 && _stack.Peek().Token.TokenType == compare;
-
-    public bool IsTruthy => _stack.Count == 0 || _stack.Peek().Truthy;
-
-    public bool IsFalsy => !IsTruthy;
 }

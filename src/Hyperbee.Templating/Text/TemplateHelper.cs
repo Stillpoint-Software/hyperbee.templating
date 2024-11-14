@@ -8,7 +8,7 @@ internal static class TemplateHelper
     {
         // do-not-remove this method.
         //
-        // this method is required despite code analysis claiming the method is not referenced.
+        // this method is required despite code analysis claiming the method isn't referenced.
         //
         // this overload is required (and used) by generic delegates which don't support
         // ReadOnlySpan<char> as a generic argument.
