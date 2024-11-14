@@ -245,10 +245,8 @@ public class TemplateParser
                                     ProcessFrame( state.CurrentFrame(), tokenAction, token.TokenType, ref span, ref bufferManager, ref loopDepth );
 
                                     if ( tokenAction == TokenAction.ContinueLoop )
-                                    {
-                                        ignore = state.Frames.IsFalsy;
                                         continue;
-                                    }
+
 
                                     // write value
                                     if ( tokenAction != TokenAction.Ignore )
@@ -513,18 +511,7 @@ internal sealed class FrameStack
     public bool IsTokenType( TokenType compare )
         => _stack.Count > 0 && _stack.Peek().Token.TokenType == compare;
 
-    public bool IsTruthy
-    {
-        get => _stack.Count == 0 || _stack.Peek().Truthy;
-        set
-        {
-            if ( _stack.Count > 0 )
-            {
-                // Modify the Truthy value of the top frame
-                var topFrame = _stack.Pop();
-                _stack.Push( topFrame with { Truthy = value } );
-            }
-        }
-    }
+    public bool IsTruthy => _stack.Count == 0 || _stack.Peek().Truthy;
+
     public bool IsFalsy => !IsTruthy;
 }

@@ -199,7 +199,6 @@ internal class TokenProcessor
         if ( enumerator!.MoveNext() )
         {
             _members[currentName] = enumerator.Current;
-            frames.IsTruthy = true;
             return TokenAction.ContinueLoop;
         }
 
