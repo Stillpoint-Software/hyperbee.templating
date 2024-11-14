@@ -66,6 +66,12 @@ internal class TokenProcessor
 
             case TokenType.Define:
                 return ProcessDefineToken( token );
+
+            case TokenType.None:
+            case TokenType.LoopStart: // loop category
+            case TokenType.LoopEnd: // loop category
+            default:
+                throw new NotSupportedException( $"{nameof(ProcessToken)}: Invalid {nameof(TokenType)} {token.TokenType}." );
         }
 
         // Resolve value 
@@ -162,9 +168,9 @@ internal class TokenProcessor
         if ( frames.Depth == 0 || !frames.IsTokenType( TokenType.While ) )
             throw new TemplateException( "Syntax error. Invalid `/while` without matching `while`." );
 
-        var whileToken = frames.Peek().Token;
         string expressionError = null;
-
+        var whileToken = frames.Peek().Token;
+        
         var conditionIsTrue = whileToken.TokenEvaluation switch
         {
             TokenEvaluation.Expression when TryInvokeTokenExpression( whileToken, out var expressionResult, out expressionError )
@@ -177,7 +183,6 @@ internal class TokenProcessor
         if ( conditionIsTrue )
             return TokenAction.ContinueLoop;
 
-        // Otherwise, pop the frame and exit the loop
         frames.Pop();
         return TokenAction.Ignore;
     }
@@ -316,12 +321,12 @@ internal class TokenProcessor
         }
     }
 
-    private static readonly string[] FalsyStrings = ["False", "No", "Off", "0"];
+    private static readonly HashSet<string> FalsyStrings = new(["False", "No", "Off", "0"], StringComparer.OrdinalIgnoreCase );
 
     private static bool Truthy( ReadOnlySpan<char> value )
     {
         var trimmed = value.Trim();
-        return !trimmed.IsEmpty && Array.IndexOf( FalsyStrings, trimmed.ToString() ) == -1;
+        return !trimmed.IsEmpty && !FalsyStrings.Contains( trimmed.ToString() );
     }
 }
 
@@ -331,6 +336,7 @@ internal sealed class EnumeratorAdapter : IEnumerator<string>
 
     internal EnumeratorAdapter( IEnumerable enumerable )
     {
+        // ReSharper disable once GenericEnumeratorNotDisposed
         _inner = enumerable?.GetEnumerator() ?? throw new ArgumentNullException( nameof( enumerable ) );
     }
 
