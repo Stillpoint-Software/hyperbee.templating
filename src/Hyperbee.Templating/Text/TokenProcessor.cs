@@ -68,7 +68,7 @@ internal class TokenProcessor
                 return ProcessDefineToken( token );
         }
 
-        // Resolve value (called only once)
+        // Resolve value 
         ResolveValue( token, out var resolvedValue, out var defined, out var conditionalResult, out var expressionError );
 
         // Conditional frame handling based on token type after value resolution
@@ -88,7 +88,6 @@ internal class TokenProcessor
                 break;
         }
 
-        // Final action determination for all tokens
         return ProcessTokenHandler( token, defined, ref value, expressionError );
     }
 
