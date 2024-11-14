@@ -39,21 +39,19 @@ public class TemplateParserLoopTests
     public void Should_honor_each_expression( ParseTemplateMethod parseMethod )
     {
         // arrange
-        //AF original expression
-        //const string expression = "{{each x=>x.list}}World {{x}},{{/each}}";
-        const string expression = "{{each n:x => x.list}}World {{n}},{{/each}}";
+
+        const string expression = "{{each n:x => x.list.Split( \",\" )}}World {{n}},{{/each}}";
 
         const string template = $"hello {expression}.";
-        {
-            var parser = new TemplateParser { Variables = { ["list"] = "1,2,3" } };
+        
+        var parser = new TemplateParser { Variables = { ["list"] = "1,2,3" } };
+        
+        // act
+        var result = parser.Render( template, parseMethod );
 
-            // act
-            var result = parser.Render( template, parseMethod );
+        // assert
+        var expected = "hello World 1,World 2,World 3,.";
 
-            // assert
-            var expected = "hello World 1,World 2,World 3,.";
-
-            Assert.AreEqual( expected, result );
-        }
+        Assert.AreEqual( expected, result );
     }
 }

@@ -495,11 +495,11 @@ internal sealed class TemplateState
         Frames.Depth > 0 ? Frames.Peek() : default;
 }
 
+internal record EnumeratorDefinition( string Name, IEnumerator<string> Enumerator );
+
 internal sealed class FrameStack
 {
     public record Frame( TokenDefinition Token, bool Truthy, EnumeratorDefinition EnumeratorDefinition = null, int StartPos = -1 );
-
-    public record EnumeratorDefinition( string Name, IEnumerator<string> Enumerator );
 
     private readonly Stack<Frame> _stack = new();
 

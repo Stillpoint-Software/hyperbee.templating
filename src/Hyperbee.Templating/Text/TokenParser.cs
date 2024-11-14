@@ -11,7 +11,7 @@ internal class TokenParser
 
     internal TokenParser( TemplateOptions options )
     {
-        _validateKey = options.Validator ?? throw new ArgumentNullException( nameof( options.Validator ) );
+        _validateKey = options.Validator ?? throw new ArgumentNullException( nameof( options ), $"{nameof(options.Validator)} cannot be null." );
         (_tokenLeft, _tokenRight) = options.TokenDelimiters();
     }
 
@@ -34,7 +34,6 @@ internal class TokenParser
         // {{while x => x.token}}
         // {{/while}}
         //
-        // {{each [!]token}} -- not necessary???
         // {{each x => x.token}}
         // {{/each}}
 
@@ -169,53 +168,10 @@ internal class TokenParser
         // each handling
         if ( span.StartsWith( "each", StringComparison.OrdinalIgnoreCase ) )
         {
-
-            //AF Put this separate from Define because I needed to eat the 'each' before checking for the rest of the syntax
-            //Planned on cleaning up with Define later
             if ( span.Length == 4 || char.IsWhiteSpace( span[4] ) )
             {
                 tokenType = TokenType.Each;
                 span = span[4..].Trim(); // eat the 'each'
-                // Define value
-                var defineTokenPos = span.IndexOfIgnoreDelimitedRanges( ":", "\"" );
-                var fatArrowPos = span.IndexOfIgnoreDelimitedRanges( "=>", "\"" );
-
-                if ( defineTokenPos > -1 && (fatArrowPos == -1 || defineTokenPos < fatArrowPos) )
-                {
-
-                    tokenType = TokenType.Each;  //HERE
-                    name = span[..defineTokenPos].Trim();
-                    tokenExpression = UnQuote( span[(defineTokenPos + 1)..] );
-
-                    if ( fatArrowPos > 0 )
-                    {
-                        tokenEvaluation = TokenEvaluation.Expression;
-
-                        // Check and remove surrounding token delimiters (e.g., {{ and }})
-                        if ( tokenExpression.StartsWith( _tokenLeft ) && tokenExpression.EndsWith( _tokenRight ) )
-                        {
-                            tokenExpression = tokenExpression[_tokenLeft.Length..^_tokenRight.Length].Trim();
-                        }
-                    }
-                }
-                else if ( fatArrowPos > -1 && (defineTokenPos == -1 || fatArrowPos < defineTokenPos) )
-                {
-                    // fat arrow value
-
-                    tokenType = TokenType.Each;
-                    tokenEvaluation = TokenEvaluation.Expression;
-                    tokenExpression = span;
-                }
-                else
-                {
-                    // identifier value
-
-                    if ( !_validateKey( span ) )
-                        throw new TemplateException( "Invalid token name." );
-
-                    tokenType = TokenType.Each;
-                    name = span;
-                }
             }
         }
         else if ( span.StartsWith( "/each", StringComparison.OrdinalIgnoreCase ) )
@@ -226,46 +182,9 @@ internal class TokenParser
             tokenType = TokenType.EndEach;
         }
 
-        if ( tokenType == TokenType.None )
+        if ( tokenType == TokenType.None || tokenType == TokenType.Each )
         {
-            var defineTokenPos = span.IndexOfIgnoreDelimitedRanges( ":", "\"" );
-            var fatArrowPos = span.IndexOfIgnoreDelimitedRanges( "=>", "\"" );
-
-            if ( defineTokenPos > -1 && (fatArrowPos == -1 || defineTokenPos < fatArrowPos) )
-            {
-                tokenType = TokenType.Define;
-                name = span[..defineTokenPos].Trim();
-                tokenExpression = UnQuote( span[(defineTokenPos + 1)..] );
-
-                if ( fatArrowPos > 0 )
-                {
-                    tokenEvaluation = TokenEvaluation.Expression;
-
-                    // Check and remove surrounding token delimiters (e.g., {{ and }})
-                    if ( tokenExpression.StartsWith( _tokenLeft ) && tokenExpression.EndsWith( _tokenRight ) )
-                    {
-                        tokenExpression = tokenExpression[_tokenLeft.Length..^_tokenRight.Length].Trim();
-                    }
-                }
-            }
-            else if ( fatArrowPos > -1 && (defineTokenPos == -1 || fatArrowPos < defineTokenPos) )
-            {
-                // fat arrow value
-
-                tokenType = TokenType.Value;
-                tokenEvaluation = TokenEvaluation.Expression;
-                tokenExpression = span;
-            }
-            else
-            {
-                // identifier value
-
-                if ( !_validateKey( span ) )
-                    throw new TemplateException( "Invalid token name." );
-
-                tokenType = TokenType.Value;
-                name = span;
-            }
+            tokenType = GetTokenNameAndExpression( tokenType, span, ref name, ref tokenExpression, ref tokenEvaluation );
         }
 
         // return the definition
@@ -279,6 +198,63 @@ internal class TokenParser
             TokenEvaluation = tokenEvaluation,
             TokenExpression = tokenExpression.ToString()
         };
+    }
+
+    private TokenType GetTokenNameAndExpression( TokenType tokenType, ReadOnlySpan<char> span, ref ReadOnlySpan<char> name, ref ReadOnlySpan<char> tokenExpression, ref TokenEvaluation tokenEvaluation )
+    {
+        if ( tokenType != TokenType.None && tokenType != TokenType.Each )
+        {
+            return tokenType;
+        }
+
+        var defineTokenPos = span.IndexOfIgnoreDelimitedRanges( ":", "\"" );
+        var fatArrowPos = span.IndexOfIgnoreDelimitedRanges( "=>", "\"" );
+
+        if ( defineTokenPos > -1 && (fatArrowPos == -1 || defineTokenPos < fatArrowPos) )
+        {
+            if ( tokenType == TokenType.None )
+                tokenType = TokenType.Define;
+
+            name = span[..defineTokenPos].Trim();
+            tokenExpression = UnQuote( span[(defineTokenPos + 1)..] );
+
+            if ( fatArrowPos <= 0 )
+            {
+                return tokenType;
+            }
+
+            tokenEvaluation = TokenEvaluation.Expression;
+
+            // Check and remove surrounding token delimiters (e.g., {{ and }})
+            if ( tokenExpression.StartsWith( _tokenLeft ) && tokenExpression.EndsWith( _tokenRight ) )
+            {
+                tokenExpression = tokenExpression[_tokenLeft.Length..^_tokenRight.Length].Trim();
+            }
+        }
+        else if ( fatArrowPos > -1 && (defineTokenPos == -1 || fatArrowPos < defineTokenPos) )
+        {
+            // fat arrow value
+
+            if ( tokenType == TokenType.None )
+                tokenType = TokenType.Value;
+
+            tokenEvaluation = TokenEvaluation.Expression;
+            tokenExpression = span;
+        }
+        else
+        {
+            // identifier value
+
+            if ( !_validateKey( span ) )
+                throw new TemplateException( "Invalid token name." );
+
+            if ( tokenType == TokenType.None )
+                tokenType = TokenType.Value;
+
+            name = span;
+        }
+
+        return tokenType;
     }
 
     private static ReadOnlySpan<char> UnQuote( ReadOnlySpan<char> span )
