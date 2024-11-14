@@ -11,7 +11,7 @@ internal class TokenParser
 
     internal TokenParser( TemplateOptions options )
     {
-        _validateKey = options.Validator ?? throw new ArgumentNullException( nameof( options ), $"{nameof(options.Validator)} cannot be null." );
+        _validateKey = options.Validator ?? throw new ArgumentNullException( nameof( options ), $"{nameof( options.Validator )} cannot be null." );
         (_tokenLeft, _tokenRight) = options.TokenDelimiters();
     }
 

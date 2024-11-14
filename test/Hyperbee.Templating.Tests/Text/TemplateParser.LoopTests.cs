@@ -43,9 +43,9 @@ public class TemplateParserLoopTests
         const string expression = "{{each n:x => x.list.Split( \",\" )}}World {{n}},{{/each}}";
 
         const string template = $"hello {expression}.";
-        
+
         var parser = new TemplateParser { Variables = { ["list"] = "1,2,3" } };
-        
+
         // act
         var result = parser.Render( template, parseMethod );
 
