@@ -19,7 +19,7 @@ internal class TokenParser
     {
         // token syntax:
         //
-        // {{token:definition}}
+        // {{token: definition}}
         //
         // {{token}}
         // {{x => x.token}}
@@ -34,9 +34,27 @@ internal class TokenParser
         // {{while x => x.token}}
         // {{/while}}
         //
-        // {{each i:x => enumerable}}
-        //    {{i}}
+        // {{each n[,i]: x => enumerable}} #1
+        //    {{n}}
         // {{/each}}
+
+        // {{each n[,i]: Person}} // person values or person[] fallback #2
+        //    {{n}}
+        // {{/each}}
+
+        /*
+        x => x.Person* // rewrites to x => x.Enumerate( "Person[*]" ) #4     
+        x => x.Enumerate( regex ) #3 
+
+        #5 is nesting
+
+        Person[0].Name
+        Person[1].Name
+
+        Person = "a,b,c"
+        Person = { "1", "1", "2" }
+        */
+
 
         var span = token.Trim();
 
