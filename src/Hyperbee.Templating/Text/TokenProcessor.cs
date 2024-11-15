@@ -71,8 +71,8 @@ internal class TokenProcessor
                 return ProcessDefineToken( token );
 
             case TokenType.Undefined:
-            case TokenType.LoopStart: 
-            case TokenType.LoopEnd: 
+            case TokenType.LoopStart:
+            case TokenType.LoopEnd:
             default:
                 throw new NotSupportedException( $"{nameof( ProcessToken )}: Invalid {nameof( TokenType )} {token.TokenType}." );
         }
@@ -267,13 +267,13 @@ internal class TokenProcessor
 
             case TokenType.If when token.TokenEvaluation == TokenEvaluation.Expression:
             case TokenType.While when token.TokenEvaluation == TokenEvaluation.Expression:
-            {
-                if ( !TryInvokeTokenExpression( token, out var condExprResult, out var error ) )
-                    throw new TemplateException( $"{_tokenLeft}Error ({token.Id}):{error ?? "Error in condition."}{_tokenRight}" );
-                
-                conditionalResult = Convert.ToBoolean( condExprResult );
-                break;
-            }
+                {
+                    if ( !TryInvokeTokenExpression( token, out var condExprResult, out var error ) )
+                        throw new TemplateException( $"{_tokenLeft}Error ({token.Id}):{error ?? "Error in condition."}{_tokenRight}" );
+
+                    conditionalResult = Convert.ToBoolean( condExprResult );
+                    break;
+                }
 
             case TokenType.Each:
                 {
@@ -282,7 +282,7 @@ internal class TokenProcessor
 
                     if ( !TryInvokeTokenExpression( token, out var eachExprResult, out var errorEach ) )
                         throw new TemplateException( $"{_tokenLeft}Error ({token.Id}):{errorEach ?? "Error in each condition."}{_tokenRight}" );
-                    
+
                     value = new EnumeratorAdapter( (IEnumerable) eachExprResult );
                     break;
                 }
