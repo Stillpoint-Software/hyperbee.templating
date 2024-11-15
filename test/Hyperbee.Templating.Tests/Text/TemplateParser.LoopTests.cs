@@ -46,7 +46,7 @@ public class TemplateParserLoopTests
     public void Should_honor_each_expression( ParseTemplateMethod parseMethod )
     {
         // arrange
-        const string expression = 
+        const string expression =
             """
             {{each n:x => x.list.Split( \",\" )}}
                 World {{n}},
