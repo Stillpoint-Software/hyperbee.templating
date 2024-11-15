@@ -125,7 +125,7 @@ internal sealed class RoslynTokenExpressionProvider : ITokenExpressionProvider
 //
 // 1. x => x.someProp to x["someProp"]
 // 2. x => x.someProp<T> to x.GetValueAs<T>("someProp")
-// 3. x => x.someMethod(..) to x.InvokeMethod("someMethod", ..)
+// 3. x => x.someMethod(..) to x.Invoke("someMethod", ..)
 
 internal class TokenExpressionRewriter( string parameterName ) : CSharpSyntaxRewriter
 {
@@ -232,12 +232,12 @@ internal class TokenExpressionRewriter( string parameterName ) : CSharpSyntaxRew
             .Select( arg => (ExpressionSyntax) Visit( arg.Expression ) )
             .ToArray();
 
-        // Create the InvokeMethod call: x.InvokeMethod("MethodName", arg1, arg2, ...)
+        // Create the InvokeMethod call: x.Invoke("MethodName", arg1, arg2, ...)
         var invokeMethodCall = SyntaxFactory.InvocationExpression(
             SyntaxFactory.MemberAccessExpression(
                 SyntaxKind.SimpleMemberAccessExpression,
                 memberAccess.Expression, // This is `x`
-                SyntaxFactory.IdentifierName( "InvokeMethod" )
+                SyntaxFactory.IdentifierName( "Invoke" )
             ),
             SyntaxFactory.ArgumentList(
                 SyntaxFactory.SeparatedList(

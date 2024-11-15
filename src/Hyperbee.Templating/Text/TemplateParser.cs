@@ -131,14 +131,14 @@ public class TemplateParser
 
     private void ParseTemplate( TextReader reader, TextWriter writer )
     {
-        var bufferSize = GetScopedBufferSize( BufferSize, _tokenLeft.Length, _tokenRight.Length );
+        var bufferSize = GetAdjustedBufferSize( BufferSize, _tokenLeft.Length, _tokenRight.Length );
         var bufferManager = new BufferManager( bufferSize );
 
         ParseTemplate( ref bufferManager, reader, writer );
 
         return;
 
-        static int GetScopedBufferSize( int bufferSize, int tokenLeftSize, int tokenRightSize )
+        static int GetAdjustedBufferSize( int bufferSize, int tokenLeftSize, int tokenRightSize )
         {
             // because of the way we read the buffer, we need to ensure that the buffer size
             // is at least the size of the longest token delimiter plus one character.

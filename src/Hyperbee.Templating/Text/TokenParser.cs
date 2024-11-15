@@ -34,12 +34,13 @@ internal class TokenParser
         // {{while x => x.token}}
         // {{/while}}
         //
-        // {{each x => x.token}}
+        // {{each i:x => enumerable}}
+        //    {{i}}
         // {{/each}}
 
         var span = token.Trim();
 
-        var tokenType = TokenType.None;
+        var tokenType = TokenType.Undefined;
         var tokenEvaluation = TokenEvaluation.None;
         var tokenExpression = ReadOnlySpan<char>.Empty;
         var name = ReadOnlySpan<char>.Empty;
@@ -182,7 +183,7 @@ internal class TokenParser
             tokenType = TokenType.EndEach;
         }
 
-        if ( tokenType == TokenType.None || tokenType == TokenType.Each )
+        if ( tokenType == TokenType.Undefined || tokenType == TokenType.Each )
         {
             tokenType = GetTokenNameAndExpression( tokenType, span, ref name, ref tokenExpression, ref tokenEvaluation );
         }
@@ -202,7 +203,7 @@ internal class TokenParser
 
     private TokenType GetTokenNameAndExpression( TokenType tokenType, ReadOnlySpan<char> span, ref ReadOnlySpan<char> name, ref ReadOnlySpan<char> tokenExpression, ref TokenEvaluation tokenEvaluation )
     {
-        if ( tokenType != TokenType.None && tokenType != TokenType.Each )
+        if ( tokenType != TokenType.Undefined && tokenType != TokenType.Each )
         {
             return tokenType;
         }
@@ -212,7 +213,7 @@ internal class TokenParser
 
         if ( defineTokenPos > -1 && (fatArrowPos == -1 || defineTokenPos < fatArrowPos) )
         {
-            if ( tokenType == TokenType.None )
+            if ( tokenType == TokenType.Undefined )
                 tokenType = TokenType.Define;
 
             name = span[..defineTokenPos].Trim();
@@ -235,7 +236,7 @@ internal class TokenParser
         {
             // fat arrow value
 
-            if ( tokenType == TokenType.None )
+            if ( tokenType == TokenType.Undefined )
                 tokenType = TokenType.Value;
 
             tokenEvaluation = TokenEvaluation.Expression;
@@ -248,7 +249,7 @@ internal class TokenParser
             if ( !_validateKey( span ) )
                 throw new TemplateException( "Invalid token name." );
 
-            if ( tokenType == TokenType.None )
+            if ( tokenType == TokenType.Undefined )
                 tokenType = TokenType.Value;
 
             name = span;

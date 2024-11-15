@@ -7,7 +7,7 @@ namespace Hyperbee.Templating.Text;
 public interface IReadOnlyMemberDictionary : IReadOnlyDictionary<string, string>
 {
     public TType GetValueAs<TType>( string name ) where TType : IConvertible;
-    public object InvokeMethod( string methodName, params object[] args );
+    public object Invoke( string methodName, params object[] args );
 }
 
 public class MemberDictionary : IReadOnlyMemberDictionary
@@ -102,7 +102,7 @@ public class MemberDictionary : IReadOnlyMemberDictionary
         return (TType) Convert.ChangeType( this[name], typeof( TType ) );
     }
 
-    public object InvokeMethod( string methodName, params object[] args )
+    public object Invoke( string methodName, params object[] args )
     {
         if ( !Methods.TryGetValue( methodName, out var methodInvoker ) )
             throw new MissingMethodException( $"Failed to invoke method '{methodName}'." );

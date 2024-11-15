@@ -33,6 +33,7 @@ internal class TokenProcessor
         _ignoreMissingTokens = options.IgnoreMissingTokens;
         _substituteEnvironmentVariables = options.SubstituteEnvironmentVariables;
         _members = members;
+
         (_tokenLeft, _tokenRight) = options.TokenDelimiters();
     }
 
@@ -69,9 +70,9 @@ internal class TokenProcessor
             case TokenType.Define:
                 return ProcessDefineToken( token );
 
-            case TokenType.None:
-            case TokenType.LoopStart: // loop category
-            case TokenType.LoopEnd: // loop category
+            case TokenType.Undefined:
+            case TokenType.LoopStart: 
+            case TokenType.LoopEnd: 
             default:
                 throw new NotSupportedException( $"{nameof( ProcessToken )}: Invalid {nameof( TokenType )} {token.TokenType}." );
         }
@@ -99,7 +100,6 @@ internal class TokenProcessor
         return ProcessTokenHandler( token, defined, ref value, expressionError );
     }
 
-
     private TokenAction ProcessTokenHandler( TokenDefinition token, bool defined, ref string value, string expressionError )
     {
         if ( !TryInvokeTokenHandler( token, defined, ref value, out var tokenAction ) )
@@ -119,18 +119,24 @@ internal class TokenProcessor
     private TokenAction ProcessDefineToken( TokenDefinition token )
     {
         string expressionError = null;
-        var value = token.TokenEvaluation switch
+        string value;
+        switch ( token.TokenEvaluation )
         {
-            TokenEvaluation.Expression when TryInvokeTokenExpression( token, out var expressionResult, out expressionError ) => Convert.ToString( expressionResult, CultureInfo.InvariantCulture ),
-            TokenEvaluation.Expression => throw new TemplateException( $"Error evaluating define expression for {token.Name}: {expressionError}" ),
-            _ => token.TokenExpression
-        };
+            case TokenEvaluation.Expression when TryInvokeTokenExpression( token, out var expressionResult, out expressionError ):
+                value = Convert.ToString( expressionResult, CultureInfo.InvariantCulture );
+                break;
+            case TokenEvaluation.Expression:
+                throw new TemplateException( $"Error evaluating define expression for {token.Name}: {expressionError}" );
+            default:
+                value = token.TokenExpression;
+                break;
+        }
 
         _members[token.Name] = value;
         return TokenAction.Ignore;
     }
 
-    private TokenAction ProcessIfToken( TokenDefinition token, FrameStack frames, bool conditionalResult )
+    private static TokenAction ProcessIfToken( TokenDefinition token, FrameStack frames, bool conditionalResult )
     {
         var frameIsTruthy = token.TokenEvaluation == TokenEvaluation.Falsy ? !conditionalResult : conditionalResult;
         frames.Push( token, frameIsTruthy );
@@ -158,7 +164,7 @@ internal class TokenProcessor
         return TokenAction.Ignore;
     }
 
-    private TokenAction ProcessWhileToken( TokenDefinition token, FrameStack frames, bool conditionalResult, TemplateState state )
+    private static TokenAction ProcessWhileToken( TokenDefinition token, FrameStack frames, bool conditionalResult, TemplateState state )
     {
         var frameIsTruthy = token.TokenEvaluation == TokenEvaluation.Falsy ? !conditionalResult : conditionalResult;
         frames.Push( token, frameIsTruthy, null, state.CurrentPos );
@@ -170,17 +176,22 @@ internal class TokenProcessor
         if ( frames.Depth == 0 || !frames.IsTokenType( TokenType.While ) )
             throw new TemplateException( "Syntax error. Invalid `/while` without matching `while`." );
 
-        string expressionError = null;
         var whileToken = frames.Peek().Token;
 
-        var conditionIsTrue = whileToken.TokenEvaluation switch
+        bool conditionIsTrue;
+        string expressionError = null;
+
+        switch ( whileToken.TokenEvaluation )
         {
-            TokenEvaluation.Expression when TryInvokeTokenExpression( whileToken, out var expressionResult, out expressionError )
-                => Convert.ToBoolean( expressionResult ),
-            TokenEvaluation.Expression
-                => throw new TemplateException( $"{_tokenLeft}Error ({whileToken.Id}):{expressionError ?? "Error in while condition."}{_tokenRight}" ),
-            _ => Truthy( _members[whileToken.Name] )
-        };
+            case TokenEvaluation.Expression when TryInvokeTokenExpression( whileToken, out var expressionResult, out expressionError ):
+                conditionIsTrue = Convert.ToBoolean( expressionResult );
+                break;
+            case TokenEvaluation.Expression:
+                throw new TemplateException( $"{_tokenLeft}Error ({whileToken.Id}):{expressionError ?? "Error in while condition."}{_tokenRight}" );
+            default:
+                conditionIsTrue = Truthy( _members[whileToken.Name] );
+                break;
+        }
 
         if ( conditionIsTrue )
             return TokenAction.ContinueLoop;
@@ -256,23 +267,23 @@ internal class TokenProcessor
 
             case TokenType.If when token.TokenEvaluation == TokenEvaluation.Expression:
             case TokenType.While when token.TokenEvaluation == TokenEvaluation.Expression:
-                {
-                    if ( TryInvokeTokenExpression( token, out var condExprResult, out var error ) )
-                        conditionalResult = Convert.ToBoolean( condExprResult );
-                    else
-                        throw new TemplateException( $"{_tokenLeft}Error ({token.Id}):{error ?? "Error in condition."}{_tokenRight}" );
-                    break;
-                }
+            {
+                if ( !TryInvokeTokenExpression( token, out var condExprResult, out var error ) )
+                    throw new TemplateException( $"{_tokenLeft}Error ({token.Id}):{error ?? "Error in condition."}{_tokenRight}" );
+                
+                conditionalResult = Convert.ToBoolean( condExprResult );
+                break;
+            }
 
             case TokenType.Each:
                 {
                     if ( token.TokenEvaluation != TokenEvaluation.Expression )
                         throw new TemplateException( "Invalid token expression for each. Are you missing a fat arrow?" );
 
-                    if ( TryInvokeTokenExpression( token, out var eachExprResult, out var errorEach ) )
-                        value = new EnumeratorAdapter( (IEnumerable) eachExprResult );
-                    else
+                    if ( !TryInvokeTokenExpression( token, out var eachExprResult, out var errorEach ) )
                         throw new TemplateException( $"{_tokenLeft}Error ({token.Id}):{errorEach ?? "Error in each condition."}{_tokenRight}" );
+                    
+                    value = new EnumeratorAdapter( (IEnumerable) eachExprResult );
                     break;
                 }
         }
