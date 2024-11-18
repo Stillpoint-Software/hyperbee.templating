@@ -34,7 +34,8 @@ internal enum TokenEvaluation
 [Flags]
 internal enum TokenType
 {
-    None = 0x00,
+    Undefined = 0x00,
+
     Define = 0x01,
     Value = 0x02,
     If = 0x03,
