@@ -19,7 +19,7 @@ internal sealed class RoslynTokenExpressionProvider : ITokenExpressionProvider
         MetadataReference.CreateFromFile( typeof( RuntimeBinderException ).Assembly.Location ),
         MetadataReference.CreateFromFile( typeof( DynamicAttribute ).Assembly.Location ),
         MetadataReference.CreateFromFile( typeof( RoslynTokenExpressionProvider ).Assembly.Location ),
-        MetadataReference.CreateFromFile(typeof(System.Text.RegularExpressions.Regex).Assembly.Location)
+        MetadataReference.CreateFromFile( typeof( System.Text.RegularExpressions.Regex ).Assembly.Location )
     ];
 
     private sealed class RuntimeContext( ImmutableArray<MetadataReference> metadataReferences )
