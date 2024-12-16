@@ -13,13 +13,7 @@ public class TemplateParserLoopTests
     public void Should_honor_while_condition( ParseTemplateMethod parseMethod )
     {
         // arrange
-        const string expression =
-            """
-            {{while x => int.Parse(x.counter) < 3}}
-                {{counter}}
-                {{counter:{{x => int.Parse(x.counter) + 1}}}}
-            {{/while}}"
-            """;
+        const string expression = "{{while x => int.Parse(x.counter) < 3}}{{counter}}{{counter:{{x => int.Parse(x.counter) + 1}}}}{{/while}}";
 
         const string template = $"count: {expression}.";
 
@@ -46,12 +40,7 @@ public class TemplateParserLoopTests
     public void Should_honor_each_expression( ParseTemplateMethod parseMethod )
     {
         // arrange
-        const string expression =
-            """
-            {{each n:x => x.list.Split( \",\" )}}
-                World {{n}},
-            {{/each}}
-            """;
+        const string expression = "{{each n:x => x.list.Split( \",\" )}}World {{n}},{{/each}}";
 
         const string template = $"hello {expression}.";
 
@@ -62,6 +51,29 @@ public class TemplateParserLoopTests
 
         // assert
         var expected = "hello World 1,World 2,World 3,.";
+
+        Assert.AreEqual( expected, result );
+    }
+
+    [DataTestMethod]
+    [DataRow( ParseTemplateMethod.Buffered )]
+    [DataRow( ParseTemplateMethod.InMemory )]
+    public void Should_honor_each_expression_2( ParseTemplateMethod parseMethod )
+    {
+        // arrange
+        const string expression = "{{each n:x => x.Select( t => t.Value ).Where( t => t.Value == RegEx.IsMatch( people ))}}{{/each}}";
+
+
+        const string template = $"hello {expression}.";
+
+        var parser = new TemplateParser { Variables = { ["people"] = "{John, Jane, Doe}" } };
+
+
+        // act
+        var result = parser.Render( template, parseMethod );
+
+        // assert
+        var expected = "hello Doe.";
 
         Assert.AreEqual( expected, result );
     }

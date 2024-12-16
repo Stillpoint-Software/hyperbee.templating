@@ -418,6 +418,8 @@ public class TemplateParser
         // Look for value pattern in span ignoring quoted strings and code expression braces
 
         const char quoteChar = '"';
+        const char doubleQuoteChar = (char) 34;
+
         var tokenLeftSpan = _tokenLeft.AsSpan();
         var tokenRightSpan = _tokenRight.AsSpan();
 
@@ -429,7 +431,7 @@ public class TemplateParser
 
             if ( state.Quoted )
             {
-                if ( c == quoteChar && !state.Escape )
+                if ( (c == quoteChar || c == doubleQuoteChar) && !state.Escape )
                     state.Quoted = false;
 
                 state.Escape = c == '\\' && !state.Escape;
@@ -442,6 +444,11 @@ public class TemplateParser
                     state.Quoted = true;
                     state.Escape = false;
                     break;
+
+                //case var _ when c == doubleQuoteChar:
+                //    state.Quoted = true;
+                //    state.Escape = false;
+                //    break;
 
                 case var _ when c == tokenLeftSpan[0]:
                     switch ( tokenLeftSpan.Length )

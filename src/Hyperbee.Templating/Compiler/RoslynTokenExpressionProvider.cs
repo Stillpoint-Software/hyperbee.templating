@@ -1,6 +1,5 @@
 ﻿using System.Collections.Concurrent;
 using System.Collections.Immutable;
-using System.Diagnostics;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using Hyperbee.Templating.Text;
@@ -19,7 +18,8 @@ internal sealed class RoslynTokenExpressionProvider : ITokenExpressionProvider
         MetadataReference.CreateFromFile( typeof( object ).Assembly.Location.Replace( "System.Private.CoreLib", "System.Runtime" ) ),
         MetadataReference.CreateFromFile( typeof( RuntimeBinderException ).Assembly.Location ),
         MetadataReference.CreateFromFile( typeof( DynamicAttribute ).Assembly.Location ),
-        MetadataReference.CreateFromFile( typeof( RoslynTokenExpressionProvider ).Assembly.Location )
+        MetadataReference.CreateFromFile( typeof( RoslynTokenExpressionProvider ).Assembly.Location ),
+        MetadataReference.CreateFromFile(typeof(System.Text.RegularExpressions.Regex).Assembly.Location)
     ];
 
     private sealed class RuntimeContext( ImmutableArray<MetadataReference> metadataReferences )
@@ -49,19 +49,23 @@ internal sealed class RoslynTokenExpressionProvider : ITokenExpressionProvider
     {
         // Create a shim to compile the expression
         var codeShim =
-            $$"""
-              using Hyperbee.Templating.Text;
-              using Hyperbee.Templating.Compiler;
-              
-              public static class TokenExpressionInvoker
-              {
-                  public static object Invoke( {{nameof( IReadOnlyMemberDictionary )}} members ) 
-                  {
-                      TokenExpression expr = {{codeExpression}};
-                      return expr( members );
-                  }
-              }
-              """;
+            $$$"""
+               using Hyperbee.Templating.Text;
+               using Hyperbee.Templating.Compiler;
+               using System;
+               using System.Linq;
+               using System.Text.RegularExpressions;
+
+               
+               public static class TokenExpressionInvoker
+               {
+                   public static object Invoke( {{{nameof( IReadOnlyMemberDictionary )}}} members ) 
+                   {
+                       TokenExpression expr = {{{codeExpression}}};
+                       return expr( members );
+                   }
+               }
+               """;
 
         // Parse the code expression
         var syntaxTree = CSharpSyntaxTree.ParseText( codeShim );
@@ -83,7 +87,7 @@ internal sealed class RoslynTokenExpressionProvider : ITokenExpressionProvider
         var rewriter = new TokenExpressionRewriter( parameterName );
         var rewrittenSyntaxTree = rewriter.Visit( root );
 
-        //var rewrittenCode = rewrittenSyntaxTree.ToFullString(); // Keep for debugging
+        var rewrittenCode = rewrittenSyntaxTree.ToFullString(); // Keep for debugging
 
         // Compile the rewritten code
         var counter = Interlocked.Increment( ref __counter );
