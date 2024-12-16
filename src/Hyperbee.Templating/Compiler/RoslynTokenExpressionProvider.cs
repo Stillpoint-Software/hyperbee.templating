@@ -48,6 +48,8 @@ internal sealed class RoslynTokenExpressionProvider : ITokenExpressionProvider
     private static TokenExpression Compile( string codeExpression )
     {
         // Create a shim to compile the expression
+        //AF: I added the linq and regular Expression usings
+        //AF: the error is in the Regex as it doesn't know what the people are.  
         var codeShim =
             $$$"""
                using Hyperbee.Templating.Text;
