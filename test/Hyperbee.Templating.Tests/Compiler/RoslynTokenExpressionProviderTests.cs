@@ -76,7 +76,7 @@ public class RoslynTokenExpressionProviderTests
 
         var variables = new MemberDictionary( tokens );
         var tokenExpression = compiler.GetTokenExpression( expression, variables );
-        
+
         // act
 
         var result = tokenExpression( variables );

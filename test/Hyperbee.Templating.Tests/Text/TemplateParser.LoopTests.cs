@@ -65,14 +65,14 @@ public class TemplateParserLoopTests
 
         const string template = $"{expression}";
 
-        var parser = new TemplateParser 
-        { 
+        var parser = new TemplateParser
+        {
             Variables = //BF : we want the key validator to allow `[#]`, and `[#].` in the key
-            { 
-                ["people0"] = "John", 
-                ["people1"] = "Jane", 
-                ["people2"] = "Doe" 
-            } 
+            {
+                ["people0"] = "John",
+                ["people1"] = "Jane",
+                ["people2"] = "Doe"
+            }
         };
 
         // act

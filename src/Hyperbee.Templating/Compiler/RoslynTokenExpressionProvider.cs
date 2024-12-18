@@ -24,7 +24,7 @@ internal sealed class RoslynTokenExpressionProvider : ITokenExpressionProvider
         MetadataReference.CreateFromFile( typeof( Regex ).Assembly.Location ),
         MetadataReference.CreateFromFile( typeof( Enumerable ).Assembly.Location ),
 
-        MetadataReference.CreateFromFile( typeof(object).Assembly.Location.Replace( "System.Private.CoreLib", "System.Runtime" ) ),
+        MetadataReference.CreateFromFile( typeof( object ).Assembly.Location.Replace( "System.Private.CoreLib", "System.Runtime" ) ),
         MetadataReference.CreateFromFile( typeof( IList ).Assembly.Location.Replace( "System.Private.CoreLib", "System.Collections" ) )
     ];
 
@@ -138,7 +138,7 @@ internal class TokenExpressionProviderException : Exception
     public string Id => Diagnostic != null && Diagnostic.Length > 0 ? Diagnostic[0].Id : string.Empty;
 
     public TokenExpressionProviderException( string message, Diagnostic[] diagnostic )
-    : base( message)
+    : base( message )
     {
         Diagnostic = diagnostic;
     }

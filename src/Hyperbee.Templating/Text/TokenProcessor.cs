@@ -339,7 +339,7 @@ internal class TokenProcessor
                     var sourceSpan = location.SourceSpan;
                     methodName = sourceTree?.ToString().Substring( sourceSpan.Start, sourceSpan.Length );
                 }
-               
+
                 error = $"Method '{methodName ?? "<unknown>"}' not found.";
             }
             else
