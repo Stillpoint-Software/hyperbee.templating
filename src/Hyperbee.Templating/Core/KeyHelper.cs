@@ -16,6 +16,13 @@ internal static class KeyHelper
         return ValidateKey( key.AsSpan() );
     }
 
+    // KeyScanner
+    //   -Start
+    //   Identifier
+    //   -ArrayStart
+    //   ArrayDigit
+    //   -ArrayEnd
+
     public static bool ValidateKey( ReadOnlySpan<char> key )
     {
         if ( key.IsEmpty || !char.IsLetter( key[0] ) )

@@ -321,14 +321,32 @@ internal class TokenProcessor
     {
         try
         {
-            var tokenExpression = _tokenExpressionProvider.GetTokenExpression( token.TokenExpression );
+            var tokenExpression = _tokenExpressionProvider.GetTokenExpression( token.TokenExpression, _members );
             result = tokenExpression( _members );
             error = null;
             return true;
         }
         catch ( Exception ex )
         {
-            error = ex.Message;
+            if ( ex is TokenExpressionProviderException providerException && providerException.Id == "CS1061" )
+            {
+                string methodName = null;
+
+                if ( providerException.Diagnostic.Length > 0 )
+                {
+                    var location = providerException.Diagnostic[0].Location;
+                    var sourceTree = location.SourceTree;
+                    var sourceSpan = location.SourceSpan;
+                    methodName = sourceTree?.ToString().Substring( sourceSpan.Start, sourceSpan.Length );
+                }
+               
+                error = $"Method '{methodName ?? "<unknown>"}' not found.";
+            }
+            else
+            {
+                error = ex.Message;
+            }
+
             result = null;
             return false;
         }

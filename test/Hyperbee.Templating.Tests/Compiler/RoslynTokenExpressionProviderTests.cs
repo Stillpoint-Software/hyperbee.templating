@@ -22,8 +22,8 @@ public class RoslynTokenExpressionProviderTests
             ["Value"] = "base"
         };
 
-        var tokenExpression = compiler.GetTokenExpression( expression );
         var variables = new MemberDictionary( tokens );
+        var tokenExpression = compiler.GetTokenExpression( expression, variables );
 
         // act
 
@@ -48,8 +48,8 @@ public class RoslynTokenExpressionProviderTests
             ["Value"] = "1"
         };
 
-        var tokenExpression = compiler.GetTokenExpression( expression );
         var variables = new MemberDictionary( tokens );
+        var tokenExpression = compiler.GetTokenExpression( expression, variables );
 
         // act
 
@@ -74,9 +74,9 @@ public class RoslynTokenExpressionProviderTests
             ["Value"] = "base"
         };
 
-        var tokenExpression = compiler.GetTokenExpression( expression );
         var variables = new MemberDictionary( tokens );
-
+        var tokenExpression = compiler.GetTokenExpression( expression, variables );
+        
         // act
 
         var result = tokenExpression( variables );
@@ -98,10 +98,10 @@ public class RoslynTokenExpressionProviderTests
 
         var tokens = new Dictionary<string, string> { ["Value"] = "base" };
 
-        var tokenExpression1 = compiler.GetTokenExpression( expression1 );
-        var tokenExpression2 = compiler.GetTokenExpression( expression2 );
-
         var variables = new MemberDictionary( tokens );
+
+        var tokenExpression1 = compiler.GetTokenExpression( expression1, variables );
+        var tokenExpression2 = compiler.GetTokenExpression( expression2, variables );
 
         // act
 

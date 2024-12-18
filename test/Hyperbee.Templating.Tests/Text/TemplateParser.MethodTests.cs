@@ -85,7 +85,7 @@ public class TemplateParserMethodTests
 
         // assert
 
-        var expected = template.Replace( expression, "{{Error (1):Failed to invoke method 'missing'.}}" );
+        var expected = template.Replace( expression, "{{Error (1):Method 'missing' not found.}}" );
 
         Assert.AreEqual( expected, result );
     }

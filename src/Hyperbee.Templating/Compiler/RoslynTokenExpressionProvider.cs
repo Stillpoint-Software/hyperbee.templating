@@ -1,7 +1,10 @@
-﻿using System.Collections.Concurrent;
+﻿using System.Collections;
+using System.Collections.Concurrent;
 using System.Collections.Immutable;
 using System.Reflection;
 using System.Runtime.CompilerServices;
+using System.Text.Json.Serialization;
+using System.Text.RegularExpressions;
 using Hyperbee.Templating.Text;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
@@ -15,11 +18,14 @@ internal sealed class RoslynTokenExpressionProvider : ITokenExpressionProvider
     private static readonly ImmutableArray<MetadataReference> MetadataReferences =
     [
         MetadataReference.CreateFromFile( typeof( object ).Assembly.Location ),
-        MetadataReference.CreateFromFile( typeof( object ).Assembly.Location.Replace( "System.Private.CoreLib", "System.Runtime" ) ),
         MetadataReference.CreateFromFile( typeof( RuntimeBinderException ).Assembly.Location ),
         MetadataReference.CreateFromFile( typeof( DynamicAttribute ).Assembly.Location ),
         MetadataReference.CreateFromFile( typeof( RoslynTokenExpressionProvider ).Assembly.Location ),
-        MetadataReference.CreateFromFile( typeof( System.Text.RegularExpressions.Regex ).Assembly.Location )
+        MetadataReference.CreateFromFile( typeof( Regex ).Assembly.Location ),
+        MetadataReference.CreateFromFile( typeof( Enumerable ).Assembly.Location ),
+
+        MetadataReference.CreateFromFile( typeof(object).Assembly.Location.Replace( "System.Private.CoreLib", "System.Runtime" ) ),
+        MetadataReference.CreateFromFile( typeof( IList ).Assembly.Location.Replace( "System.Private.CoreLib", "System.Collections" ) )
     ];
 
     private sealed class RuntimeContext( ImmutableArray<MetadataReference> metadataReferences )
@@ -35,9 +41,9 @@ internal sealed class RoslynTokenExpressionProvider : ITokenExpressionProvider
         new( OutputKind.DynamicallyLinkedLibrary, optimizationLevel: OptimizationLevel.Release );
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public TokenExpression GetTokenExpression( string codeExpression )
+    public TokenExpression GetTokenExpression( string codeExpression, MemberDictionary members )
     {
-        return __runtimeContext.TokenExpressions.GetOrAdd( codeExpression, Compile );
+        return __runtimeContext.TokenExpressions.GetOrAdd( codeExpression, Compile( codeExpression, members ) );
     }
 
     public static void Reset()
@@ -45,19 +51,20 @@ internal sealed class RoslynTokenExpressionProvider : ITokenExpressionProvider
         __runtimeContext = new RuntimeContext( MetadataReferences );
     }
 
-    private static TokenExpression Compile( string codeExpression )
+    private static TokenExpression Compile( string codeExpression, MemberDictionary members )
     {
         // Create a shim to compile the expression
         //AF: I added the linq and regular Expression usings
         //AF: the error is in the Regex as it doesn't know what the people are.  
         var codeShim =
             $$$"""
-               using Hyperbee.Templating.Text;
-               using Hyperbee.Templating.Compiler;
                using System;
                using System.Linq;
                using System.Text.RegularExpressions;
-
+               using System.Collections;
+               using System.Collections.Generic;
+               using Hyperbee.Templating.Text;
+               using Hyperbee.Templating.Compiler;
                
                public static class TokenExpressionInvoker
                {
@@ -86,7 +93,7 @@ internal sealed class RoslynTokenExpressionProvider : ITokenExpressionProvider
         };
 
         // Rewrite the lambda expression to use the dictionary lookup
-        var rewriter = new TokenExpressionRewriter( parameterName );
+        var rewriter = new TokenExpressionRewriter( parameterName, members );
         var rewrittenSyntaxTree = rewriter.Visit( root );
 
         var rewrittenCode = rewrittenSyntaxTree.ToFullString(); // Keep for debugging
@@ -107,9 +114,9 @@ internal sealed class RoslynTokenExpressionProvider : ITokenExpressionProvider
         {
             var failures = result.Diagnostics.Where( diagnostic =>
                 diagnostic.IsWarningAsError ||
-                diagnostic.Severity == DiagnosticSeverity.Error );
+                diagnostic.Severity == DiagnosticSeverity.Error ).ToArray();
 
-            throw new InvalidOperationException( "Compilation failed: " + string.Join( "\n", failures.Select( diagnostic => diagnostic.GetMessage() ) ) );
+            throw new TokenExpressionProviderException( "Compilation failed: " + failures[0]?.GetMessage(), failures );
         }
 
         peStream.Seek( 0, SeekOrigin.Begin );
@@ -124,6 +131,26 @@ internal sealed class RoslynTokenExpressionProvider : ITokenExpressionProvider
     }
 }
 
+[Serializable]
+internal class TokenExpressionProviderException : Exception
+{
+    public Diagnostic[] Diagnostic { get; }
+    public string Id => Diagnostic != null && Diagnostic.Length > 0 ? Diagnostic[0].Id : string.Empty;
+
+    public TokenExpressionProviderException( string message, Diagnostic[] diagnostic )
+    : base( message)
+    {
+        Diagnostic = diagnostic;
+    }
+
+    public TokenExpressionProviderException( string message, Diagnostic[] diagnostic, Exception innerException )
+        : base( message, innerException )
+    {
+        Diagnostic = diagnostic;
+    }
+
+}
+
 // This rewriter will transform the lambda expression to use dictionary lookup
 // for property access, method invocation, and 'generic' property casting.
 //
@@ -133,7 +160,7 @@ internal sealed class RoslynTokenExpressionProvider : ITokenExpressionProvider
 // 2. x => x.someProp<T> to x.GetValueAs<T>("someProp")
 // 3. x => x.someMethod(..) to x.Invoke("someMethod", ..)
 
-internal class TokenExpressionRewriter( string parameterName ) : CSharpSyntaxRewriter
+internal class TokenExpressionRewriter( string parameterName, MemberDictionary members ) : CSharpSyntaxRewriter
 {
     private readonly HashSet<string> _aliases = [parameterName];
 
@@ -157,7 +184,12 @@ internal class TokenExpressionRewriter( string parameterName ) : CSharpSyntaxRew
              _aliases.Contains( identifier.Identifier.Text ) )
         {
             // Handle method invocation rewrite
-            return RewriteMethodInvocation( memberAccess, node );
+
+            if ( members.Methods.ContainsKey( memberAccess.Name.Identifier.Text ) )
+                return RewriteMethodInvocation( memberAccess, node );
+
+            return node.Update( node.Expression, (ArgumentListSyntax) VisitArgumentList( node.ArgumentList )! );
+            //return RewriteMethodInvocation( memberAccess, node ); //BF this rewrite causes the error. we need to disambiguate calls to template lambdas methods
         }
 
         return base.VisitInvocationExpression( node );
