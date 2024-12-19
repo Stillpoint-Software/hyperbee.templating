@@ -163,24 +163,6 @@ var parser = new TemplateParser
 {
     Variables = 
         {
-            ["people0"] = "John",
-            ["people1"] = "Jane",
-            ["people2"] = "Doe"
-        }
-};
-
-var result = parser.Render(template);
-Console.WriteLine(result); // hello John. hello Jane. hello Doe. 
-```
-
-```csharp
-
-var template = " "{{each n:x => x.Where( t => Regex.IsMatch( t.Key, \"people*\" ) ).Select( t => t.Value )}}hello {{n}}. {{/each}}"";
-
-var parser = new TemplateParser
-{
-    Variables = 
-        {
             ["people[0]"] = "John",
             ["people[1]"] = "Jane",
             ["people[2]"] = "Doe"
