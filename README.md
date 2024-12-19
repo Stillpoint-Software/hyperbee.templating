@@ -141,6 +141,38 @@ var result = parser.Render(template);
 Console.WriteLine(result); // Output: 012. 
 ```
 
+### Each Statement
+
+```csharp
+var template = "{{each n:x => x.list.Split( \",\" )}}World {{n}},{{/each}}";
+
+var parser = new TemplateParser
+{
+    Variables = { ["list"] = "John,James,Sarah" }
+};
+
+var result = parser.Render(template);
+Console.WriteLine(result); // hello World John,World James,World Sarah,. 
+```
+
+```csharp
+
+var template = "{{each n:x => x.Where( t => Regex.IsMatch( t.Key, \"people*\" ) ).Select( t => t.Value )}}hello {{n}}. {{/each}}";
+
+var parser = new TemplateParser
+{
+    Variables = 
+        {
+            ["people[0]"] = "John",
+            ["people[1]"] = "Jane",
+            ["people[2]"] = "Doe"
+        }
+};
+
+var result = parser.Render(template);
+Console.WriteLine(result); // hello John. hello Jane. hello Doe. 
+```
+
 ### Methods
 
 You can invoke methods within token expressions.

@@ -64,6 +64,12 @@ The `while` statement repeats a template block while a condition is true.
 
 `{{ while condition }} ... {{ /while }}`
 
+### Each Statement
+
+The `each` statement repeats a template block for each a condition.
+
+`{{ each condition }} ... {{ /each }}`
+
 ## Inline Declarations
 
 You can declare variable tokens inline within the template.
