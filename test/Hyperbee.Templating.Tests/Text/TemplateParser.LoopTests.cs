@@ -67,11 +67,11 @@ public class TemplateParserLoopTests
 
         var parser = new TemplateParser
         {
-            Variables = //TODO : we want the key validator to allow `[#].` in the key
+            Variables = 
             {
-                ["people0"] = "John",
-                ["people1"] = "Jane",
-                ["people2"] = "Doe"
+                ["people[0]"] = "John",
+                ["people[1]"] = "Jane",
+                ["people[2]"] = "Doe"
             }
         };
 
