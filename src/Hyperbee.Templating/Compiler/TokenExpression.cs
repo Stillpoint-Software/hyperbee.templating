@@ -6,5 +6,5 @@ public delegate object TokenExpression( IReadOnlyMemberDictionary members );
 
 public interface ITokenExpressionProvider
 {
-    public TokenExpression GetTokenExpression( string codeExpression );
+    public TokenExpression GetTokenExpression( string codeExpression, MemberDictionary members );
 }

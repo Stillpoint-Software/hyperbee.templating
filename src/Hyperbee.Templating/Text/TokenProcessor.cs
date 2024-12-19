@@ -1,6 +1,10 @@
-﻿using System.Globalization;
+﻿using System.Collections;
+using System.Globalization;
 using Hyperbee.Templating.Compiler;
 using Hyperbee.Templating.Configure;
+using Hyperbee.Templating.Core;
+
+// ReSharper disable RedundantAssignment
 
 namespace Hyperbee.Templating.Text;
 
@@ -12,12 +16,11 @@ internal class TokenProcessor
     private readonly bool _substituteEnvironmentVariables;
     private readonly string _tokenLeft;
     private readonly string _tokenRight;
+    private readonly MemberDictionary _members;
 
-    private readonly MemberDictionary _tokens;
-
-    public TokenProcessor( MemberDictionary tokens, TemplateOptions options )
+    public TokenProcessor( MemberDictionary members, TemplateOptions options )
     {
-        ArgumentNullException.ThrowIfNull( tokens );
+        ArgumentNullException.ThrowIfNull( members );
 
         if ( options.Methods == null )
             throw new ArgumentNullException( nameof( options ), $"{nameof( options.Methods )} cannot be null." );
@@ -29,8 +32,7 @@ internal class TokenProcessor
         _tokenHandler = options.TokenHandler;
         _ignoreMissingTokens = options.IgnoreMissingTokens;
         _substituteEnvironmentVariables = options.SubstituteEnvironmentVariables;
-
-        _tokens = tokens;
+        _members = members;
 
         (_tokenLeft, _tokenRight) = options.TokenDelimiters();
     }
@@ -40,15 +42,16 @@ internal class TokenProcessor
         value = default;
         var frames = state.Frames;
 
-        // Frame handling: pre-value processing
+        // Initial handling based on token type
         switch ( token.TokenType )
         {
             case TokenType.Value:
-                if ( frames.IsFalsy )
-                    return TokenAction.Ignore;
+                if ( frames.IsFalsy ) return TokenAction.Ignore;
                 break;
 
             case TokenType.If:
+            case TokenType.While:
+            case TokenType.Each:
                 // Fall through to resolve value.
                 break;
 
@@ -58,65 +61,89 @@ internal class TokenProcessor
             case TokenType.Endif:
                 return ProcessEndIfToken( frames );
 
-            case TokenType.While:
-                // Fall through to resolve value.
-                break;
-
             case TokenType.EndWhile:
                 return ProcessEndWhileToken( frames );
+
+            case TokenType.EndEach:
+                return ProcessEndEachToken( frames );
 
             case TokenType.Define:
                 return ProcessDefineToken( token );
 
-            case TokenType.None:
+            case TokenType.Undefined:
+            case TokenType.LoopStart:
+            case TokenType.LoopEnd:
             default:
                 throw new NotSupportedException( $"{nameof( ProcessToken )}: Invalid {nameof( TokenType )} {token.TokenType}." );
         }
 
-        // Resolve value
+        // Resolve value 
+        ResolveValue( token, out var resolvedValue, out var defined, out var conditionalResult, out var expressionError );
 
-        ResolveValue( token, out value, out var defined, out var ifResult, out var expressionError );
-
-        // Frame handling: post-value processing
-
+        // Conditional frame handling based on token type after value resolution
         switch ( token.TokenType )
         {
             case TokenType.If:
+                return ProcessIfToken( token, frames, conditionalResult );
+
             case TokenType.While:
-                {
-                    var frameIsTruthy = token.TokenEvaluation == TokenEvaluation.Falsy ? !ifResult : ifResult;
-                    var startPos = token.TokenType == TokenType.While ? state.CurrentPos : -1;
+                return ProcessWhileToken( token, frames, conditionalResult, state );
 
-                    frames.Push( token, frameIsTruthy, startPos );
-
-                    return TokenAction.Ignore;
-                }
-        }
-
-        // Token handling: user-defined token action
-
-        _ = TryInvokeTokenHandler( token, defined, ref value, out var tokenAction );
-
-        // Handle final token action
-
-        switch ( tokenAction )
-        {
-            case TokenAction.Ignore:
-            case TokenAction.Replace:
-                break;
-
-            case TokenAction.Error:
-                value = $"{_tokenLeft}Error ({token.Id}):{expressionError ?? token.Name}{_tokenRight}";
-                break;
+            case TokenType.Each:
+                return ProcessEachToken( token, frames, resolvedValue, state, out value );
 
             default:
-                throw new NotSupportedException( $"{nameof( ProcessToken )}: Invalid {nameof( TokenAction )} {tokenAction}." );
+                value = (string) resolvedValue;
+                break;
+        }
+
+        return ProcessTokenHandler( token, defined, ref value, expressionError );
+    }
+
+    private TokenAction ProcessTokenHandler( TokenDefinition token, bool defined, ref string value, string expressionError )
+    {
+        if ( !TryInvokeTokenHandler( token, defined, ref value, out var tokenAction ) )
+        {
+            tokenAction = defined ? TokenAction.Replace : (_ignoreMissingTokens ? TokenAction.Ignore : TokenAction.Error);
+        }
+
+        // Determine final action based on token handler and missing tokens
+        if ( tokenAction == TokenAction.Error && !defined )
+        {
+            value = $"{_tokenLeft}Error ({token.Id}):{expressionError ?? token.Name}{_tokenRight}";
         }
 
         return tokenAction;
     }
 
-    private static TokenAction ProcessElseToken( TemplateStack frames, TokenDefinition token )
+    private TokenAction ProcessDefineToken( TokenDefinition token )
+    {
+        string expressionError = null;
+        string value;
+        switch ( token.TokenEvaluation )
+        {
+            case TokenEvaluation.Expression when TryInvokeTokenExpression( token, out var expressionResult, out expressionError ):
+                value = Convert.ToString( expressionResult, CultureInfo.InvariantCulture );
+                break;
+            case TokenEvaluation.Expression:
+                throw new TemplateException( $"Error evaluating define expression for {token.Name}: {expressionError}" );
+            default:
+                value = token.TokenExpression;
+                break;
+        }
+
+        _members[token.Name] = value;
+        return TokenAction.Ignore;
+    }
+
+    private static TokenAction ProcessIfToken( TokenDefinition token, FrameStack frames, bool conditionalResult )
+    {
+        var frameIsTruthy = token.TokenEvaluation == TokenEvaluation.Falsy ? !conditionalResult : conditionalResult;
+        frames.Push( token, frameIsTruthy );
+        return TokenAction.Ignore;
+    }
+
+    private static TokenAction ProcessElseToken( FrameStack frames, TokenDefinition token )
     {
         if ( !frames.IsTokenType( TokenType.If ) )
             throw new TemplateException( "Syntax error. Invalid `else` without matching `if`." );
@@ -125,7 +152,7 @@ internal class TokenProcessor
         return TokenAction.Ignore;
     }
 
-    private static TokenAction ProcessEndIfToken( TemplateStack frames )
+    private static TokenAction ProcessEndIfToken( FrameStack frames )
     {
         if ( frames.Depth == 0 || !frames.IsTokenType( TokenType.If ) && !frames.IsTokenType( TokenType.Else ) )
             throw new TemplateException( "Syntax error. Invalid `/if` without matching `if`." );
@@ -134,56 +161,83 @@ internal class TokenProcessor
             frames.Pop(); // pop the else
 
         frames.Pop(); // pop the if
-
         return TokenAction.Ignore;
     }
 
-    private TokenAction ProcessEndWhileToken( TemplateStack frames )
+    private static TokenAction ProcessWhileToken( TokenDefinition token, FrameStack frames, bool conditionalResult, TemplateState state )
+    {
+        var frameIsTruthy = token.TokenEvaluation == TokenEvaluation.Falsy ? !conditionalResult : conditionalResult;
+        frames.Push( token, frameIsTruthy, null, state.CurrentPos );
+        return TokenAction.Ignore;
+    }
+
+    private TokenAction ProcessEndWhileToken( FrameStack frames )
     {
         if ( frames.Depth == 0 || !frames.IsTokenType( TokenType.While ) )
             throw new TemplateException( "Syntax error. Invalid `/while` without matching `while`." );
 
         var whileToken = frames.Peek().Token;
 
-        // ReSharper disable once RedundantAssignment
-        string expressionError = null; // assign to avoid compiler complaint
+        bool conditionIsTrue;
+        string expressionError = null;
 
-        var conditionIsTrue = whileToken.TokenEvaluation switch
+        switch ( whileToken.TokenEvaluation )
         {
-            TokenEvaluation.Expression when TryInvokeTokenExpression( whileToken, out var expressionResult, out expressionError ) => Convert.ToBoolean( expressionResult ),
-            TokenEvaluation.Expression => throw new TemplateException( $"{_tokenLeft}Error ({whileToken.Id}):{expressionError ?? "Error in while condition."}{_tokenRight}" ),
-            _ => Truthy( _tokens[whileToken.Name] ) // Re-evaluate the condition
-        };
+            case TokenEvaluation.Expression when TryInvokeTokenExpression( whileToken, out var expressionResult, out expressionError ):
+                conditionIsTrue = Convert.ToBoolean( expressionResult );
+                break;
+            case TokenEvaluation.Expression:
+                throw new TemplateException( $"{_tokenLeft}Error ({whileToken.Id}):{expressionError ?? "Error in while condition."}{_tokenRight}" );
+            default:
+                conditionIsTrue = Truthy( _members[whileToken.Name] );
+                break;
+        }
 
-        if ( conditionIsTrue ) // If the condition is true, replay the while block
+        if ( conditionIsTrue )
             return TokenAction.ContinueLoop;
 
-        // Otherwise, pop the frame and exit the loop
         frames.Pop();
         return TokenAction.Ignore;
     }
 
-    private TokenAction ProcessDefineToken( TokenDefinition token )
+    private TokenAction ProcessEachToken( TokenDefinition token, FrameStack frames, object resolvedValue, TemplateState state, out string value )
     {
-        // ReSharper disable once RedundantAssignment
-        string expressionError = null; // assign to avoid compiler complaint
+        value = default;
 
-        _tokens[token.Name] = token.TokenEvaluation switch
+        if ( resolvedValue is IEnumerator<string> enumerator && enumerator.MoveNext() )
         {
-            TokenEvaluation.Expression when TryInvokeTokenExpression( token, out var expressionResult, out expressionError )
-                => Convert.ToString( expressionResult, CultureInfo.InvariantCulture ),
-            TokenEvaluation.Expression
-                => throw new TemplateException( $"Error evaluating define expression for {token.Name}: {expressionError}" ),
-            _ => token.TokenExpression
-        };
+            value = enumerator.Current;
+            _members[token.Name] = value;
+            frames.Push( token, true, new EnumeratorDefinition( Name: token.Name, Enumerator: enumerator ), state.CurrentPos );
+        }
+
         return TokenAction.Ignore;
     }
 
-    private void ResolveValue( TokenDefinition token, out string value, out bool defined, out bool ifResult, out string expressionError )
+    private TokenAction ProcessEndEachToken( FrameStack frames )
+    {
+        if ( frames.Depth == 0 || !frames.IsTokenType( TokenType.Each ) )
+            throw new TemplateException( "Syntax error. Invalid /each without matching each." );
+
+        var frame = frames.Peek();
+        var (currentName, enumerator) = frame.EnumeratorDefinition;
+
+        if ( enumerator!.MoveNext() )
+        {
+            _members[currentName] = enumerator.Current;
+            return TokenAction.ContinueLoop;
+        }
+
+        _members[currentName] = default;
+        frames.Pop();
+        return TokenAction.Ignore;
+    }
+
+    private void ResolveValue( TokenDefinition token, out object value, out bool defined, out bool conditionalResult, out string expressionError )
     {
         value = default;
         defined = false;
-        ifResult = false;
+        conditionalResult = false;
         expressionError = null;
 
         switch ( token.TokenType )
@@ -191,44 +245,61 @@ internal class TokenProcessor
             case TokenType.Value when token.TokenEvaluation != TokenEvaluation.Expression:
             case TokenType.If when token.TokenEvaluation != TokenEvaluation.Expression:
             case TokenType.While when token.TokenEvaluation != TokenEvaluation.Expression:
-                defined = _tokens.TryGetValue( token.Name, out value );
-
-                if ( !defined && _substituteEnvironmentVariables )
                 {
-                    value = Environment.GetEnvironmentVariable( token.Name );
-                    defined = value != null;
-                }
+                    defined = _members.TryGetValue( token.Name, out var valueMember );
+                    value = defined ? valueMember : GetEnvironmentVariableValue( token.Name );
 
-                if ( token.TokenType == TokenType.If || token.TokenType == TokenType.While )
-                    ifResult = defined && Truthy( value );
-                break;
+                    if ( token.TokenType == TokenType.If || token.TokenType == TokenType.While || token.TokenType == TokenType.Each )
+                        conditionalResult = defined && Truthy( valueMember );
+                    break;
+                }
 
             case TokenType.Value when token.TokenEvaluation == TokenEvaluation.Expression:
-                if ( TryInvokeTokenExpression( token, out var valueExprResult, out expressionError ) )
                 {
-                    value = Convert.ToString( valueExprResult, CultureInfo.InvariantCulture );
-                    defined = true;
-                }
+                    if ( TryInvokeTokenExpression( token, out var valueExprResult, out expressionError ) )
+                    {
+                        value = Convert.ToString( valueExprResult, CultureInfo.InvariantCulture );
+                        defined = true;
+                    }
 
-                break;
+                    break;
+                }
 
             case TokenType.If when token.TokenEvaluation == TokenEvaluation.Expression:
             case TokenType.While when token.TokenEvaluation == TokenEvaluation.Expression:
-                if ( TryInvokeTokenExpression( token, out var condExprResult, out var error ) )
-                    ifResult = Convert.ToBoolean( condExprResult );
-                else
-                    throw new TemplateException( $"{_tokenLeft}Error ({token.Id}):{error ?? "Error in if condition."}{_tokenRight}" );
-                break;
+                {
+                    if ( !TryInvokeTokenExpression( token, out var condExprResult, out var error ) )
+                        throw new TemplateException( $"{_tokenLeft}Error ({token.Id}):{error ?? "Error in condition."}{_tokenRight}" );
+
+                    conditionalResult = Convert.ToBoolean( condExprResult );
+                    break;
+                }
+
+            case TokenType.Each:
+                {
+                    if ( token.TokenEvaluation != TokenEvaluation.Expression )
+                        throw new TemplateException( "Invalid token expression for each. Are you missing a fat arrow?" );
+
+                    if ( !TryInvokeTokenExpression( token, out var eachExprResult, out var errorEach ) )
+                        throw new TemplateException( $"{_tokenLeft}Error ({token.Id}):{errorEach ?? "Error in each condition."}{_tokenRight}" );
+
+                    value = new EnumeratorAdapter( (IEnumerable) eachExprResult );
+                    break;
+                }
+        }
+
+        return;
+
+        string GetEnvironmentVariableValue( string name )
+        {
+            return _substituteEnvironmentVariables ? Environment.GetEnvironmentVariable( token.Name ) : default;
         }
     }
 
     private bool TryInvokeTokenHandler( TokenDefinition token, bool defined, ref string value, out TokenAction tokenAction )
     {
         tokenAction = defined ? TokenAction.Replace : (_ignoreMissingTokens ? TokenAction.Ignore : TokenAction.Error);
-
-        // Invoke any token handler
-        if ( _tokenHandler == null )
-            return false;
+        if ( _tokenHandler == null ) return false;
 
         var eventArgs = new TemplateEventArgs
         {
@@ -241,10 +312,8 @@ internal class TokenProcessor
 
         _tokenHandler.Invoke( null, eventArgs );
 
-        // The token handler may have modified token properties
         value = eventArgs.Value;
         tokenAction = eventArgs.Action;
-
         return true;
     }
 
@@ -252,44 +321,42 @@ internal class TokenProcessor
     {
         try
         {
-            var tokenExpression = _tokenExpressionProvider.GetTokenExpression( token.TokenExpression );
-
-            result = tokenExpression( _tokens );
-            error = default;
-
+            var tokenExpression = _tokenExpressionProvider.GetTokenExpression( token.TokenExpression, _members );
+            result = tokenExpression( _members );
+            error = null;
             return true;
         }
         catch ( Exception ex )
         {
-            error = ex.Message;
-        }
+            if ( ex is TokenExpressionProviderException providerException && providerException.Id == "CS1061" )
+            {
+                string methodName = null;
 
-        result = default;
-        return false;
+                if ( providerException.Diagnostic.Length > 0 )
+                {
+                    var location = providerException.Diagnostic[0].Location;
+                    var sourceTree = location.SourceTree;
+                    var sourceSpan = location.SourceSpan;
+                    methodName = sourceTree?.ToString().Substring( sourceSpan.Start, sourceSpan.Length );
+                }
+
+                error = $"Method '{methodName ?? "<unknown>"}' not found.";
+            }
+            else
+            {
+                error = ex.Message;
+            }
+
+            result = null;
+            return false;
+        }
     }
 
-    private static readonly string[] FalsyStrings = ["False", "No", "Off", "0"];
+    private static readonly HashSet<string> FalsyStrings = new( ["False", "No", "Off", "0"], StringComparer.OrdinalIgnoreCase );
 
     private static bool Truthy( ReadOnlySpan<char> value )
     {
-        // falsy => null, String.Empty, False, No, Off, 0
-
-        var truthy = !value.IsEmpty;
-
-        if ( !truthy )
-            return false;
-
-        var compare = value.Trim();
-
-        foreach ( var item in FalsyStrings )
-        {
-            if ( !compare.SequenceEqual( item ) )
-                continue;
-
-            truthy = false;
-            break;
-        }
-
-        return truthy;
+        var trimmed = value.Trim();
+        return !trimmed.IsEmpty && !FalsyStrings.Contains( trimmed.ToString() );
     }
 }

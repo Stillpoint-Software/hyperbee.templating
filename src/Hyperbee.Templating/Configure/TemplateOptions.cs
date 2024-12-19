@@ -1,20 +1,23 @@
 ﻿using System.ComponentModel;
 using System.Reflection;
 using Hyperbee.Templating.Compiler;
+using Hyperbee.Templating.Core;
 using Hyperbee.Templating.Text;
 
 namespace Hyperbee.Templating.Configure;
 
 public class TemplateOptions
 {
+    public static TemplateOptions Create() => new();
+
     public IDictionary<string, IMethodInvoker> Methods { get; }
     public IDictionary<string, string> Variables { get; init; }
 
     public TokenStyle TokenStyle { get; set; } = TokenStyle.Default;
-    public KeyValidator Validator { get; set; } = TemplateHelper.ValidateKey;
+    public KeyValidator Validator { get; set; } = KeyHelper.ValidateKey;
 
-    public bool IgnoreMissingTokens { get; set; } = false;
-    public bool SubstituteEnvironmentVariables { get; set; } = false;
+    public bool IgnoreMissingTokens { get; set; }
+    public bool SubstituteEnvironmentVariables { get; set; }
     public int MaxTokenDepth { get; set; } = 20;
 
     public ITokenExpressionProvider TokenExpressionProvider { get; set; } = new RoslynTokenExpressionProvider();
@@ -84,6 +87,48 @@ public class TemplateOptions
     }
 
     public MethodBuilder AddMethod( string name ) => new( name, this );
+
+    public TemplateOptions SetIgnoreMissingTokens( bool ignoreMissingTokens )
+    {
+        IgnoreMissingTokens = ignoreMissingTokens;
+        return this;
+    }
+
+    public TemplateOptions SetMaxTokenDepth( int maxTokenDepth )
+    {
+        MaxTokenDepth = maxTokenDepth;
+        return this;
+    }
+
+    public TemplateOptions SetSubstituteEnvironmentVariables( bool substituteEnvironmentVariables )
+    {
+        SubstituteEnvironmentVariables = substituteEnvironmentVariables;
+        return this;
+    }
+
+    public TemplateOptions SetTokenExpressionProvider( ITokenExpressionProvider expressionProvider )
+    {
+        TokenExpressionProvider = expressionProvider;
+        return this;
+    }
+
+    public TemplateOptions SetTokenHandler( Action<TemplateParser, TemplateEventArgs> tokenHandler )
+    {
+        TokenHandler = tokenHandler;
+        return this;
+    }
+
+    public TemplateOptions SetTokenStyle( TokenStyle tokenStyle )
+    {
+        TokenStyle = tokenStyle;
+        return this;
+    }
+
+    public TemplateOptions SetValidator( KeyValidator validator )
+    {
+        Validator = validator;
+        return this;
+    }
 
     public (string TokenLeft, string TokenRight) TokenDelimiters()
     {
