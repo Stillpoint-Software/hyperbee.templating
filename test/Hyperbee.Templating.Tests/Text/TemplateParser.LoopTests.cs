@@ -67,7 +67,7 @@ public class TemplateParserLoopTests
 
         var parser = new TemplateParser
         {
-            Variables = 
+            Variables =
             {
                 ["people[0]"] = "John",
                 ["people[1]"] = "Jane",
