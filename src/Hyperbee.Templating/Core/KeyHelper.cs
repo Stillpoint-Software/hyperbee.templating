@@ -28,10 +28,35 @@ internal static class KeyHelper
         if ( key.IsEmpty || !char.IsLetter( key[0] ) )
             return false;
 
+
         for ( var i = 1; i < key.Length; i++ )
         {
-            if ( !char.IsLetterOrDigit( key[i] ) && key[i] != '_' )
+            if ( key[i] == '[' )
+            {
+                i++;
+                if ( i >= key.Length || !char.IsDigit( key[i] ) )
+                    return false;
+
+                int numberStart = i;
+
+                while ( i < key.Length && char.IsDigit( key[i] ) )
+                    i++;
+
+                if ( i >= key.Length || key[i] != ']' )
+                    return false;
+
+                // Ensure that the bracket is at the end of the string
+                if ( i != key.Length - 1 )
+                    return false;
+
+                // Ensure that the number inside the brackets is positive
+                if ( int.Parse( key.Slice( numberStart, i - numberStart ) ) <= -1 )
+                    return false;
+            }
+            else if ( !char.IsLetterOrDigit( key[i] ) && key[i] != '_' )
+            {
                 return false;
+            }
         }
 
         return true;

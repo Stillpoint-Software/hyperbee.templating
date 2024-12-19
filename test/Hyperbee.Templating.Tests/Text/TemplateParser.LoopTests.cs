@@ -58,7 +58,7 @@ public class TemplateParserLoopTests
     [DataTestMethod]
     [DataRow( ParseTemplateMethod.Buffered )]
     [DataRow( ParseTemplateMethod.InMemory )]
-    public void Should_honor_each_expression_2( ParseTemplateMethod parseMethod )
+    public void Should_honor_each_expression_RegEx( ParseTemplateMethod parseMethod )
     {
         // arrange
         const string expression = "{{each n:x => x.Where( t => Regex.IsMatch( t.Key, \"people*\" ) ).Select( t => t.Value )}}hello {{n}}. {{/each}}";
@@ -67,11 +67,40 @@ public class TemplateParserLoopTests
 
         var parser = new TemplateParser
         {
-            Variables = //BF : we want the key validator to allow `[#]`, and `[#].` in the key
+            Variables = //TODO : we want the key validator to allow `[#].` in the key
             {
                 ["people0"] = "John",
                 ["people1"] = "Jane",
                 ["people2"] = "Doe"
+            }
+        };
+
+        // act
+        var result = parser.Render( template, parseMethod );
+
+        // assert
+        var expected = "hello John. hello Jane. hello Doe. ";
+
+        Assert.AreEqual( expected, result );
+    }
+
+    [DataTestMethod]
+    [DataRow( ParseTemplateMethod.Buffered )]
+    [DataRow( ParseTemplateMethod.InMemory )]
+    public void Should_honor_each_Key( ParseTemplateMethod parseMethod )
+    {
+        // arrange
+        const string expression = "{{each n:x => x.Where( t => Regex.IsMatch( t.Key, \"people*\" ) ).Select( t => t.Value )}}hello {{n}}. {{/each}}";
+
+        const string template = $"{expression}";
+
+        var parser = new TemplateParser
+        {
+            Variables =
+            {
+                ["people[0]"] = "John",
+                ["people[1]"] = "Jane",
+                ["people[2]"] = "Doe"
             }
         };
 
