@@ -14,7 +14,7 @@ internal static class ReadOnlySpanExtensions
             // ReSharper disable UseCollectionExpression
             ? stackalloc char[] { '\\', value[0] }
             : stackalloc char[] { '\\', char.ToLowerInvariant( value[0] ), char.ToUpperInvariant( value[0] ) };
-            // ReSharper restore UseCollectionExpression
+        // ReSharper restore UseCollectionExpression
 #pragma warning restore IDE0302
 
         var search = span;
