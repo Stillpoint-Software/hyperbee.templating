@@ -1,6 +1,4 @@
-﻿using System.Collections.Generic;
-using Hyperbee.Collections;
-using Hyperbee.Templating.Configure;
+﻿using Hyperbee.Templating.Configure;
 using Hyperbee.Templating.Tests.TestSupport;
 using Hyperbee.Templating.Text;
 using Microsoft.VisualStudio.TestTools.UnitTesting;

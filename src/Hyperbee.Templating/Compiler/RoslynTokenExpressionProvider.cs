@@ -54,10 +54,9 @@ internal sealed class RoslynTokenExpressionProvider : ITokenExpressionProvider
     private static TokenExpression Compile( string codeExpression, MemberDictionary members )
     {
         // Create a shim to compile the expression
-        //AF: I added the linq and regular Expression usings
-        //AF: the error is in the Regex as it doesn't know what the people are.  
+
         var codeShim =
-            $$$"""
+            $$"""
                using System;
                using System.Linq;
                using System.Text.RegularExpressions;
@@ -68,9 +67,9 @@ internal sealed class RoslynTokenExpressionProvider : ITokenExpressionProvider
                
                public static class TokenExpressionInvoker
                {
-                   public static object Invoke( {{{nameof( IReadOnlyMemberDictionary )}}} members ) 
+                   public static object Invoke( {{nameof( IReadOnlyMemberDictionary )}} members ) 
                    {
-                       TokenExpression expr = {{{codeExpression}}};
+                       TokenExpression expr = {{codeExpression}};
                        return expr( members );
                    }
                }
@@ -96,7 +95,7 @@ internal sealed class RoslynTokenExpressionProvider : ITokenExpressionProvider
         var rewriter = new TokenExpressionRewriter( parameterName, members );
         var rewrittenSyntaxTree = rewriter.Visit( root );
 
-        var rewrittenCode = rewrittenSyntaxTree.ToFullString(); // Keep for debugging
+        //var rewrittenCode = rewrittenSyntaxTree.ToFullString(); // Keep for debugging
 
         // Compile the rewritten code
         var counter = Interlocked.Increment( ref __counter );
@@ -125,9 +124,9 @@ internal sealed class RoslynTokenExpressionProvider : ITokenExpressionProvider
         var methodDelegate = assembly!
             .GetType( "TokenExpressionInvoker" )!
             .GetMethod( "Invoke", BindingFlags.Public | BindingFlags.Static )!
-            .CreateDelegate( typeof( TokenExpression ) );
+            .CreateDelegate<TokenExpression>();
 
-        return (TokenExpression) methodDelegate;
+        return methodDelegate;
     }
 }
 
