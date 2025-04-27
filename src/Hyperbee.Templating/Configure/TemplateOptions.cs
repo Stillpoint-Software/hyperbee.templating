@@ -71,7 +71,7 @@ public class TemplateOptions
                     value = ((PropertyInfo) member).GetValue( variableObject, null );
                     break;
                 case MemberTypes.Field:
-                    value = ((PropertyInfo) member).GetValue( variableObject, null );
+                    value = ((FieldInfo) member).GetValue( variableObject );
                     break;
                 default:
                     continue;
