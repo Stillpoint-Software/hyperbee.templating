@@ -1,5 +1,4 @@
 ﻿using System.Buffers;
-using Hyperbee.Templating.Compiler;
 using Hyperbee.Templating.Configure;
 using Hyperbee.Templating.Core;
 
@@ -7,7 +6,7 @@ namespace Hyperbee.Templating.Text.Runtime;
 
 public class TemplateParser
 {
-    internal static int BufferSize = 1024;
+    internal static int BufferSize = 4096; // default to typical memory page size
 
     internal TokenParser TokenParser { get; }
     internal TokenProcessor TokenProcessor { get; }
