@@ -3,6 +3,7 @@ using System.Reflection;
 using Hyperbee.Templating.Compiler;
 using Hyperbee.Templating.Core;
 using Hyperbee.Templating.Text;
+using Hyperbee.Templating.Text.Runtime;
 
 namespace Hyperbee.Templating.Configure;
 

@@ -1,5 +1,4 @@
-﻿using Hyperbee.Templating.Tests.TestSupport;
-using Hyperbee.Templating.Text;
+﻿using Hyperbee.Templating.Text;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Hyperbee.Templating.Tests.Text
@@ -7,16 +6,16 @@ namespace Hyperbee.Templating.Tests.Text
     [TestClass]
     public class TemplateParserNestedTokensTests
     {
-        [DataTestMethod]
-        [DataRow( ParseTemplateMethod.Buffered )]
-        [DataRow( ParseTemplateMethod.InMemory )]
-        public void Should_render_nested_tokens( ParseTemplateMethod parseMethod )
+        [TestMethod]
+        public void Should_render_nested_tokens()
         {
             // arrange
 
             const string template = "hello {{name}}.";
 
-            var parser = new TemplateParser
+            // act
+
+            var result = Template.Render( template, new()
             {
                 Variables =
                 {
@@ -25,11 +24,7 @@ namespace Hyperbee.Templating.Tests.Text
                     ["last"] = "seldon",
                     ["last_expression"] = "{{last}}"
                 }
-            };
-
-            // act
-
-            var result = parser.Render( template, parseMethod );
+            } );
 
             // assert
 
@@ -38,14 +33,14 @@ namespace Hyperbee.Templating.Tests.Text
             Assert.AreEqual( expected, result );
         }
 
-        [DataTestMethod]
-        [DataRow( ParseTemplateMethod.Buffered )]
-        [DataRow( ParseTemplateMethod.InMemory )]
-        public void Should_handle_deeply_nested_tokens( ParseTemplateMethod parseMethod )
+        [TestMethod]
+        public void Should_handle_deeply_nested_tokens()
         {
             // arrange
             const string template = "hello {{name}}.";
-            var parser = new TemplateParser
+
+            // act
+            var result = Template.Render( template, new()
             {
                 Variables =
                 {
@@ -55,24 +50,21 @@ namespace Hyperbee.Templating.Tests.Text
                     ["last"] = "{{suffix}} Doe",
                     ["suffix"] = "Jr."
                 }
-            };
-
-            // act
-            var result = parser.Render( template, parseMethod );
+            } );
 
             // assert
             const string expected = "hello Mr. John Jr. Doe.";
             Assert.AreEqual( expected, result );
         }
 
-        [DataTestMethod]
-        [DataRow( ParseTemplateMethod.Buffered )]
-        [DataRow( ParseTemplateMethod.InMemory )]
-        public void Should_handle_recursive_token_definitions( ParseTemplateMethod parseMethod )
+        [TestMethod]
+        public void Should_handle_recursive_token_definitions()
         {
             // arrange
             const string template = "hello {{name}}.";
-            var parser = new TemplateParser
+
+            // act & assert
+            Assert.ThrowsExactly<TemplateException>( () => Template.Render( template, new()
             {
                 Variables =
                 {
@@ -80,10 +72,7 @@ namespace Hyperbee.Templating.Tests.Text
                     ["first"] = "{{name}}",
                     ["last"] = "Doe"
                 }
-            };
-
-            // act & assert
-            Assert.ThrowsException<TemplateException>( () => parser.Render( template, parseMethod ) );
+            } ) );
         }
     }
 }
