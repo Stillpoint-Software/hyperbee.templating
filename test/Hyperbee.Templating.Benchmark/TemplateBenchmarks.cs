@@ -66,7 +66,7 @@ public class TemplateBenchmarks
             {
                 ["choice"] = "2"
             }
-        });
+        } );
     }
 }
 

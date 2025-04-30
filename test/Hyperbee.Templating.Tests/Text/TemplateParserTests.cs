@@ -54,11 +54,11 @@ public class TemplateParserTests
 
         var result = Template.Render( template, new()
         {
-            Variables = 
-            { 
-                ["token"] = value 
+            Variables =
+            {
+                ["token"] = value
             }
-        });
+        } );
 
         // assert
 
@@ -77,13 +77,13 @@ public class TemplateParserTests
         {
             Variables =
             {
-                ["name"] = "{{first}} {{last_proxy}}", 
-                ["first"] = "hari", 
-                ["last"] = "seldon", 
+                ["name"] = "{{first}} {{last_proxy}}",
+                ["first"] = "hari",
+                ["last"] = "seldon",
                 ["last_proxy"] = "{{last}}",
             }
 
-        });
+        } );
 
         // assert
 
