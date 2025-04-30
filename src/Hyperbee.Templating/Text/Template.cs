@@ -28,6 +28,7 @@ public static class Template
 
         var (tokenLeft, _) = parser.TokenDelimiters();
         var pos = template.IndexOf( tokenLeft );
+        
         if ( pos < 0 )
             return template.ToString();
 
@@ -43,6 +44,7 @@ public static class Template
 
         var (tokenLeft, _) = parser.TokenDelimiters();
         var pos = template.IndexOf( tokenLeft );
+        
         if ( pos < 0 )
         {
             writer.Write( template );
