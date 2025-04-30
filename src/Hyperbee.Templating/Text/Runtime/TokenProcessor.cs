@@ -30,8 +30,8 @@ internal class TokenProcessor
         _tokenHandler = options.TokenHandler;
         _ignoreMissingTokens = options.IgnoreMissingTokens;
         _substituteEnvironmentVariables = options.SubstituteEnvironmentVariables;
-        
-        _members =  new MemberDictionary(
+
+        _members = new MemberDictionary(
             options.Validator,
             options.Variables,
             (IReadOnlyDictionary<string, IMethodInvoker>) options.Methods

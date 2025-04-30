@@ -15,11 +15,11 @@ public class TemplateParserExpressionTests
 
         // act
         var result = Template.Render( template, new()
-        { 
-            Variables = 
-            { 
-                ["counter"] = "0" 
-            } 
+        {
+            Variables =
+            {
+                ["counter"] = "0"
+            }
         } );
 
         // assert
@@ -49,12 +49,12 @@ public class TemplateParserExpressionTests
 
         // act
 
-        var result = Template.Render( template, new() 
-        { 
-            Variables = 
-            { 
-                ["choice"] = "2" 
-            } 
+        var result = Template.Render( template, new()
+        {
+            Variables =
+            {
+                ["choice"] = "2"
+            }
         } );
 
         // assert
@@ -103,12 +103,12 @@ public class TemplateParserExpressionTests
         const string template = $"{definition}hello {expression}.";
 
         // act
-        var result = Template.Render( template, new() 
-        { 
-            Variables = 
-            { 
-                ["choice"] = "2" 
-            } 
+        var result = Template.Render( template, new()
+        {
+            Variables =
+            {
+                ["choice"] = "2"
+            }
         } );
 
         // assert

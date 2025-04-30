@@ -15,7 +15,7 @@ public class TemplateParserLoopTests
         const string template = $"count: {expression}.";
 
         // act
-        var result = Template.Render( template, new() 
+        var result = Template.Render( template, new()
         {
             Variables =
             {
@@ -38,12 +38,12 @@ public class TemplateParserLoopTests
         const string template = $"hello {expression}.";
 
         // act
-        var result = Template.Render( template, new() 
-        { 
-            Variables = 
-            { 
-                ["list"] = "1,2,3" 
-            } 
+        var result = Template.Render( template, new()
+        {
+            Variables =
+            {
+                ["list"] = "1,2,3"
+            }
         } );
 
         // assert
@@ -61,7 +61,7 @@ public class TemplateParserLoopTests
         const string template = $"{expression}";
 
         // act
-        var result = Template.Render( template, new() 
+        var result = Template.Render( template, new()
         {
             Variables =
             {
@@ -86,7 +86,7 @@ public class TemplateParserLoopTests
         const string template = $"{expression}";
 
         // act
-        var result = Template.Render( template, new() 
+        var result = Template.Render( template, new()
         {
             Variables =
             {
