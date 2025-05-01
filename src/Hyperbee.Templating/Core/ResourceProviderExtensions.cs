@@ -20,8 +20,7 @@ public static class ResourceProviderExtensions
             .AddVariables( options.Parameters )
             .SetIgnoreMissingTokens( options.IgnoreMissingTokensValue );
 
-        var parser = new TemplateParser( templateOptions );
-        var statement = parser.Render( reader );
+        var statement = Template.Render( reader, templateOptions );
 
         return statement;
     }

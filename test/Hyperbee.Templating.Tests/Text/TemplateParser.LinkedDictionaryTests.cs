@@ -1,7 +1,6 @@
 ﻿using System.Collections.Generic;
 using Hyperbee.Collections;
 using Hyperbee.Templating.Configure;
-using Hyperbee.Templating.Tests.TestSupport;
 using Hyperbee.Templating.Text;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
@@ -10,10 +9,8 @@ namespace Hyperbee.Templating.Tests.Text;
 [TestClass]
 public class TemplateParserLinkedDictionaryTests
 {
-    [DataTestMethod]
-    [DataRow( ParseTemplateMethod.Buffered )]
-    [DataRow( ParseTemplateMethod.InMemory )]
-    public void Should_resolve_conditional_nested_tokens_with_custom_source( ParseTemplateMethod parseMethod )
+    [TestMethod]
+    public void Should_resolve_conditional_nested_tokens_with_custom_source()
     {
         // arrange
 
@@ -37,11 +34,10 @@ public class TemplateParserLinkedDictionaryTests
         } );
 
         var config = new TemplateOptions( source );
-        var parser = new TemplateParser( config );
 
         // act
 
-        var result = parser.Render( template, parseMethod );
+        var result = Template.Render( template, config );
 
         // assert
 
