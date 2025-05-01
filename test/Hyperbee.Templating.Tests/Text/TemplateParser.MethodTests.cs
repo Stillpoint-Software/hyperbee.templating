@@ -1,5 +1,4 @@
 ﻿using Hyperbee.Templating.Configure;
-using Hyperbee.Templating.Tests.TestSupport;
 using Hyperbee.Templating.Text;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
@@ -8,10 +7,8 @@ namespace Hyperbee.Templating.Tests.Text;
 [TestClass]
 public class TemplateParserMethodTests
 {
-    [DataTestMethod]
-    [DataRow( ParseTemplateMethod.Buffered )]
-    [DataRow( ParseTemplateMethod.InMemory )]
-    public void Should_call_custom_method( ParseTemplateMethod parseMethod )
+    [TestMethod]
+    public void Should_call_custom_method()
     {
         // arrange
         const string template = "hello {{x=>x.ToUpper(x.name)}}. this is a template with an expression token.";
@@ -20,11 +17,9 @@ public class TemplateParserMethodTests
             .AddVariable( "name", "me" )
             .AddMethod( "ToUpper" ).Expression<string, string>( arg => arg.ToUpper() );
 
-        var parser = new TemplateParser( options );
-
         // act
 
-        var result = parser.Render( template, parseMethod );
+        var result = Template.Render( template, options );
 
         // assert
 
@@ -33,10 +28,8 @@ public class TemplateParserMethodTests
         Assert.AreEqual( expected, result );
     }
 
-    [DataTestMethod]
-    [DataRow( ParseTemplateMethod.Buffered )]
-    [DataRow( ParseTemplateMethod.InMemory )]
-    public void Should_call_custom_method_with_arguments( ParseTemplateMethod parseMethod )
+    [TestMethod]
+    public void Should_call_custom_method_with_arguments()
     {
         // arrange
 
@@ -51,11 +44,9 @@ public class TemplateParserMethodTests
                 return result;
             } );
 
-        var parser = new TemplateParser( options );
-
         // act
 
-        var result = parser.Render( template, parseMethod );
+        var result = Template.Render( template, options );
 
         // assert
 
@@ -64,10 +55,8 @@ public class TemplateParserMethodTests
         Assert.AreEqual( expected, result );
     }
 
-    [DataTestMethod]
-    [DataRow( ParseTemplateMethod.Buffered )]
-    [DataRow( ParseTemplateMethod.InMemory )]
-    public void Should_not_replace_token_when_method_is_missing( ParseTemplateMethod parseMethod )
+    [TestMethod]
+    public void Should_not_replace_token_when_method_is_missing()
     {
         // arrange
 
@@ -77,11 +66,9 @@ public class TemplateParserMethodTests
         var options = new TemplateOptions()
             .AddVariable( "name", "me" );
 
-        var parser = new TemplateParser( options );
-
         // act
 
-        var result = parser.Render( template, parseMethod );
+        var result = Template.Render( template, options );
 
         // assert
 

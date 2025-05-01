@@ -17,6 +17,11 @@ public class MemberDictionary : IReadOnlyMemberDictionary
 
     public KeyValidator Validator { get; }
 
+    public MemberDictionary()
+        : this( KeyHelper.ValidateKey, default, default )
+    {
+    }
+
     public MemberDictionary( IDictionary<string, string> source, IReadOnlyDictionary<string, IMethodInvoker> methods = default )
         : this( KeyHelper.ValidateKey, source, methods )
     {
@@ -66,6 +71,11 @@ public class MemberDictionary : IReadOnlyMemberDictionary
 
             Add( key, value );
         }
+    }
+
+    public void Add( KeyValuePair<string, string> item )
+    {
+        Add( item.Key, item.Value );
     }
 
     public void Add( string name, string value )

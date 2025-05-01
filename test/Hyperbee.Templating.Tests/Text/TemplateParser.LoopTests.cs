@@ -1,5 +1,4 @@
-﻿using Hyperbee.Templating.Tests.TestSupport;
-using Hyperbee.Templating.Text;
+﻿using Hyperbee.Templating.Text;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Hyperbee.Templating.Tests.Text;
@@ -7,26 +6,22 @@ namespace Hyperbee.Templating.Tests.Text;
 [TestClass]
 public class TemplateParserLoopTests
 {
-    [DataTestMethod]
-    [DataRow( ParseTemplateMethod.Buffered )]
-    [DataRow( ParseTemplateMethod.InMemory )]
-    public void Should_honor_while_condition( ParseTemplateMethod parseMethod )
+    [TestMethod]
+    public void Should_honor_while_condition()
     {
         // arrange
         const string expression = "{{while x => int.Parse(x.counter) < 3}}{{counter}}{{counter:{{x => int.Parse(x.counter) + 1}}}}{{/while}}";
 
         const string template = $"count: {expression}.";
 
-        var parser = new TemplateParser
+        // act
+        var result = Template.Render( template, new()
         {
             Variables =
             {
                 ["counter"] = "0"
             }
-        };
-
-        // act
-        var result = parser.Render( template, parseMethod );
+        } );
 
         // assert
         const string expected = "count: 012.";
@@ -34,38 +29,39 @@ public class TemplateParserLoopTests
         Assert.AreEqual( expected, result );
     }
 
-    [DataTestMethod]
-    [DataRow( ParseTemplateMethod.Buffered )]
-    [DataRow( ParseTemplateMethod.InMemory )]
-    public void Should_honor_each_expression( ParseTemplateMethod parseMethod )
+    [TestMethod]
+    public void Should_honor_each_expression()
     {
         // arrange
         const string expression = "{{each n:x => x.list.Split( \",\" )}}World {{n}},{{/each}}";
 
         const string template = $"hello {expression}.";
 
-        var parser = new TemplateParser { Variables = { ["list"] = "1,2,3" } };
-
         // act
-        var result = parser.Render( template, parseMethod );
+        var result = Template.Render( template, new()
+        {
+            Variables =
+            {
+                ["list"] = "1,2,3"
+            }
+        } );
 
         // assert
-        var expected = "hello World 1,World 2,World 3,.";
+        const string expected = "hello World 1,World 2,World 3,.";
 
         Assert.AreEqual( expected, result );
     }
 
-    [DataTestMethod]
-    [DataRow( ParseTemplateMethod.Buffered )]
-    [DataRow( ParseTemplateMethod.InMemory )]
-    public void Should_honor_each_expression_RegEx( ParseTemplateMethod parseMethod )
+    [TestMethod]
+    public void Should_honor_each_expression_RegEx()
     {
         // arrange
         const string expression = "{{each n:x => x.Where( t => Regex.IsMatch( t.Key, \"people*\" ) ).Select( t => t.Value )}}hello {{n}}. {{/each}}";
 
         const string template = $"{expression}";
 
-        var parser = new TemplateParser
+        // act
+        var result = Template.Render( template, new()
         {
             Variables =
             {
@@ -73,28 +69,24 @@ public class TemplateParserLoopTests
                 ["people[1]"] = "Jane",
                 ["people[2]"] = "Doe"
             }
-        };
-
-        // act
-        var result = parser.Render( template, parseMethod );
+        } );
 
         // assert
-        var expected = "hello John. hello Jane. hello Doe. ";
+        const string expected = "hello John. hello Jane. hello Doe. ";
 
         Assert.AreEqual( expected, result );
     }
 
-    [DataTestMethod]
-    [DataRow( ParseTemplateMethod.Buffered )]
-    [DataRow( ParseTemplateMethod.InMemory )]
-    public void Should_honor_each_Key( ParseTemplateMethod parseMethod )
+    [TestMethod]
+    public void Should_honor_each_Key()
     {
         // arrange
         const string expression = "{{each n:x => x.Where( t => Regex.IsMatch( t.Key, \"people*\" ) ).Select( t => t.Value )}}hello {{n}}. {{/each}}";
 
         const string template = $"{expression}";
 
-        var parser = new TemplateParser
+        // act
+        var result = Template.Render( template, new()
         {
             Variables =
             {
@@ -102,13 +94,10 @@ public class TemplateParserLoopTests
                 ["people[1]"] = "Jane",
                 ["people[2]"] = "Doe"
             }
-        };
-
-        // act
-        var result = parser.Render( template, parseMethod );
+        } );
 
         // assert
-        var expected = "hello John. hello Jane. hello Doe. ";
+        const string expected = "hello John. hello Jane. hello Doe. ";
 
         Assert.AreEqual( expected, result );
     }

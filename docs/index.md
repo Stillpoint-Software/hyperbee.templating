@@ -34,7 +34,9 @@ dotnet add package Hyperbee.Templating
 ### Basic Example: Variable Substitution
 
 ```csharp
-var parser = new TemplateParser
+var template = "hello {{fullname}}.";
+
+var result = Template.Render(template, new()
 {
     Variables =
     {
@@ -42,11 +44,8 @@ var parser = new TemplateParser
         ["first"] = "Hari",
         ["last"] = "Seldon"
     }
-};
+});
 
-var template = "hello {{fullname}}.";
-
-var result = parser.Render(template);
 Console.WriteLine(result); // Output: hello Hari Seldon.
 ```
 

@@ -36,17 +36,16 @@ Templating can be configured directly at `TemplateParser` construction or throug
 If you are performing simple variable substitution you can configure the `TemplateParser` directly.
 
 ```csharp
-var parser = new TemplateParser
+const string template = "hello {{who}}.";
+
+var result = Template.Render(template, new()
 {
     Variables =
     {
         ["who"] = "you"
     }
-};
+});
 
-const string template = "hello {{who}}.";
-
-var result = parser.Render(template);
 Console.WriteLine(result); // Output: hello you.
 ```
 
@@ -68,11 +67,9 @@ var options = new TemplateOptions()
     )
     .AddMethod("ToUpper", (string input) => input.ToUpper());
 
-var parser = new TemplateParser(options);
-
 const string template = "{{greeting}} {{name.ToUpper()}}!";
 
-var result = parser.Render(template);
+var result = Template.Render(template, options);
 Console.WriteLine(result); // Output: Hello JOHN!
 ```
 
@@ -90,11 +87,9 @@ var options = new TemplateOptions()
         }
     );
 
-var parser = new TemplateParser(options);
-
 const string template = "{{greeting}} {{name}}, good {{timeOfDay}} from {{location}}!";
 
-var result = parser.Render(template);
+var result = Template.Render(template, options);
 Console.WriteLine(result); // Output: Hello John, good morning from world!
 ```
 
@@ -104,23 +99,10 @@ Console.WriteLine(result); // Output: Hello John, good morning from world!
 var options = new TemplateOptions()
     .AddMethod("Format").Expression<string,string,string>((format, arg1, arg2) => string.Format(format, arg1, arg2));
 
-var parser = new TemplateParser(options);
-
 const string template = "{{Format('{0} and {1}', 'Alice', 'Bob')}}";
 
-var result = parser.Render(template);
+var result = Template.Render(template, options);
 Console.WriteLine(result); // Output: Alice and Bob
 ```
-
-#### Example: Setting Token Style and Depth
-
-```csharp
-var options = new TemplateOptions()
-    .SetTokenStyle(TokenStyle.CurlyBraces)
-    .SetMaxTokenDepth(10);
-
-var parser = new TemplateParser(options);
-```
-
 
 {% endraw %}

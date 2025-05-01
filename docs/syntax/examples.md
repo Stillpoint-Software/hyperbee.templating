@@ -10,41 +10,41 @@ nav_order: 5
 ## Variable Substitution
 
 ```csharp
-var parser = new TemplateParser
+var template = "hello {{name}}.";
+
+var result = Template.Render(template, new()
 {
     Variables =
     {
         ["name"] = "me"
     }
-};
+});
 
-var template = "hello {{name}}.";
-
-var result = parser.Render(template);
 Console.WriteLine(result); // Output: hello me.
 ```
 
 ## Expression Substitution
 
 ```csharp
-var parser = new TemplateParser
+var template = "hello {{x => x.name.ToUpper()}}.";
+
+var result = Template.Render(template, new()
 {
     Variables =
     {
         ["name"] = "me"
     }
-};
+});
 
-var template = "hello {{x => x.name.ToUpper()}}.";
-
-var result = parser.Render(template);
 Console.WriteLine(result); // Output: hello ME.
 ```
 
 ## Token Nesting
 
 ```csharp
-var parser = new TemplateParser
+var template = "hello {{fullname}}.";
+
+var result = Template.Render(template, new()
 {
     Variables =
     {
@@ -52,11 +52,8 @@ var parser = new TemplateParser
         ["first"] = "Hari",
         ["last"] = "Seldon"
     }
-};
+});
 
-var template = "hello {{fullname}}.";
-
-var result = parser.Render(template);
 Console.WriteLine(result); // Output: hello Hari Seldon.
 ```
 
@@ -65,25 +62,26 @@ Console.WriteLine(result); // Output: hello Hari Seldon.
 ### If Statement
 
 ```csharp
-var parser = new TemplateParser
+var template = "{{#if condition}}hello {{name}}.{{/if}}";
+
+var result = Template.Render(template, new()
 {
     Variables =
     {
         ["condition"] = "true",
         ["name"] = "me"
     }
-};
+});
 
-var template = "{{#if condition}}hello {{name}}.{{/if}}";
-
-var result = parser.Render(template);
 Console.WriteLine(result); // Output: hello me.
 ```
 
 ### If-Else Statement
 
 ```csharp
-var parser = new TemplateParser
+var template = "hello {{#if condition}}{{name1}}{{else}}{{name2}}{{/if}}.";
+
+var result = Template.Render(template, new()
 {
     Variables =
     {
@@ -91,28 +89,24 @@ var parser = new TemplateParser
         ["name1"] = "me",
         ["name2"] = "you",
     }
-};
+});
 
-var template = "hello {{#if condition}}{{name1}}{{else}}{{name2}}{{/if}}.";
-
-var result = parser.Render(template);
 Console.WriteLine(result); // Output: hello you.
 ```
 
 ### While Statement
 
 ```csharp
-var parser = new TemplateParser
+var template = "{{while x => x.counter<int> < 3}}{{counter}}{{counter:{{x => x.counter<int> + 1}}}}{{/while}}";
+
+var result = Template.Render(template, new()
 {
     Variables =
     {
         ["counter"] = "0"
     }
-};
+});
 
-var template = "{{while x => x.counter<int> < 3}}{{counter}}{{counter:{{x => x.counter<int> + 1}}}}{{/while}}";
-
-var result = parser.Render(template);
 Console.WriteLine(result); // Output: 012. 
 ```
 
@@ -121,12 +115,14 @@ Console.WriteLine(result); // Output: 012.
 ```csharp
 var template = "{{each n:x => x.list.Split( \",\" )}}World {{n}},{{/each}}";
 
-var parser = new TemplateParser
+var result = Template.Render(template, new()
 {
-    Variables = { ["list"] = "John,James,Sarah" }
-};
+    Variables = 
+    { 
+        ["list"] = "John,James,Sarah" 
+    }
+});
 
-var result = parser.Render(template);
 Console.WriteLine(result); // hello World John,World James,World Sarah,. 
 ```
 
@@ -134,17 +130,16 @@ Console.WriteLine(result); // hello World John,World James,World Sarah,.
 
 var template = "{{each n:x => x.Where( t => Regex.IsMatch( t.Key, \"people*\" ) ).Select( t => t.Value )}}hello {{n}}. {{/each}}";
 
-var parser = new TemplateParser
+var result = Template.Render(template, new()
 {
     Variables = 
-        {
-            ["people[0]"] = "John",
-            ["people[1]"] = "Jane",
-            ["people[2]"] = "Doe"
-        }
-};
+    {
+        ["people[0]"] = "John",
+        ["people[1]"] = "Jane",
+        ["people[2]"] = "Doe"
+    }
+});
 
-var result = parser.Render(template);
 Console.WriteLine(result); // hello John. hello Jane. hello Doe. 
 ```
 
@@ -153,14 +148,16 @@ Console.WriteLine(result); // hello John. hello Jane. hello Doe.
 ```csharp
 var template = """{{identity:"me"}} hello {{identity}}.""";
 
-var result = parser.Render(template);
+var result = Template.Render(template, default);
+
 Console.WriteLine(result); // Output: hello me.
 ```
 
 ```csharp
 var template = """{{identity:{{x => "me"}} }} hello {{identity}}.""";
 
-var result = parser.Render(template);
+var result = Template.Render(template, default);
+
 Console.WriteLine(result); // Output: hello me.
 ```
 
@@ -169,17 +166,16 @@ Console.WriteLine(result); // Output: hello me.
 ### Framework Method
 
 ```csharp
-var parser = new TemplateParser
+var template = "hello {{x => x.name.ToUpper()}}.";
+
+var result = Template.Render(template, new()
 {
     Variables =
     {
         ["name"] = "me"
     }
-};
+});
 
-var template = "hello {{x => x.name.ToUpper()}}.";
-
-var result = parser.Render(template);
 Console.WriteLine(result); // Output: hello ME.
 ```
 
@@ -195,7 +191,8 @@ var parser = new TemplateParser( options );
 
 var template = "hello {{x => x.MyUpper( x.name )}}.";
 
-var result = parser.Render(template);
+var result = Template.Render(template, options);
+
 Console.WriteLine(result); // Output: hello ME.
 ```
 {% endraw %}

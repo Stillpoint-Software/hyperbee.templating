@@ -1,4 +1,4 @@
-﻿namespace Hyperbee.Templating.Text;
+﻿namespace Hyperbee.Templating.Text.Runtime;
 
 internal record TokenDefinition
 {
