@@ -37,6 +37,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Hyperbee.Templating.Benchma
 EndProject
 Project("{D954291E-2A0B-460D-934E-DC6B0785DB48}") = "docs", "docs\docs.shproj", "{8409DDE0-C540-4A94-BF7F-9403888BEDAC}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Hyperbee.Templating.Provider.XS", "src\Hyperbee.Templating.Provider.XS\Hyperbee.Templating.Provider.XS.csproj", "{EA264696-D88A-288E-0D8E-C834780D5F9E}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -55,6 +57,10 @@ Global
 		{EB7D2A85-3C82-444A-84CD-D245DCF951CE}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{EB7D2A85-3C82-444A-84CD-D245DCF951CE}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{EB7D2A85-3C82-444A-84CD-D245DCF951CE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{EA264696-D88A-288E-0D8E-C834780D5F9E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EA264696-D88A-288E-0D8E-C834780D5F9E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EA264696-D88A-288E-0D8E-C834780D5F9E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EA264696-D88A-288E-0D8E-C834780D5F9E}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -1,4 +1,5 @@
 ﻿using BenchmarkDotNet.Attributes;
+using Hyperbee.Templating.Provider.XS.Compiler;
 using Hyperbee.Templating.Text;
 
 namespace Hyperbee.Templating.Benchmark;
@@ -66,6 +67,34 @@ public class TemplateBenchmarks
             {
                 ["choice"] = "2"
             }
+        } );
+    }
+
+    [Benchmark]
+    public void InlineBlockExpressionXs()
+    {
+        const string expression = "{{name}}";
+        const string definition =
+            """
+            {{name:{{_ => {
+                return switch( vars<string>::choice )
+                {
+                    case "1": "me";
+                    case "2": "you";
+                    default: "default";
+                };
+            } }} }}
+            """;
+
+        const string template = $"{definition}hello {expression}.";
+
+        Template.Render( template, new()
+        {
+            Variables =
+            {
+                ["choice"] = "2"
+            },
+            TokenExpressionProvider = new XsTokenExpressionProvider(true)
         } );
     }
 }

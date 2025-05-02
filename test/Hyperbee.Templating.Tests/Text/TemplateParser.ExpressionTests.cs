@@ -1,4 +1,7 @@
-﻿using Hyperbee.Templating.Text;
+﻿using System;
+using Hyperbee.Templating.Configure;
+using Hyperbee.Templating.Provider.XS.Compiler;
+using Hyperbee.Templating.Text;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Hyperbee.Templating.Tests.Text;
@@ -6,6 +9,26 @@ namespace Hyperbee.Templating.Tests.Text;
 [TestClass]
 public class TemplateParserExpressionTests
 {
+    [TestMethod]
+    public void Should_honor_while_xs_condition()
+    {
+        // arrange
+        const string expression = "{{while x => vars<int>::counter < 3 }}{{counter}}{{counter:{{x => vars<int>::counter + 1}}}}{{/while}}";
+        const string template = $"count: {expression}.";
+
+        // act
+        var options = new TemplateOptions()
+            .AddVariable( "counter", "0" )
+            .SetTokenExpressionProvider( new XsTokenExpressionProvider() );
+
+        var result = Template.Render( template, options );
+
+        // assert
+        const string expected = "count: 012.";
+
+        Assert.AreEqual( expected, result );
+    }
+
     [TestMethod]
     public void Should_honor_while_condition()
     {
@@ -28,6 +51,41 @@ public class TemplateParserExpressionTests
         Assert.AreEqual( expected, result );
     }
 
+    [TestMethod]
+    public void Should_honor_block_xs_expression()
+    {
+        // arrange
+        const string expression =
+            """
+            {{_ => {
+                switch( vars<string>::choice ){
+                    case "1": vars<string>::TheBest("me", "no");
+                    case "2": vars<string>::TheBest("you", "yes");
+                    default: "error";
+                }
+            } }}
+            """;
+
+        const string template = $"hello {expression}.";
+
+        // act
+        var options = new TemplateOptions()
+            .AddVariable( "choice", "2" )
+            .AddMethod( "TheBest" ).Expression<string, string, string>( ( arg0, arg1 ) =>
+            {
+                var result = $"{arg0} {(arg1 == "yes" ? "ARE" : "are NOT")} the best";
+                return result;
+            } )
+            .SetTokenExpressionProvider( new XsTokenExpressionProvider() );
+
+        var result = Template.Render( template, options );
+
+        // assert
+
+        var expected = template.Replace( expression, "you ARE the best" );
+
+        Assert.AreEqual( expected, result );
+    }
 
     [TestMethod]
     public void Should_honor_block_expression()
@@ -65,6 +123,28 @@ public class TemplateParserExpressionTests
     }
 
     [TestMethod]
+    public void Should_honor_xs_inline_define()
+    {
+        // arrange
+        const string expression = "{{choice:me}}{{choice}}";
+
+        const string template = $"hello {expression}.";
+
+        // act
+        
+        var options = new TemplateOptions()
+            .SetTokenExpressionProvider( new XsTokenExpressionProvider() );
+
+        var result = Template.Render( template, options );
+
+        // assert
+
+        var expected = template.Replace( expression, "me" );
+
+        Assert.AreEqual( expected, result );
+    }
+
+    [TestMethod]
     public void Should_honor_inline_define()
     {
         // arrange
@@ -79,6 +159,43 @@ public class TemplateParserExpressionTests
         // assert
 
         var expected = template.Replace( expression, "me" );
+
+        Assert.AreEqual( expected, result );
+    }
+
+    [TestMethod]
+    public void Should_honor_xs_inline_block_expression()
+    {
+        // arrange
+        const string expression = "{{name}}";
+        const string definition =
+            """
+            {{name:{{_ => {
+                return switch( vars<string>::choice )
+                {
+                    case "1": "me";
+                    case "2": "you";
+                    default: "default";
+                };
+            } }} }}
+            """;
+
+        const string template = $"{definition}hello {expression}.";
+
+        // act
+        var result = Template.Render( template, new()
+        {
+            Variables =
+            {
+                ["choice"] = "2"
+            },
+            TokenExpressionProvider = new XsTokenExpressionProvider()
+        } );
+
+        // assert
+        var expected = template
+            .Replace( definition, "" )
+            .Replace( expression, "you" );
 
         Assert.AreEqual( expected, result );
     }

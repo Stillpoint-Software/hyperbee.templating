@@ -14,6 +14,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\src\Hyperbee.Templating.Provider.XS\Hyperbee.Templating.Provider.XS.csproj" />
     <ProjectReference Include="..\..\src\Hyperbee.Templating\Hyperbee.Templating.csproj" />
     <ProjectReference Include="..\Hyperbee.Templating.Tests\Hyperbee.Templating.Tests.csproj" />
   </ItemGroup>
