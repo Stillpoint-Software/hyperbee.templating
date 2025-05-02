@@ -1,4 +1,4 @@
-﻿using System.Collections.Concurrent;
+using System.Collections.Concurrent;
 using System.Linq.Expressions;
 using System.Reflection;
 using System.Runtime.CompilerServices;
@@ -17,17 +17,19 @@ namespace Hyperbee.Templating.Provider.XS.Compiler;
 public sealed class XsTokenExpressionProvider : ITokenExpressionProvider
 {
     private readonly bool _fastCompile;
+    private readonly TypeResolver _typeResolver;
     private ConcurrentDictionary<string, TokenExpression> TokenExpressions { get; } = new();
 
-    public XsTokenExpressionProvider( bool fastCompile = false )
+    public XsTokenExpressionProvider( bool fastCompile = false, TypeResolver typeResolver = null)
     {
         _fastCompile = fastCompile;
+        _typeResolver = typeResolver ?? TypeResolver.Create( Assembly.GetExecutingAssembly() );
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public TokenExpression GetTokenExpression( string codeExpression, MemberDictionary members )
     {
-        return TokenExpressions.GetOrAdd( codeExpression, Compile( codeExpression, members, _fastCompile ) );
+        return TokenExpressions.GetOrAdd( codeExpression, Compile( codeExpression, members, _typeResolver, _fastCompile ) );
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
@@ -36,66 +38,38 @@ public sealed class XsTokenExpressionProvider : ITokenExpressionProvider
         TokenExpressions.Clear();
     }
 
-    private static TokenExpression Compile( ReadOnlySpan<char> codeExpression, MemberDictionary members, bool fastCompile = false )
+    private static TokenExpression Compile( ReadOnlySpan<char> codeExpression, MemberDictionary members, TypeResolver typeResolver, bool fastCompile = false )
     {
-        var xsParser = new XsParser( new XsConfig( TypeResolver.Create( Assembly.GetExecutingAssembly() ) )
-        {
-            Extensions = [new MemberDictionaryParseExtension( members )]
-        } );
-
         var start = codeExpression.IndexOf( "=>" );
         var argument = codeExpression[..start].Trim().ToString();
         var body = codeExpression[(start + 2)..].Trim().ToString();
 
-        var scope = new ParseScope();
+        var xsParser = new XsParser( new XsConfig( typeResolver ) 
+        { 
+            Extensions = [new MemberDictionaryParseExtension( argument, members )] 
+        } );
 
-        try
-        {
-            scope.EnterScope( FrameType.Method );
+        var lambda = Lambda<TokenExpression>(
+            Convert( xsParser.Parse( body ), typeof( object ) ),
+            Parameter( typeof( IReadOnlyMemberDictionary ) ) );
 
-            var argumentParameter = Parameter( typeof( IReadOnlyMemberDictionary ), argument );
-
-            scope.Variables.Add( argument, argumentParameter );
-
-            var expressionBody = xsParser.Parse( body, scope: scope ) as BlockExpression;
-
-            if ( expressionBody == null )
-                throw new InvalidOperationException( $"Failed to parse expression body: {body}" );
-
-            var lambdaParameter = Parameter( typeof( IReadOnlyMemberDictionary ) );
-
-            var newExpressionBody = expressionBody.Expressions.Prepend(
-                Assign( argumentParameter, lambdaParameter )
-            );
-
-            var lambda = Lambda<TokenExpression>(
-                Convert( Block(
-                    expressionBody.Variables,
-                    newExpressionBody
-                ), typeof( object ) ),
-                lambdaParameter );
-
-            return fastCompile
-                ? lambda.CompileFast()
-                : lambda.Compile();
-        }
-        finally
-        {
-            scope.ExitScope();
-        }
+        return fastCompile
+            ? lambda.CompileFast()
+            : lambda.Compile();
     }
 
     internal class MemberDictionaryParseExtension : IParseExtension
     {
         public ExtensionType Type => ExtensionType.Expression;
-        public string Key => "vars";
+        public string Key { get; }
 
         private readonly MethodInfo _getValueAsMethodInfo = typeof( MemberDictionary ).GetMethod( nameof( MemberDictionary.GetValueAs ), [typeof( string )] )!;
         private readonly MethodInfo _invokeMethodInfo = typeof( MemberDictionary ).GetMethod( nameof( MemberDictionary.Invoke ), [typeof( string ), typeof( object[] )] )!;
         private readonly MemberDictionary _member;
 
-        public MemberDictionaryParseExtension( MemberDictionary member )
+        public MemberDictionaryParseExtension( string name, MemberDictionary member )
         {
+            Key = name;
             _member = member;
         }
 

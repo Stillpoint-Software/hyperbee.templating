@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using Hyperbee.Templating.Provider.XS.Compiler;
 using Hyperbee.Templating.Text;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -15,7 +14,7 @@ public class XsTokenExpressionProviderTests
         // arrange
 
         const string expression = """"
-                                  _ => String.Concat( "all your ",
+                                  vars => String.Concat( "all your ",
                                       vars<string>::Value,
                                       " are belong to us."
                                   ).ToUpper();
@@ -46,7 +45,7 @@ public class XsTokenExpressionProviderTests
         // arrange
 
         const string expression = """"
-                                  _ => String.Concat( "all your ",
+                                  vars => String.Concat( "all your ",
                                       (1 + vars<int>::Value).ToString(),
                                       " base are belong to us."
                                   ).ToUpper();
@@ -77,7 +76,7 @@ public class XsTokenExpressionProviderTests
         // arrange
 
         const string expression = """"
-                                  _ => String.Concat( "all your ",
+                                  vars => String.Concat( "all your ",
                                       vars<string>::Value,
                                       " are belong to us."
                                   ).ToUpper();
@@ -108,13 +107,13 @@ public class XsTokenExpressionProviderTests
         // arrange
 
         const string expression1 = """"
-                                  _ => String.Concat( "all your ",
+                                  vars => String.Concat( "all your ",
                                       vars<string>::Value,
                                       " are belong to us."
                                   ).ToUpper();
                                   """";
         const string expression2 = """"
-                                   _ => String.Concat( "all your ",
+                                   vars => String.Concat( "all your ",
                                        vars<string>::Value,
                                        " are not belong to us."
                                    ).ToUpper();

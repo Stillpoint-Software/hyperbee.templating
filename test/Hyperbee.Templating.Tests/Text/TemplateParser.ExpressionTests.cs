@@ -13,7 +13,7 @@ public class TemplateParserExpressionTests
     public void Should_honor_while_xs_condition()
     {
         // arrange
-        const string expression = "{{while x => vars<int>::counter < 3 }}{{counter}}{{counter:{{x => vars<int>::counter + 1}}}}{{/while}}";
+        const string expression = "{{while vars => vars<int>::counter < 3 }}{{counter}}{{counter:{{ vars => vars<int>::counter + 1}}}}{{/while}}";
         const string template = $"count: {expression}.";
 
         // act
@@ -57,10 +57,10 @@ public class TemplateParserExpressionTests
         // arrange
         const string expression =
             """
-            {{_ => {
-                switch( vars<string>::choice ){
-                    case "1": vars<string>::TheBest("me", "no");
-                    case "2": vars<string>::TheBest("you", "yes");
+            {{ x => {
+                switch( x<string>::choice ){
+                    case "1": x<string>::TheBest("me", "no");
+                    case "2": x<string>::TheBest("you", "yes");
                     default: "error";
                 }
             } }}
@@ -170,8 +170,8 @@ public class TemplateParserExpressionTests
         const string expression = "{{name}}";
         const string definition =
             """
-            {{name:{{_ => {
-                return switch( vars<string>::choice )
+            {{name:{{ input => {
+                switch( input<string>::choice )
                 {
                     case "1": "me";
                     case "2": "you";
