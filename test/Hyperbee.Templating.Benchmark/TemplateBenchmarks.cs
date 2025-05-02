@@ -1,4 +1,4 @@
-using System.Reflection;
+﻿using System.Reflection;
 using BenchmarkDotNet.Attributes;
 using Hyperbee.Templating.Provider.XS.Compiler;
 using Hyperbee.Templating.Text;
@@ -93,10 +93,10 @@ public class TemplateBenchmarks
 
         const string template = $"{definition}hello {expression}.";
 
-        Template.Render( template, new() 
-        { 
-            Variables = { ["choice"] = "2" }, 
-            TokenExpressionProvider = new XsTokenExpressionProvider( true, TypeResolver ) 
+        Template.Render( template, new()
+        {
+            Variables = { ["choice"] = "2" },
+            TokenExpressionProvider = new XsTokenExpressionProvider( true, TypeResolver )
         } );
     }
 }

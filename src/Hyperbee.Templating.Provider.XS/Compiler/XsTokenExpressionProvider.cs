@@ -1,4 +1,4 @@
-using System.Collections.Concurrent;
+﻿using System.Collections.Concurrent;
 using System.Linq.Expressions;
 using System.Reflection;
 using System.Runtime.CompilerServices;
@@ -20,7 +20,7 @@ public sealed class XsTokenExpressionProvider : ITokenExpressionProvider
     private readonly TypeResolver _typeResolver;
     private ConcurrentDictionary<string, TokenExpression> TokenExpressions { get; } = new();
 
-    public XsTokenExpressionProvider( bool fastCompile = false, TypeResolver typeResolver = null)
+    public XsTokenExpressionProvider( bool fastCompile = false, TypeResolver typeResolver = null )
     {
         _fastCompile = fastCompile;
         _typeResolver = typeResolver ?? TypeResolver.Create( Assembly.GetExecutingAssembly() );
@@ -44,9 +44,9 @@ public sealed class XsTokenExpressionProvider : ITokenExpressionProvider
         var argument = codeExpression[..start].Trim().ToString();
         var body = codeExpression[(start + 2)..].Trim().ToString();
 
-        var xsParser = new XsParser( new XsConfig( typeResolver ) 
-        { 
-            Extensions = [new MemberDictionaryParseExtension( argument, members )] 
+        var xsParser = new XsParser( new XsConfig( typeResolver )
+        {
+            Extensions = [new MemberDictionaryParseExtension( argument, members )]
         } );
 
         var lambda = Lambda<TokenExpression>(
