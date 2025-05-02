@@ -94,7 +94,7 @@ public class TemplateBenchmarks
             {
                 ["choice"] = "2"
             },
-            TokenExpressionProvider = new XsTokenExpressionProvider(true)
+            TokenExpressionProvider = new XsTokenExpressionProvider( true )
         } );
     }
 }

@@ -38,9 +38,9 @@ public sealed class XsTokenExpressionProvider : ITokenExpressionProvider
 
     private static TokenExpression Compile( ReadOnlySpan<char> codeExpression, MemberDictionary members, bool fastCompile = false )
     {
-        var xsParser = new XsParser( new XsConfig( TypeResolver.Create( Assembly.GetExecutingAssembly() ) ) 
-        { 
-            Extensions = [new MemberDictionaryParseExtension( members )] 
+        var xsParser = new XsParser( new XsConfig( TypeResolver.Create( Assembly.GetExecutingAssembly() ) )
+        {
+            Extensions = [new MemberDictionaryParseExtension( members )]
         } );
 
         var start = codeExpression.IndexOf( "=>" );
@@ -53,7 +53,7 @@ public sealed class XsTokenExpressionProvider : ITokenExpressionProvider
         {
             scope.EnterScope( FrameType.Method );
 
-            var argumentParameter = Parameter( typeof(IReadOnlyMemberDictionary), argument );
+            var argumentParameter = Parameter( typeof( IReadOnlyMemberDictionary ), argument );
 
             scope.Variables.Add( argument, argumentParameter );
 
@@ -62,7 +62,7 @@ public sealed class XsTokenExpressionProvider : ITokenExpressionProvider
             if ( expressionBody == null )
                 throw new InvalidOperationException( $"Failed to parse expression body: {body}" );
 
-            var lambdaParameter = Parameter( typeof(IReadOnlyMemberDictionary) );
+            var lambdaParameter = Parameter( typeof( IReadOnlyMemberDictionary ) );
 
             var newExpressionBody = expressionBody.Expressions.Prepend(
                 Assign( argumentParameter, lambdaParameter )
@@ -72,7 +72,7 @@ public sealed class XsTokenExpressionProvider : ITokenExpressionProvider
                 Convert( Block(
                     expressionBody.Variables,
                     newExpressionBody
-                ), typeof(object) ),
+                ), typeof( object ) ),
                 lambdaParameter );
 
             return fastCompile
@@ -90,8 +90,8 @@ public sealed class XsTokenExpressionProvider : ITokenExpressionProvider
         public ExtensionType Type => ExtensionType.Expression;
         public string Key => "vars";
 
-        private readonly MethodInfo _getValueAsMethodInfo = typeof(MemberDictionary).GetMethod( nameof(MemberDictionary.GetValueAs), [typeof(string)] )!;
-        private readonly MethodInfo _invokeMethodInfo = typeof(MemberDictionary).GetMethod( nameof(MemberDictionary.Invoke), [typeof(string), typeof(object[])] )!;
+        private readonly MethodInfo _getValueAsMethodInfo = typeof( MemberDictionary ).GetMethod( nameof( MemberDictionary.GetValueAs ), [typeof( string )] )!;
+        private readonly MethodInfo _invokeMethodInfo = typeof( MemberDictionary ).GetMethod( nameof( MemberDictionary.Invoke ), [typeof( string ), typeof( object[] )] )!;
         private readonly MemberDictionary _member;
 
         public MemberDictionaryParseExtension( MemberDictionary member )
@@ -142,7 +142,7 @@ public sealed class XsTokenExpressionProvider : ITokenExpressionProvider
                                 Constant( _member ),
                                 type != null
                                     ? _getValueAsMethodInfo.MakeGenericMethod( type )
-                                    : _getValueAsMethodInfo.MakeGenericMethod( typeof(object) ),
+                                    : _getValueAsMethodInfo.MakeGenericMethod( typeof( object ) ),
                                 Constant( name.ToString() )
                             );
                         }
@@ -151,7 +151,7 @@ public sealed class XsTokenExpressionProvider : ITokenExpressionProvider
                             Constant( _member ),
                             _invokeMethodInfo,
                             Constant( name.ToString() ),
-                            NewArrayInit( typeof(object), args )
+                            NewArrayInit( typeof( object ), args )
                         );
 
                         return type != null

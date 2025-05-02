@@ -131,7 +131,7 @@ public class TemplateParserExpressionTests
         const string template = $"hello {expression}.";
 
         // act
-        
+
         var options = new TemplateOptions()
             .SetTokenExpressionProvider( new XsTokenExpressionProvider() );
 
