@@ -107,7 +107,7 @@ public class TemplateParserExpressionTests
         // act
         var options = new TemplateOptions()
             .AddVariable( "choice", "2" )
-            .SetTokenExpressionProvider( new XsTokenExpressionProvider( ) );
+            .SetTokenExpressionProvider( new XsTokenExpressionProvider() );
 
         var result = Template.Render( template, options );
 

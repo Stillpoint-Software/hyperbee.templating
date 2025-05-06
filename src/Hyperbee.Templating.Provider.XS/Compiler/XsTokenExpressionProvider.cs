@@ -55,14 +55,14 @@ public sealed class XsTokenExpressionProvider : ITokenExpressionProvider
         {
             scope.EnterScope( FrameType.Method );
 
-            var codeParameter = Parameter( typeof(IReadOnlyMemberDictionary), argument );
+            var codeParameter = Parameter( typeof( IReadOnlyMemberDictionary ), argument );
 
             scope.Variables.Add( argument, codeParameter );
 
             var expression = _xsParser.Parse( body, scope: scope );
             var expressionBody = expression as BlockExpression;
 
-            var lambdaParameter = Parameter( typeof(IReadOnlyMemberDictionary) );
+            var lambdaParameter = Parameter( typeof( IReadOnlyMemberDictionary ) );
 
             // create a new block expression assigning the parameter to the argument
             var expressions = new List<Expression> { Assign( codeParameter, lambdaParameter ) };
@@ -77,7 +77,7 @@ public sealed class XsTokenExpressionProvider : ITokenExpressionProvider
                         expressionBody?.Variables,
                         expressions
                     ),
-                    typeof(object)
+                    typeof( object )
                 ),
                 lambdaParameter );
 
@@ -110,7 +110,7 @@ public sealed class XsTokenExpressionProvider : ITokenExpressionProvider
 
         public override Expression RewriteMemberExpression( Expression targetExpression, string name, IReadOnlyList<Type> typeArgs, IReadOnlyList<Expression> args )
         {
-            if ( targetExpression.Type != typeof(IReadOnlyMemberDictionary) )
+            if ( targetExpression.Type != typeof( IReadOnlyMemberDictionary ) )
                 return base.RewriteMemberExpression( targetExpression, name, typeArgs, args );
 
             if ( args != null )
@@ -119,7 +119,7 @@ public sealed class XsTokenExpressionProvider : ITokenExpressionProvider
                     targetExpression,
                     MemberInvoke,
                     Constant( name ),
-                    NewArrayInit( typeof(object), args )
+                    NewArrayInit( typeof( object ), args )
                 );
             }
 
@@ -133,7 +133,7 @@ public sealed class XsTokenExpressionProvider : ITokenExpressionProvider
             }
 
             return Property(
-                Convert( targetExpression, typeof(MemberDictionary) ),
+                Convert( targetExpression, typeof( MemberDictionary ) ),
                 MemberIndexer,
                 Constant( name ) );
 
