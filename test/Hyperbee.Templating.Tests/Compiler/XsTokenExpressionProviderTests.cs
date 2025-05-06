@@ -15,7 +15,7 @@ public class XsTokenExpressionProviderTests
 
         const string expression = """"
                                   vars => String.Concat( "all your ",
-                                      vars<string>::Value,
+                                      vars.Value<string>,
                                       " are belong to us."
                                   ).ToUpper();
                                   """";
@@ -46,7 +46,7 @@ public class XsTokenExpressionProviderTests
 
         const string expression = """"
                                   vars => String.Concat( "all your ",
-                                      (1 + vars<int>::Value).ToString(),
+                                      (1 + vars.Value<int>).ToString(),
                                       " base are belong to us."
                                   ).ToUpper();
                                   """";
@@ -77,7 +77,7 @@ public class XsTokenExpressionProviderTests
 
         const string expression = """"
                                   vars => String.Concat( "all your ",
-                                      vars<string>::Value,
+                                      vars.Value<string>,
                                       " are belong to us."
                                   ).ToUpper();
                                   """";
@@ -108,13 +108,13 @@ public class XsTokenExpressionProviderTests
 
         const string expression1 = """"
                                   vars => String.Concat( "all your ",
-                                      vars<string>::Value,
+                                      vars.Value<string>,
                                       " are belong to us."
                                   ).ToUpper();
                                   """";
         const string expression2 = """"
                                    vars => String.Concat( "all your ",
-                                       vars<string>::Value,
+                                       vars.Value<string>,
                                        " are not belong to us."
                                    ).ToUpper();
                                    """";

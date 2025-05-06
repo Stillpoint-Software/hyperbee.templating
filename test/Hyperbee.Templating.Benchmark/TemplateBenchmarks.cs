@@ -1,5 +1,7 @@
 ﻿using System.Reflection;
 using BenchmarkDotNet.Attributes;
+using FastExpressionCompiler;
+using Hyperbee.Templating.Configure;
 using Hyperbee.Templating.Provider.XS.Compiler;
 using Hyperbee.Templating.Text;
 using Hyperbee.XS.Core;
@@ -8,8 +10,7 @@ namespace Hyperbee.Templating.Benchmark;
 
 public class TemplateBenchmarks
 {
-    private static readonly TypeResolver TypeResolver = TypeResolver.Create( Assembly.GetExecutingAssembly() );
-
+    private static readonly TypeResolver TypeResolver = new XsTokenExpressionProvider.MemberTypeResolver( ReferenceManager.Create() );
 
     [Benchmark( Baseline = true )]
     public void ParserSingleLine()
@@ -81,8 +82,8 @@ public class TemplateBenchmarks
         const string expression = "{{name}}";
         const string definition =
             """
-            {{name:{{vars => {
-                switch( vars<string>::choice )
+            {{name:{{x => {
+                switch( x.choice )
                 {
                     case "1": "me";
                     case "2": "you";
@@ -93,10 +94,13 @@ public class TemplateBenchmarks
 
         const string template = $"{definition}hello {expression}.";
 
-        Template.Render( template, new()
+        Template.Render( template, new TemplateOptions
         {
             Variables = { ["choice"] = "2" },
-            TokenExpressionProvider = new XsTokenExpressionProvider( true, TypeResolver )
+            TokenExpressionProvider = new XsTokenExpressionProvider(
+                compile: lambda => lambda.CompileFast(),
+                typeResolver: TypeResolver
+            )
         } );
     }
 }

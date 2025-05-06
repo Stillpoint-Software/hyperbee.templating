@@ -1,5 +1,4 @@
-﻿using System;
-using Hyperbee.Templating.Configure;
+﻿using Hyperbee.Templating.Configure;
 using Hyperbee.Templating.Provider.XS.Compiler;
 using Hyperbee.Templating.Text;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -13,7 +12,7 @@ public class TemplateParserExpressionTests
     public void Should_honor_while_xs_condition()
     {
         // arrange
-        const string expression = "{{while vars => vars<int>::counter < 3 }}{{counter}}{{counter:{{ vars => vars<int>::counter + 1}}}}{{/while}}";
+        const string expression = "{{while x => x.counter<int> < 3; }}{{counter}}{{counter:{{x => x.counter<int> + 1;}}}}{{/while}}";
         const string template = $"count: {expression}.";
 
         // act
@@ -33,7 +32,7 @@ public class TemplateParserExpressionTests
     public void Should_honor_while_condition()
     {
         // arrange
-        const string expression = "{{while x => int.Parse(x.counter) < 3}}{{counter}}{{counter:{{x => int.Parse(x.counter) + 1}}}}{{/while}}";
+        const string expression = "{{while x => x.counter<int> < 3}}{{counter}}{{counter:{{x => x.counter<int> + 1}}}}{{/while}}";
         const string template = $"count: {expression}.";
 
         // act
@@ -58,9 +57,9 @@ public class TemplateParserExpressionTests
         const string expression =
             """
             {{ x => {
-                switch( x<string>::choice ){
-                    case "1": x<string>::TheBest("me", "no");
-                    case "2": x<string>::TheBest("you", "yes");
+                switch( x.choice ){
+                    case "1": x.TheBest("me", "no") as string;
+                    case "2": x.TheBest("you", "yes") as string;
                     default: "error";
                 }
             } }}
@@ -83,6 +82,38 @@ public class TemplateParserExpressionTests
         // assert
 
         var expected = template.Replace( expression, "you ARE the best" );
+
+        Assert.AreEqual( expected, result );
+    }
+
+    [TestMethod]
+    public void Should_honor_xs_expression_extentions()
+    {
+        // arrange
+        const string expression =
+            """
+            {{ x => {
+                if( x.choice == "2")
+                    "you";
+                else
+                    "me";
+            } }}
+            """;
+
+        const string template = $"hello {expression}.";
+
+        var serviceProvider = TestSupport.ServiceProvider.GetServiceProvider();
+
+        // act
+        var options = new TemplateOptions()
+            .AddVariable( "choice", "2" )
+            .SetTokenExpressionProvider( new XsTokenExpressionProvider( ) );
+
+        var result = Template.Render( template, options );
+
+        // assert
+
+        var expected = template.Replace( expression, "you" );
 
         Assert.AreEqual( expected, result );
     }
@@ -171,10 +202,10 @@ public class TemplateParserExpressionTests
         const string definition =
             """
             {{name:{{ input => {
-                switch( input<string>::choice )
+                switch( input.choice<int> )
                 {
-                    case "1": "me";
-                    case "2": "you";
+                    case 1: "me";
+                    case 2: "you";
                     default: "default";
                 };
             } }} }}

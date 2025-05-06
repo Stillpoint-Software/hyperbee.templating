@@ -2,34 +2,39 @@
 using System.Linq.Expressions;
 using System.Reflection;
 using System.Runtime.CompilerServices;
-using FastExpressionCompiler;
 using Hyperbee.Templating.Compiler;
 using Hyperbee.Templating.Text;
 using Hyperbee.XS;
 using Hyperbee.XS.Core;
-using Hyperbee.XS.Core.Parsers;
-using Parlot.Fluent;
 using static System.Linq.Expressions.Expression;
-using static Parlot.Fluent.Parsers;
 
 namespace Hyperbee.Templating.Provider.XS.Compiler;
 
+public delegate TokenExpression CompileLambda( Expression<TokenExpression> lambda );
+
 public sealed class XsTokenExpressionProvider : ITokenExpressionProvider
 {
-    private readonly bool _fastCompile;
-    private readonly TypeResolver _typeResolver;
-    private ConcurrentDictionary<string, TokenExpression> TokenExpressions { get; } = new();
+    private readonly ConcurrentDictionary<string, TokenExpression> TokenExpressions = new();
+    private readonly CompileLambda _compile;
+    private readonly XsParser _xsParser;
 
-    public XsTokenExpressionProvider( bool fastCompile = false, TypeResolver typeResolver = null )
+    public XsTokenExpressionProvider(
+        CompileLambda compile = null,
+        TypeResolver typeResolver = null,
+        List<IParseExtension> extensions = null )
     {
-        _fastCompile = fastCompile;
-        _typeResolver = typeResolver ?? TypeResolver.Create( Assembly.GetExecutingAssembly() );
+        _compile = compile ?? (lambda => lambda.Compile());
+        typeResolver ??= new MemberTypeResolver( ReferenceManager.Create() );
+
+        _xsParser = new XsParser(
+            new XsConfig( typeResolver ) { Extensions = extensions ?? [] }
+        );
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public TokenExpression GetTokenExpression( string codeExpression, MemberDictionary members )
     {
-        return TokenExpressions.GetOrAdd( codeExpression, Compile( codeExpression, members, _typeResolver, _fastCompile ) );
+        return TokenExpressions.GetOrAdd( codeExpression, _ => Compile( codeExpression ) );
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
@@ -38,103 +43,100 @@ public sealed class XsTokenExpressionProvider : ITokenExpressionProvider
         TokenExpressions.Clear();
     }
 
-    private static TokenExpression Compile( ReadOnlySpan<char> codeExpression, MemberDictionary members, TypeResolver typeResolver, bool fastCompile = false )
+    private TokenExpression Compile( ReadOnlySpan<char> codeExpression )
     {
         var start = codeExpression.IndexOf( "=>" );
         var argument = codeExpression[..start].Trim().ToString();
         var body = codeExpression[(start + 2)..].Trim().ToString();
 
-        var xsParser = new XsParser( new XsConfig( typeResolver )
+        var scope = new ParseScope();
+
+        try
         {
-            Extensions = [new MemberDictionaryParseExtension( argument, members )]
-        } );
+            scope.EnterScope( FrameType.Method );
 
-        var lambda = Lambda<TokenExpression>(
-            Convert( xsParser.Parse( body ), typeof( object ) ),
-            Parameter( typeof( IReadOnlyMemberDictionary ) ) );
+            var codeParameter = Parameter( typeof(IReadOnlyMemberDictionary), argument );
 
-        return fastCompile
-            ? lambda.CompileFast()
-            : lambda.Compile();
+            scope.Variables.Add( argument, codeParameter );
+
+            var expression = _xsParser.Parse( body, scope: scope );
+            var expressionBody = expression as BlockExpression;
+
+            var lambdaParameter = Parameter( typeof(IReadOnlyMemberDictionary) );
+
+            // create a new block expression assigning the parameter to the argument
+            var expressions = new List<Expression> { Assign( codeParameter, lambdaParameter ) };
+            if ( expressionBody == null )
+                expressions.Add( expression );
+            else
+                expressions.AddRange( expressionBody.Expressions );
+
+            var lambda = Lambda<TokenExpression>(
+                Convert(
+                    Block(
+                        expressionBody?.Variables,
+                        expressions
+                    ),
+                    typeof(object)
+                ),
+                lambdaParameter );
+
+            return _compile( lambda );
+        }
+        finally
+        {
+            scope.ExitScope();
+        }
     }
 
-    internal class MemberDictionaryParseExtension : IParseExtension
+    public class MemberTypeResolver : TypeResolver
     {
-        public ExtensionType Type => ExtensionType.Expression;
-        public string Key { get; }
+        private static readonly MethodInfo MemberInvoke = typeof( IReadOnlyMemberDictionary )
+            .GetMethod( nameof( IReadOnlyMemberDictionary.Invoke ), [typeof( string ), typeof( object[] )] )!;
 
-        private readonly MethodInfo _getValueAsMethodInfo = typeof( MemberDictionary ).GetMethod( nameof( MemberDictionary.GetValueAs ), [typeof( string )] )!;
-        private readonly MethodInfo _invokeMethodInfo = typeof( MemberDictionary ).GetMethod( nameof( MemberDictionary.Invoke ), [typeof( string ), typeof( object[] )] )!;
-        private readonly MemberDictionary _member;
+        private static readonly MethodInfo MemberGetValueAs = typeof( IReadOnlyMemberDictionary )
+            .GetMethod( nameof( IReadOnlyMemberDictionary.GetValueAs ), [typeof( string )] )!;
 
-        public MemberDictionaryParseExtension( string name, MemberDictionary member )
+        private static readonly PropertyInfo MemberIndexer = typeof( MemberDictionary )
+            .GetProperties()
+            .First( x => x.GetIndexParameters().Length > 0 );
+        public MemberTypeResolver( ReferenceManager referenceManager ) : base( referenceManager ) { }
+
+        // Resolves a member expression for the given target expression.
+        // 
+        // 1. x => x.someProp to x["someProp"]
+        // 2. x => x.someProp<T> to x.GetValueAs<T>("someProp")
+        // 3. x => x.someMethod(..) to x.Invoke("someMethod", ..)
+
+        public override Expression RewriteMemberExpression( Expression targetExpression, string name, IReadOnlyList<Type> typeArgs, IReadOnlyList<Expression> args )
         {
-            Key = name;
-            _member = member;
-        }
+            if ( targetExpression.Type != typeof(IReadOnlyMemberDictionary) )
+                return base.RewriteMemberExpression( targetExpression, name, typeArgs, args );
 
-        public Parser<Expression> CreateParser( ExtensionBinder binder )
-        {
-            var (expression, _) = binder;
-            // var v = vars::myValue;
-            // var v = vars<bool>::myValue;
-            // var v = vars<bool>::method( arg );
+            if ( args != null )
+            {
+                return Call(
+                    targetExpression,
+                    MemberInvoke,
+                    Constant( name ),
+                    NewArrayInit( typeof(object), args )
+                );
+            }
 
-            return ZeroOrOne(
-                    Between(
-                        Terms.Char( '<' ),
-                        XsParsers.TypeRuntime(),
-                        Terms.Char( '>' )
-                    )
-                )
-                .AndSkip( Terms.Text( "::" ) )
-                .And( Terms.NamespaceIdentifier() )
-                .And(
-                    ZeroOrOne(
-                        Between(
-                            Terms.Char( '(' ),
-                            ZeroOrOne(
-                                Separated(
-                                    Terms.Char( ',' ),
-                                    expression
+            if ( typeArgs != null )
+            {
+                return Call(
+                    targetExpression,
+                    MemberGetValueAs
+                        .MakeGenericMethod( typeArgs[0] ),
+                    Constant( name ) );
+            }
 
-                                )
-                            ),
-                            Terms.Char( ')' )
-                        )
-                    ) )
-                .Then<Expression>( ( _, parts ) =>
-                    {
-                        var (type, name, args) = parts;
+            return Property(
+                Convert( targetExpression, typeof(MemberDictionary) ),
+                MemberIndexer,
+                Constant( name ) );
 
-                        if ( name == null )
-                            throw new InvalidOperationException( "Name must be specified." );
-
-                        if ( args == null )
-                        {
-                            return Call(
-                                Constant( _member ),
-                                type != null
-                                    ? _getValueAsMethodInfo.MakeGenericMethod( type )
-                                    : _getValueAsMethodInfo.MakeGenericMethod( typeof( object ) ),
-                                Constant( name.ToString() )
-                            );
-                        }
-
-                        var invokeExpression = Call(
-                            Constant( _member ),
-                            _invokeMethodInfo,
-                            Constant( name.ToString() ),
-                            NewArrayInit( typeof( object ), args )
-                        );
-
-                        return type != null
-                            ? Convert( invokeExpression, type )
-                            : invokeExpression; // normally defaults to typeof(object)
-
-                    }
-                )
-                .Named( "vars" );
         }
     }
 }
