@@ -1,12 +1,12 @@
 ﻿using System.Reflection;
+using Hyperbee.Expressions;
+using Hyperbee.Templating.Compiler;
 using Hyperbee.Templating.Configure;
 using Hyperbee.Templating.Provider.XS.Compiler;
 using Hyperbee.Templating.Text;
-using Hyperbee.Expressions;
-using Hyperbee.Templating.Compiler;
 using Hyperbee.Xs.Extensions;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Hyperbee.XS.Core;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 using static Hyperbee.Templating.Provider.XS.Compiler.XsTokenExpressionProvider;
 
 namespace Hyperbee.Templating.Tests.Text;
@@ -111,7 +111,7 @@ public class TemplateParserExpressionTests
         // act
         var options = new TemplateOptions()
             .SetTokenExpressionProvider( new XsTokenExpressionProvider(
-                compile: lambda => lambda.Compile(serviceProvider) as TokenExpression,
+                compile: lambda => lambda.Compile( serviceProvider ) as TokenExpression,
                 typeResolver: new MemberTypeResolver( ReferenceManager.Create( Assembly.GetExecutingAssembly() ) ),
                 extensions: [new InjectParseExtension(), new ConfigurationParseExtension()]
             ) );
