@@ -20,7 +20,7 @@ public class TestService : ITestService
     public TestService( string extra ) => Extra = extra;
     public string Extra { get; set; }
 
-    public string DoSomething() => "Hello, World!" + Extra;
+    public string DoSomething() => "World" + Extra;
 }
 
 public static class ServiceProvider
@@ -31,15 +31,13 @@ public static class ServiceProvider
             .ConfigureServices( ( _, services ) =>
             {
                 services.AddSingleton<ITestService, TestService>();
-                services.AddKeyedSingleton<ITestService>( "TestKey", ( _, _ ) => new TestService( " And Universe!" ) );
+                services.AddKeyedSingleton<ITestService>( "TestKey", ( _, _ ) => new TestService( " and Universe" ) );
             } )
             .ConfigureAppConfiguration( ( _, config ) =>
             {
                 config.AddInMemoryCollection( new Dictionary<string, string>
                 {
-                    {"hello", "Hello, World!"},
-                    {"number", "10"},
-                    {"connections:sql:secure", "true"},
+                    {"hello", "aliens"}
                 } );
             } )
             .Build();

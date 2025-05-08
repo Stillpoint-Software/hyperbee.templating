@@ -1,7 +1,13 @@
-﻿using Hyperbee.Templating.Configure;
+﻿using System.Reflection;
+using Hyperbee.Templating.Configure;
 using Hyperbee.Templating.Provider.XS.Compiler;
 using Hyperbee.Templating.Text;
+using Hyperbee.Expressions;
+using Hyperbee.Templating.Compiler;
+using Hyperbee.Xs.Extensions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Hyperbee.XS.Core;
+using static Hyperbee.Templating.Provider.XS.Compiler.XsTokenExpressionProvider;
 
 namespace Hyperbee.Templating.Tests.Text;
 
@@ -92,12 +98,10 @@ public class TemplateParserExpressionTests
         // arrange
         const string expression =
             """
-            {{ x => {
-                if( x.choice == "2")
-                    "you";
-                else
-                    "me";
-            } }}
+            {{ _ => {
+                var service = inject<ITestService>::TestKey;
+                service.DoSomething();
+            } }} also {{ _ => config::hello}}
             """;
 
         const string template = $"hello {expression}.";
@@ -106,14 +110,17 @@ public class TemplateParserExpressionTests
 
         // act
         var options = new TemplateOptions()
-            .AddVariable( "choice", "2" )
-            .SetTokenExpressionProvider( new XsTokenExpressionProvider() );
+            .SetTokenExpressionProvider( new XsTokenExpressionProvider(
+                compile: lambda => lambda.Compile(serviceProvider) as TokenExpression,
+                typeResolver: new MemberTypeResolver( ReferenceManager.Create( Assembly.GetExecutingAssembly() ) ),
+                extensions: [new InjectParseExtension(), new ConfigurationParseExtension()]
+            ) );
 
         var result = Template.Render( template, options );
 
         // assert
 
-        var expected = template.Replace( expression, "you" );
+        var expected = template.Replace( expression, "World and Universe also aliens" );
 
         Assert.AreEqual( expected, result );
     }
