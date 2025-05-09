@@ -33,11 +33,11 @@ public class TemplateParserLinkedDictionaryTests
             ["upper"] = "True"
         } );
 
-        var config = new TemplateOptions( source );
+        var options = new TemplateOptions( source );
 
         // act
 
-        var result = Template.Render( template, config );
+        var result = Template.Render( template, options );
 
         // assert
 
