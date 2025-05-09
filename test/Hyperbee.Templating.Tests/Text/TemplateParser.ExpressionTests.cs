@@ -113,7 +113,11 @@ public class TemplateParserExpressionTests
             .SetTokenExpressionProvider( new XsTokenExpressionProvider(
                 compile: lambda => lambda.Compile( serviceProvider ) as TokenExpression,
                 typeResolver: new MemberTypeResolver( ReferenceManager.Create( Assembly.GetExecutingAssembly() ) ),
-                extensions: [new InjectParseExtension(), new ConfigurationParseExtension()]
+                extensions:
+                [
+                    new InjectParseExtension(),
+                    new ConfigurationParseExtension()
+                ]
             ) );
 
         var result = Template.Render( template, options );

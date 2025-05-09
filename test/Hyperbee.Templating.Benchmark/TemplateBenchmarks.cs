@@ -1,5 +1,4 @@
-﻿using System.Reflection;
-using BenchmarkDotNet.Attributes;
+﻿using BenchmarkDotNet.Attributes;
 using FastExpressionCompiler;
 using Hyperbee.Templating.Configure;
 using Hyperbee.Templating.Provider.XS.Compiler;
