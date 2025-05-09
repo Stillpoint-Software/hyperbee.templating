@@ -1,6 +1,5 @@
 ﻿using System.Reflection;
 using Hyperbee.Expressions;
-using Hyperbee.Templating.Compiler;
 using Hyperbee.Templating.Configure;
 using Hyperbee.Templating.Provider.XS.Compiler;
 using Hyperbee.Templating.Text;
@@ -111,7 +110,7 @@ public class TemplateParserExpressionTests
         // act
         var options = new TemplateOptions()
             .SetTokenExpressionProvider( new XsTokenExpressionProvider(
-                compile: lambda => lambda.Compile( serviceProvider ) as TokenExpression,
+                compile: lambda => lambda.Compile( serviceProvider ),
                 typeResolver: new MemberTypeResolver( ReferenceManager.Create( Assembly.GetExecutingAssembly() ) ),
                 extensions:
                 [
