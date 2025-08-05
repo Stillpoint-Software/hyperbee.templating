@@ -8,7 +8,7 @@ namespace Hyperbee.Templating.Tests.Text;
 [TestClass]
 public class TemplateParserParsingTests
 {
-    [DataTestMethod] //BF this is a minimal placeholder. enhance this test.
+    [TestMethod] //BF this is a minimal placeholder. enhance this test.
     [DataRow( "token", nameof( TokenType.Value ), nameof( TokenEvaluation.None ) )]
     [DataRow( " token ", nameof( TokenType.Value ), nameof( TokenEvaluation.None ) )]
     [DataRow( "x=>x.token", nameof( TokenType.Value ), nameof( TokenEvaluation.Expression ) )]
@@ -29,7 +29,7 @@ public class TemplateParserParsingTests
         Assert.AreEqual( Enum.Parse<TokenEvaluation>( expectedTokenEvaluation ), result.TokenEvaluation );
     }
 
-    [DataTestMethod]
+    [TestMethod]
     [DataRow( 2 )]
     [DataRow( 9 )]
     [DataRow( 10 )]

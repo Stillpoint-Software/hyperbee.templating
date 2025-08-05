@@ -44,7 +44,7 @@ public class TemplateParserTests
         Assert.AreEqual( template, result );
     }
 
-    [DataTestMethod]
+    [TestMethod]
     [DataRow( "{{token}} your base are belong to us.", "all" )]
     [DataRow( "all your {{token}} are belong to us.", "base" )]
     [DataRow( "all your base are belong to {{token}}", "us." )]
