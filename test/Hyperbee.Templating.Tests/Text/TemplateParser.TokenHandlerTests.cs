@@ -1,6 +1,4 @@
 ﻿using System;
-using Hyperbee.Templating.Configure;
-using Hyperbee.Templating.Tests.TestSupport;
 using Hyperbee.Templating.Text;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
@@ -9,10 +7,8 @@ namespace Hyperbee.Templating.Tests.Text;
 [TestClass]
 public class TemplateParserTokenHandlerTests
 {
-    [DataTestMethod]
-    [DataRow( ParseTemplateMethod.Buffered )]
-    [DataRow( ParseTemplateMethod.InMemory )]
-    public void Should_render_multi_line_template_with_handler( ParseTemplateMethod parseMethod )
+    [TestMethod]
+    public void Should_render_multi_line_template_with_handler()
     {
         // arrange
 
@@ -25,7 +21,9 @@ public class TemplateParserTokenHandlerTests
 
         var undefinedCounter = 0;
 
-        var options = new TemplateOptions
+        // act
+
+        var result = Template.Render( template, new()
         {
             TokenHandler = ( sender, eventArgs ) =>
             {
@@ -36,49 +34,34 @@ public class TemplateParserTokenHandlerTests
                 eventArgs.Action = TokenAction.Replace;
                 eventArgs.Value = "me";
             }
-        };
-
-        var parser = new TemplateParser( options );
-
-        // act
-
-        var result = parser.Render( template, parseMethod );
+        } );
 
         // assert
 
         var expected = template.Replace( "{{name}}", "me" );
 
         Assert.AreEqual( expected, result );
-        Assert.IsTrue( undefinedCounter == 2 );
+        Assert.AreEqual( 2, undefinedCounter );
     }
 
-    [DataTestMethod]
-    [DataRow( ParseTemplateMethod.Buffered )]
-    [DataRow( ParseTemplateMethod.InMemory )]
-    public void Should_enrich_token_value( ParseTemplateMethod parseMethod )
+    [TestMethod]
+    public void Should_enrich_token_value()
     {
         // arrange
 
         const string template = "hello {{name}}.";
 
-        var options = new TemplateOptions
+        // act 
+
+        var result = Template.Render( template, new()
         {
             TokenHandler = ( sender, eventArgs ) =>
             {
                 if ( !eventArgs.UnknownToken && string.Equals( eventArgs.Name, "name", StringComparison.OrdinalIgnoreCase ) )
                     eventArgs.Value = "super " + eventArgs.Value;
             },
-            Variables =
-            {
-                ["name"] = "me"
-            }
-        };
-
-        var parser = new TemplateParser( options );
-
-        // act 
-
-        var result = parser.Render( template, parseMethod );
+            Variables = { ["name"] = "me" }
+        } );
 
         // assert
         var expected = template.Replace( "{{name}}", "super me" );
@@ -86,10 +69,8 @@ public class TemplateParserTokenHandlerTests
         Assert.AreEqual( expected, result );
     }
 
-    [DataTestMethod]
-    [DataRow( ParseTemplateMethod.Buffered )]
-    [DataRow( ParseTemplateMethod.InMemory )]
-    public void Should_ignore_unknown_tokens( ParseTemplateMethod parseMethod )
+    [TestMethod]
+    public void Should_ignore_unknown_tokens()
     {
         // arrange
 
@@ -100,20 +81,16 @@ public class TemplateParserTokenHandlerTests
             {{name}} is {{feels}}.
             """;
 
-        var options = new TemplateOptions
+        // act
+
+        var result = Template.Render( template, new()
         {
             IgnoreMissingTokens = true,
             Variables =
             {
                 ["feels"] = "happy"
             }
-        };
-
-        var parser = new TemplateParser( options );
-
-        // act
-
-        var result = parser.Render( template, parseMethod );
+        } );
 
         // assert
 
@@ -124,10 +101,8 @@ public class TemplateParserTokenHandlerTests
         Assert.AreEqual( expected, result );
     }
 
-    [DataTestMethod]
-    [DataRow( ParseTemplateMethod.Buffered )]
-    [DataRow( ParseTemplateMethod.InMemory )]
-    public void Should_ignore_unknown_tokens_using_handler( ParseTemplateMethod parseMethod )
+    [TestMethod]
+    public void Should_ignore_unknown_tokens_using_handler()
     {
         // arrange
 
@@ -141,7 +116,9 @@ public class TemplateParserTokenHandlerTests
         var unknownCounter = 0;
         var tokenCount = 0;
 
-        var options = new TemplateOptions
+        // act
+
+        var result = Template.Render( template, new()
         {
             TokenHandler = ( sender, eventArgs ) =>
             {
@@ -153,17 +130,8 @@ public class TemplateParserTokenHandlerTests
                 unknownCounter++;
                 eventArgs.Action = TokenAction.Ignore;
             },
-            Variables =
-            {
-                ["feels"] = "happy"
-            }
-        };
-
-        var parser = new TemplateParser( options );
-
-        // act
-
-        var result = parser.Render( template, parseMethod );
+            Variables = { ["feels"] = "happy" }
+        } );
 
         // assert
 
@@ -172,7 +140,7 @@ public class TemplateParserTokenHandlerTests
             .Replace( "{{feels}}", "happy" );
 
         Assert.AreEqual( expected, result );
-        Assert.IsTrue( unknownCounter == 2 );
-        Assert.IsTrue( tokenCount == 3 );
+        Assert.AreEqual( 2, unknownCounter );
+        Assert.AreEqual( 3, tokenCount );
     }
 }

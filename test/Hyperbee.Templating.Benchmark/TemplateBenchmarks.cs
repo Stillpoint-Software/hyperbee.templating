@@ -1,23 +1,21 @@
 ﻿using BenchmarkDotNet.Attributes;
-using Hyperbee.Templating.Tests.TestSupport;
+using FastExpressionCompiler;
+using Hyperbee.Templating.Configure;
+using Hyperbee.Templating.Provider.XS.Compiler;
 using Hyperbee.Templating.Text;
+using Hyperbee.XS.Core;
 
 namespace Hyperbee.Templating.Benchmark;
 
 public class TemplateBenchmarks
 {
-
-    [Params( ParseTemplateMethod.InMemory, ParseTemplateMethod.Buffered )]
-    public ParseTemplateMethod ParseMethod { get; set; }
-
+    private static readonly TypeResolver TypeResolver = new XsTokenExpressionProvider.MemberTypeResolver( ReferenceManager.Create() );
 
     [Benchmark( Baseline = true )]
     public void ParserSingleLine()
     {
         const string template = "hello. this is a single line template with no tokens.";
-        var parser = new TemplateParser();
-        parser.Render( template, ParseMethod );
-
+        Template.Render( template, default );
     }
 
     [Benchmark]
@@ -30,9 +28,7 @@ public class TemplateBenchmarks
             and no trailing cr lf pair on the last line
             """;
 
-        var parser = new TemplateParser();
-        parser.Render( template, ParseMethod );
-
+        Template.Render( template, default );
     }
 
     [Benchmark]
@@ -40,7 +36,7 @@ public class TemplateBenchmarks
     {
         const string template = "hello {{name}}.";
 
-        var parser = new TemplateParser
+        Template.Render( template, new()
         {
             Variables =
             {
@@ -49,27 +45,7 @@ public class TemplateBenchmarks
                 ["last"] = "seldon",
                 ["last_expression"] = "{{last}}"
             }
-        };
-
-        parser.Render( template, ParseMethod );
-    }
-
-
-    [Benchmark]
-    public void ParseTokenWithBufferWraps()
-    {
-        const string template = "all your {{thing}} are belong to {{who}}.";
-
-        var parser = new TemplateParser
-        {
-            Variables =
-            {
-                ["thing"] = "base",
-                ["who"] = "us"
-            }
-        };
-
-        parser.Render( template, ParseTemplateMethod.Buffered );
+        } );
     }
 
     [Benchmark]
@@ -90,15 +66,41 @@ public class TemplateBenchmarks
 
         const string template = $"{definition}hello {expression}.";
 
-        var parser = new TemplateParser
+        Template.Render( template, new()
         {
             Variables =
             {
                 ["choice"] = "2"
             }
-        };
+        } );
+    }
 
-        parser.Render( template, ParseMethod );
+    [Benchmark]
+    public void InlineBlockExpressionXs()
+    {
+        const string expression = "{{name}}";
+        const string definition =
+            """
+            {{name:{{x => {
+                switch( x.choice )
+                {
+                    case "1": "me";
+                    case "2": "you";
+                    default: "default";
+                };
+            } }} }}
+            """;
+
+        const string template = $"{definition}hello {expression}.";
+
+        Template.Render( template, new TemplateOptions
+        {
+            Variables = { ["choice"] = "2" },
+            TokenExpressionProvider = new XsTokenExpressionProvider(
+                compile: lambda => lambda.CompileFast(),
+                typeResolver: TypeResolver
+            )
+        } );
     }
 }
 

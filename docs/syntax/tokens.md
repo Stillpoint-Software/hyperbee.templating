@@ -33,14 +33,6 @@ They are passed a token context that provides invokable methods, and readonly to
 - **identifier**: A token variable.
 
 ```csharp
-var parser = new TemplateParser
-{
-    Variables =
-    {
-        ["choice"] = "2"
-    }
-};
-
 const string template =
     """
     hello {{x => {
@@ -53,7 +45,14 @@ const string template =
     } }}.
     """;
 
-var result = parser.Render(template);
+var result = Template.Render(template, new()
+{
+    Variables =
+    {
+        ["choice"] = "2"
+    }
+});
+
 Console.WriteLine(result); // Output: hello you.
 ```
 

@@ -39,11 +39,9 @@ var options = new TemplateOptions()
     .AddVariable( "name", "me" )
     .AddMethod( "CustomUpper" ).Expression<string, string>( arg => arg.ToUpper() ) ;
 
-var parser = new TemplateParser( options );
-
 var template = "hello {{x => x.CustomUpper(x.name)}}.";
 
-var result = parser.Render(template);
+var result = Template.Render(template, options);
 Console.WriteLine(result); // Output: hello ME.
 ```
 {% endraw %}

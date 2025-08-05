@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
@@ -10,10 +10,12 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="BenchmarkDotNet" Version="0.14.0" />
+    <PackageReference Include="BenchmarkDotNet" Version="0.15.2" />
+    <PackageReference Include="Hyperbee.XS" Version="1.3.3" />
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\src\Hyperbee.Templating.Provider.XS\Hyperbee.Templating.Provider.XS.csproj" />
     <ProjectReference Include="..\..\src\Hyperbee.Templating\Hyperbee.Templating.csproj" />
     <ProjectReference Include="..\Hyperbee.Templating.Tests\Hyperbee.Templating.Tests.csproj" />
   </ItemGroup>

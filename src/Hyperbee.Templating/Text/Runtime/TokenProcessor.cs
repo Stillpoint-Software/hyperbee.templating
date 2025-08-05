@@ -6,7 +6,7 @@ using Hyperbee.Templating.Core;
 
 // ReSharper disable RedundantAssignment
 
-namespace Hyperbee.Templating.Text;
+namespace Hyperbee.Templating.Text.Runtime;
 
 internal class TokenProcessor
 {
@@ -18,10 +18,8 @@ internal class TokenProcessor
     private readonly string _tokenRight;
     private readonly MemberDictionary _members;
 
-    public TokenProcessor( MemberDictionary members, TemplateOptions options )
+    public TokenProcessor( TemplateOptions options )
     {
-        ArgumentNullException.ThrowIfNull( members );
-
         if ( options.Methods == null )
             throw new ArgumentNullException( nameof( options ), $"{nameof( options.Methods )} cannot be null." );
 
@@ -32,7 +30,12 @@ internal class TokenProcessor
         _tokenHandler = options.TokenHandler;
         _ignoreMissingTokens = options.IgnoreMissingTokens;
         _substituteEnvironmentVariables = options.SubstituteEnvironmentVariables;
-        _members = members;
+
+        _members = new MemberDictionary(
+            options.Validator,
+            options.Variables,
+            (IReadOnlyDictionary<string, IMethodInvoker>) options.Methods
+        );
 
         (_tokenLeft, _tokenRight) = options.TokenDelimiters();
     }
@@ -104,7 +107,7 @@ internal class TokenProcessor
     {
         if ( !TryInvokeTokenHandler( token, defined, ref value, out var tokenAction ) )
         {
-            tokenAction = defined ? TokenAction.Replace : (_ignoreMissingTokens ? TokenAction.Ignore : TokenAction.Error);
+            tokenAction = defined ? TokenAction.Replace : _ignoreMissingTokens ? TokenAction.Ignore : TokenAction.Error;
         }
 
         // Determine final action based on token handler and missing tokens
@@ -298,7 +301,7 @@ internal class TokenProcessor
 
     private bool TryInvokeTokenHandler( TokenDefinition token, bool defined, ref string value, out TokenAction tokenAction )
     {
-        tokenAction = defined ? TokenAction.Replace : (_ignoreMissingTokens ? TokenAction.Ignore : TokenAction.Error);
+        tokenAction = defined ? TokenAction.Replace : _ignoreMissingTokens ? TokenAction.Ignore : TokenAction.Error;
         if ( _tokenHandler == null ) return false;
 
         var eventArgs = new TemplateEventArgs
