@@ -7,7 +7,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 	ProjectSection(SolutionItems) = preProject
 		Directory.Build.props = Directory.Build.props
 		Directory.Build.targets = Directory.Build.targets
-		solution-helper.psm1 = solution-helper.psm1
+		version.json = version.json
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Tests", "Solution Tests", "{F9B24CD9-E06B-4834-84CB-8C29E5F10BE0}"
@@ -23,10 +23,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "workflows", "workflows", "{
 		.github\workflows\create-release.yml = .github\workflows\create-release.yml
 		.github\workflows\format.yml = .github\workflows\format.yml
 		.github\workflows\issue-branch.yml = .github\workflows\issue-branch.yml
-		.github\workflows\publish.yml = .github\workflows\publish.yml
 		.github\workflows\test-report.yml = .github\workflows\test-report.yml
 		.github\workflows\test.yml = .github\workflows\test.yml
-		.github\workflows\update-version.yml = .github\workflows\update-version.yml
 	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Hyperbee.Templating.Tests", "test\Hyperbee.Templating.Tests\Hyperbee.Templating.Tests.csproj", "{97886205-1467-4EE6-B3DA-496CA3D086E4}"

@@ -22,6 +22,7 @@ internal sealed class RoslynTokenExpressionProvider : ITokenExpressionProvider
         MetadataReference.CreateFromFile( typeof( RoslynTokenExpressionProvider ).Assembly.Location ),
         MetadataReference.CreateFromFile( typeof( Regex ).Assembly.Location ),
         MetadataReference.CreateFromFile( typeof( Enumerable ).Assembly.Location ),
+        MetadataReference.CreateFromFile( typeof( System.Linq.Expressions.Expression ).Assembly.Location ),
 
         MetadataReference.CreateFromFile( typeof( object ).Assembly.Location.Replace( "System.Private.CoreLib", "System.Runtime" ) ),
         MetadataReference.CreateFromFile( typeof( IList ).Assembly.Location.Replace( "System.Private.CoreLib", "System.Collections" ) )
@@ -61,8 +62,15 @@ internal sealed class RoslynTokenExpressionProvider : ITokenExpressionProvider
                using System.Text.RegularExpressions;
                using System.Collections;
                using System.Collections.Generic;
+               using System.Globalization;
+               using System.Text;
+               using System.Linq.Expressions;
+               using System.ComponentModel;
                using Hyperbee.Templating.Text;
                using Hyperbee.Templating.Compiler;
+               
+               // Explicitly define the delegate type to prevent CS8917 errors
+               public delegate object TokenExpression(IReadOnlyMemberDictionary members);
                
                public static class TokenExpressionInvoker
                {
