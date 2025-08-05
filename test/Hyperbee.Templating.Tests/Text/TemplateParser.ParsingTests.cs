@@ -1,6 +1,6 @@
 ﻿using System;
-using Hyperbee.Templating.Tests.TestSupport;
 using Hyperbee.Templating.Text;
+using Hyperbee.Templating.Text.Runtime;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Hyperbee.Templating.Tests.Text;
@@ -18,11 +18,11 @@ public class TemplateParserParsingTests
     public void Should_parse_token( string token, string expectedTokenType, string expectedTokenEvaluation )
     {
         // arrange
-        var parser = new TemplateParser();
+        var tokenParser = new TokenParser( new() );
 
         // act
         const int tokenId = 1;
-        var result = parser.TokenParser.ParseToken( token, tokenId );
+        var result = tokenParser.ParseToken( token, tokenId );
 
         // assert
         Assert.AreEqual( Enum.Parse<TokenType>( expectedTokenType ), result.TokenType );
@@ -50,18 +50,16 @@ public class TemplateParserParsingTests
 
         TemplateParser.BufferSize = size;
 
-        var parser = new TemplateParser
+        // act
+
+        var result = Template.Render( template, new()
         {
             Variables =
             {
                 ["thing"] = "base",
                 ["who"] = "us"
             }
-        };
-
-        // act
-
-        var result = parser.Render( template, ParseTemplateMethod.Buffered );
+        } );
 
         // assert
 

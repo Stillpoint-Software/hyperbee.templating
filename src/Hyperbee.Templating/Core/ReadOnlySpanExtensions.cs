@@ -1,9 +1,4 @@
-﻿// FIX: Pulled from Hyperbee.Text.Extensions which is not OpenSource yet.
-// WARNING: only subset of helpers.
-
-// FIX: Pulled from Hyperbee.Text.Extensions which is not OpenSource yet.
-// WARNING: only subset of helpers.
-namespace Hyperbee.Templating.Core;
+﻿namespace Hyperbee.Templating.Core;
 
 internal static class ReadOnlySpanExtensions
 {
@@ -16,8 +11,10 @@ internal static class ReadOnlySpanExtensions
     {
 #pragma warning disable IDE0302
         var quick = !ComparisonHelper.HasIgnoreCase( comparisonType )
+            // ReSharper disable UseCollectionExpression
             ? stackalloc char[] { '\\', value[0] }
             : stackalloc char[] { '\\', char.ToLowerInvariant( value[0] ), char.ToUpperInvariant( value[0] ) };
+        // ReSharper restore UseCollectionExpression
 #pragma warning restore IDE0302
 
         var search = span;

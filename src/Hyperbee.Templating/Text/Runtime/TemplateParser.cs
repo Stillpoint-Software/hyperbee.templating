@@ -1,135 +1,46 @@
 ﻿using System.Buffers;
-using Hyperbee.Templating.Compiler;
 using Hyperbee.Templating.Configure;
 using Hyperbee.Templating.Core;
 
-namespace Hyperbee.Templating.Text;
+namespace Hyperbee.Templating.Text.Runtime;
 
 public class TemplateParser
 {
-    internal static int BufferSize = 1024;
-
-    // ReSharper disable once ConvertToAutoPropertyWhenPossible
-    public MemberDictionary Variables => _members;
+    internal static int BufferSize = 4096; // default to typical memory page size
 
     internal TokenParser TokenParser { get; }
     internal TokenProcessor TokenProcessor { get; }
 
-    private readonly MemberDictionary _members;
     private readonly int _maxTokenDepth;
     private readonly string _tokenLeft;
     private readonly string _tokenRight;
+
     private enum TemplateScanner
     {
         Text,
         Token
     }
 
-    public TemplateParser()
-        : this( null )
-    {
-    }
-
     public TemplateParser( TemplateOptions options )
     {
         options ??= new TemplateOptions();
 
-        _members = new MemberDictionary( options.Validator, options.Variables, (IReadOnlyDictionary<string, IMethodInvoker>) options.Methods );
         _maxTokenDepth = options.MaxTokenDepth;
-
         (_tokenLeft, _tokenRight) = options.TokenDelimiters();
 
         TokenParser = new TokenParser( options );
-        TokenProcessor = new TokenProcessor( _members, options );
+        TokenProcessor = new TokenProcessor( options );
     }
 
-    // Render - all the ways
-    public void Render( string templateFile, string outputFile )
-    {
-        using var reader = new StreamReader( templateFile );
-        using var writer = File.CreateText( outputFile );
-        Render( reader, writer );
-    }
+    internal (string TokenLeft, string TokenRight) TokenDelimiters() => (_tokenLeft, _tokenRight);
 
-    public void Render( string templateFile, StreamWriter writer )
-    {
-        using var reader = new StreamReader( templateFile );
-        Render( reader, writer );
-    }
-
-    public string Render( ReadOnlySpan<char> template )
-    {
-        // quick out
-        var pos = template.IndexOf( _tokenLeft );
-
-        if ( pos < 0 )
-            return template.ToString();
-
-        // write content before first token and parse remainder
-        using var writer = new StringWriter();
-        writer.Write( template[..pos] );
-
-        ParseTemplate( template[pos..], writer );
-        return writer.ToString();
-    }
-
-    public void Render( ReadOnlySpan<char> template, TextWriter writer )
-    {
-        // quick out
-        var pos = template.IndexOf( _tokenLeft );
-
-        if ( pos < 0 )
-        {
-            writer.Write( template );
-            return;
-        }
-
-        // write content before first token and parse remainder
-        writer.Write( template[..pos] );
-        ParseTemplate( template[pos..], writer );
-    }
-
-    public string Render( TextReader reader )
-    {
-        using var writer = new StringWriter();
-        Render( reader, writer );
-        return writer.ToString();
-    }
-
-    public void Render( TextReader reader, string outputFile )
-    {
-        using var writer = File.CreateText( outputFile );
-        Render( reader, writer );
-    }
-
-    public void Render( TextReader reader, TextWriter writer )
-    {
-        ParseTemplate( reader, writer );
-    }
-
-    // Resolve
-
-    public string Resolve( string identifier )
-    {
-        if ( !_members.TryGetValue( identifier, out var value ) )
-            return string.Empty;
-
-        if ( string.IsNullOrWhiteSpace( value ) || !value.Contains( _tokenLeft ) )
-            return value;
-
-        var result = Render( value );
-        return result;
-    }
-
-    // Parse template
-
-    private void ParseTemplate( ReadOnlySpan<char> templateSpan, TextWriter writer )
+    internal void ParseTemplate( ReadOnlySpan<char> templateSpan, TextWriter writer )
     {
         var bufferManager = new BufferManager( templateSpan );
         ParseTemplate( ref bufferManager, null, writer );
     }
 
-    private void ParseTemplate( TextReader reader, TextWriter writer )
+    internal void ParseTemplate( TextReader reader, TextWriter writer )
     {
         var bufferSize = GetAdjustedBufferSize( BufferSize, _tokenLeft.Length, _tokenRight.Length );
         var bufferManager = new BufferManager( bufferSize );
@@ -149,6 +60,7 @@ public class TemplateParser
     }
 
     // parse incremental template
+
     private void ParseTemplate( ref BufferManager bufferManager, TextReader reader, TextWriter writer )
     {
         var tokenWriter = new ArrayBufferWriter<char>(); // defaults to 256  
@@ -396,7 +308,6 @@ public class TemplateParser
 
         } while ( start != -1 );
     }
-
 
     // IndexOf helper
 

@@ -1,20 +1,19 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>net9.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
 	  <IsPackable>true</IsPackable>
 	  <Authors>Stillpoint Software, Inc.</Authors>
 	  <PackageReadmeFile>README.md</PackageReadmeFile>
-	  <PackageTags>templating;template;template-engine</PackageTags>
+	  <PackageTags>templating;token;xs</PackageTags>
 	  <PackageIcon>icon.png</PackageIcon>
 	  <PackageProjectUrl>https://stillpoint-software.github.io/hyperbee.templating/</PackageProjectUrl>
 	  <TargetFrameworks>net9.0</TargetFrameworks>
 	  <PackageLicenseFile>LICENSE</PackageLicenseFile>
 	  <Copyright>Stillpoint Software, Inc.</Copyright>
-	  <Title>Hyperbee Templating</Title>
+	  <Title>Hyperbee Templating Provider XS</Title>
 	  <Description>
-        A lightweight templating and variable substitution syntax engine. The library supports value replacements,
-        code expressions, token nesting, in-line definitions, conditional flow, and looping.
+        Adds an ITokenExpressionProvider powder by Hyperbee.XS
     </Description>
 	  <RepositoryUrl>https://github.com/Stillpoint-Software/Hyperbee.Templating</RepositoryUrl>
 	  <RepositoryType>git</RepositoryType>
@@ -42,7 +41,12 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
+	  <PackageReference Include="FastExpressionCompiler" Version="5.1.1" />
     <PackageReference Include="Hyperbee.Resources" Version="2.0.2" />
+    <PackageReference Include="Hyperbee.XS" Version="1.3.3" />
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Scripting" Version="4.13.0" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Hyperbee.Templating\Hyperbee.Templating.csproj" />
   </ItemGroup>
 </Project>

@@ -3,6 +3,7 @@ using System.Reflection;
 using Hyperbee.Templating.Compiler;
 using Hyperbee.Templating.Core;
 using Hyperbee.Templating.Text;
+using Hyperbee.Templating.Text.Runtime;
 
 namespace Hyperbee.Templating.Configure;
 
@@ -71,7 +72,7 @@ public class TemplateOptions
                     value = ((PropertyInfo) member).GetValue( variableObject, null );
                     break;
                 case MemberTypes.Field:
-                    value = ((PropertyInfo) member).GetValue( variableObject, null );
+                    value = ((FieldInfo) member).GetValue( variableObject );
                     break;
                 default:
                     continue;

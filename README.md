@@ -1,8 +1,7 @@
 # Hyperbee Templating
 
 Hyperbee Templating is a lightweight templating and variable substitution syntax engine. The library supports value replacements, 
-code expressions, token nesting, in-line definitions, conditional flow, and looping. It is designed to be lightweight and fast, 
-and does not rely on any external dependencies.
+code expressions, token nesting, in-line definitions, conditional flow, and looping. It is designed to be lightweight and fast.
 
 ## Features
 
@@ -33,34 +32,32 @@ dotnet add package Hyperbee.Templating
 You can use the `TemplateParser` to perform variable substitutions.
 
 ```csharp
-var parser = new TemplateParser
+var template = "hello {{name}}.";
+
+var result = Template.Render(template, new()
 {
     Variables =
     {
         ["name"] = "me"
     }
-};
+});
 
-var template = "hello {{name}}.";
-
-var result = parser.Render(template);
 Console.WriteLine(result); // Output: hello me.
 ```
 
 ### Expression Substitution
 
 ```csharp
-var parser = new TemplateParser
+var template = "hello {{x => x.name.ToUpper()}}.";
+
+var result = Template.Render(template, new()
 {
     Variables =
     {
         ["name"] = "me"
     }
-};
+});
 
-var template = "hello {{x => x.name.ToUpper()}}.";
-
-var result = parser.Render(template);
 Console.WriteLine(result); // Output: hello ME.
 ```
 
@@ -69,7 +66,9 @@ Console.WriteLine(result); // Output: hello ME.
 Token values can contain other tokens.
 
 ```csharp
-var parser = new TemplateParser
+var template = "hello {{fullname}}.";
+
+var result = Template.Render(template, new()
 {
     Variables =
     {
@@ -77,11 +76,8 @@ var parser = new TemplateParser
         ["first"] = "Hari",
         ["last"] = "Seldon"
     }
-};
+});
 
-var template = "hello {{fullname}}.";
-
-var result = parser.Render(template);
 Console.WriteLine(result); // Output: hello Hari Seldon.
 ```
 
@@ -90,23 +86,24 @@ Console.WriteLine(result); // Output: hello Hari Seldon.
 You can use conditional tokens to control the flow based on conditions.
 
 ```csharp
-var parser = new TemplateParser
+var template = "{{#if condition}}hello {{name}}.{{/if}}";
+
+var result = Template.Render(template, new()
 {
     Variables =
     {
         ["condition"] = "true",
         ["name"] = "me"
     }
-};
+});
 
-var template = "{{#if condition}}hello {{name}}.{{/if}}";
-
-var result = parser.Render(template);
 Console.WriteLine(result); // Output: hello me.
 ```
 
 ```csharp
-var parser = new TemplateParser
+var template = "hello {{#if condition}}{{name1}}{{else}}{{name2}}{{/if}}.";
+
+var result = Template.Render(template, new()
 {
     Variables =
     {
@@ -114,11 +111,8 @@ var parser = new TemplateParser
         ["name1"] = "me",
         ["name2"] = "you",
     }
-};
+});
 
-var template = "hello {{#if condition}}{{name1}}{{else}}{{name2}}{{/if}}.";
-
-var result = parser.Render(template);
 Console.WriteLine(result); // Output: hello you.
 ```
 
@@ -127,17 +121,16 @@ Console.WriteLine(result); // Output: hello you.
 You can use a while statement to repeat a block of text while a condition is true.
 
 ```csharp
-var parser = new TemplateParser
+var template = "{{while x => x.counter<int> < 3}}{{counter}}{{counter:{{x => x.counter<int> + 1}}}}{{/while}}";
+
+var result = Template.Render(template, new()
 {
     Variables =
     {
         ["counter"] = "0"
     }
-};
+});
 
-var template = "{{while x => x.counter<int> < 3}}{{counter}}{{counter:{{x => x.counter<int> + 1}}}}{{/while}}";
-
-var result = parser.Render(template);
 Console.WriteLine(result); // Output: 012. 
 ```
 
@@ -146,12 +139,14 @@ Console.WriteLine(result); // Output: 012.
 ```csharp
 var template = "{{each n:x => x.list.Split( \",\" )}}World {{n}},{{/each}}";
 
-var parser = new TemplateParser
+var result = Template.Render(template, new()
 {
-    Variables = { ["list"] = "John,James,Sarah" }
-};
+    Variables = 
+    { 
+        ["list"] = "John,James,Sarah" 
+    }
+});
 
-var result = parser.Render(template);
 Console.WriteLine(result); // hello World John,World James,World Sarah,. 
 ```
 
@@ -159,17 +154,16 @@ Console.WriteLine(result); // hello World John,World James,World Sarah,.
 
 var template = "{{each n:x => x.Where( t => Regex.IsMatch( t.Key, \"people*\" ) ).Select( t => t.Value )}}hello {{n}}. {{/each}}";
 
-var parser = new TemplateParser
+var result = Template.Render(template, new()
 {
     Variables = 
-        {
-            ["people[0]"] = "John",
-            ["people[1]"] = "Jane",
-            ["people[2]"] = "Doe"
-        }
-};
+    {
+        ["people[0]"] = "John",
+        ["people[1]"] = "Jane",
+        ["people[2]"] = "Doe"
+    }
+});
 
-var result = parser.Render(template);
 Console.WriteLine(result); // hello John. hello Jane. hello Doe. 
 ```
 
@@ -182,11 +176,10 @@ var options = new TemplateOptions()
     .AddVariable("name", "me")
     .AddMethod("ToUpper").Expression<string,string>( value => value.ToUpper() );
 
-var parser = new TemplateParser( options );
-
 var template = "hello {{x => x.ToUpper( x.name )}}.";
 
-var result = parser.Render(template);
+var result = Template.Render(template, options);
+
 Console.WriteLine(result); // Output: hello ME.
 ```
 
