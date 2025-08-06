@@ -1,12 +1,10 @@
 name: Test Report
 on:
-  # ① Automatic – when the Test workflow ends on main / develop
   workflow_run:
     workflows: ["Test"]
     types:     [completed]
     branches:  [main, develop]
 
-  # ② Manual re-run / ad-hoc report
   workflow_dispatch:
     inputs:
       test_run_id:

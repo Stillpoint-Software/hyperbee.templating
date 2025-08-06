@@ -7,8 +7,6 @@ on:
     types: [opened, edited, synchronize, reopened]
     branches: [main, develop]
 
-  # Run when Create Prerelease / Create Release start,
-  # **but only if they run on main or develop**
   workflow_run:
     workflows: [Create Prerelease, Create Release]
     types: [requested]
