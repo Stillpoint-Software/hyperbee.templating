@@ -25,6 +25,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "workflows", "workflows", "{
 		.github\workflows\pack_publish.yml = .github\workflows\pack_publish.yml
 		.github\workflows\run_tests.yml = .github\workflows\run_tests.yml
 		.github\workflows\issue_branch.yml = .github\workflows\issue_branch.yml
+		.github\workflows\unlist_package.yml = .github\workflows\unlist_package.yml
 	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Hyperbee.Templating.Tests", "test\Hyperbee.Templating.Tests\Hyperbee.Templating.Tests.csproj", "{97886205-1467-4EE6-B3DA-496CA3D086E4}"
