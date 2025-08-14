@@ -24,7 +24,7 @@
   <!-- Package metadata applied only to packable projects -->
   <PropertyGroup Condition="'$(IsPackable)' == 'true'">
     <PackageReadmeFile>README.md</PackageReadmeFile>
-    <PackageLicenseFile>LICENSE.txt</PackageLicenseFile>
+    <PackageLicenseFile>LICENSE</PackageLicenseFile>
     <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
 
     <PackageReleaseNotes>https://github.com/Stillpoint-Software/Hyperbee.Templating/releases/latest</PackageReleaseNotes>
@@ -45,6 +45,6 @@
     <None Include="$(MSBuildThisFileDirectory)LICENSE.txt"
           Pack="true"
           PackagePath="\"
-          Link="LICENSE.txt" />
+          Link="LICENSE" />
   </ItemGroup>
 </Project>
