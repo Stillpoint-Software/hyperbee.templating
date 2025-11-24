@@ -8,6 +8,7 @@ using BenchmarkDotNet.Order;
 using BenchmarkDotNet.Validators;
 
 namespace Hyperbee.Templating.Benchmark;
+
 public class BenchmarkConfig
 {
     public class Config : ManualConfig
