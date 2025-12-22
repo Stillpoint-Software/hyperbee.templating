@@ -1,14 +1,11 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>net9.0</TargetFramework>
-    <ImplicitUsings>enable</ImplicitUsings>
 	  <IsPackable>true</IsPackable>
 	  <Authors>Stillpoint Software, Inc.</Authors>
 	  <PackageReadmeFile>README.md</PackageReadmeFile>
 	  <PackageTags>templating;token;xs</PackageTags>
 	  <PackageIcon>icon.png</PackageIcon>
 	  <PackageProjectUrl>https://stillpoint-software.github.io/hyperbee.templating/</PackageProjectUrl>
-	  <TargetFrameworks>net9.0</TargetFrameworks>
 	  <PackageLicenseFile>LICENSE</PackageLicenseFile>
 	  <Copyright>Stillpoint Software, Inc.</Copyright>
 	  <Title>Hyperbee Templating Provider XS</Title>
@@ -37,14 +34,10 @@
 	  <None Include="..\..\assets\icon.png" Pack="true" Visible="false" PackagePath="/" />
     <None Include="..\..\README.md" Pack="true" Visible="true" PackagePath="/" Link="README.md" />
     <None Include="..\..\LICENSE" Pack="true" Visible="false" PackagePath="/" />
-	  <PackageReference Update="Microsoft.SourceLink.GitHub" Version="8.0.0">
-      <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-    </PackageReference>
-	  <PackageReference Include="FastExpressionCompiler" Version="5.3.0" />
-    <PackageReference Include="Hyperbee.Resources" Version="2.0.2" />
-    <PackageReference Include="Hyperbee.XS" Version="1.3.3" />
-    <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Scripting" Version="4.14.0" />
+	  <PackageReference Include="FastExpressionCompiler" />
+    <PackageReference Include="Hyperbee.Resources"  />
+    <PackageReference Include="Hyperbee.XS" />
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Scripting"  />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Hyperbee.Templating\Hyperbee.Templating.csproj" />
