@@ -36,8 +36,8 @@
   </ItemGroup>
   <ItemGroup>
 	  <None Include="..\..\assets\icon.png" Pack="true" Visible="false" PackagePath="/" />
-    <None Include="..\..\LICENSE" Pack="true" Visible="false" PackagePath="/" />
-    <None Include="..\..\README.md" Pack="true" Visible="false" PackagePath="/" />
+    <None Include="..\..\LICENSE" Pack="true" Visible="true" PackagePath="/" />
+    <None Include="..\..\README.md" Pack="true" Visible="true" PackagePath="/" />
     <PackageReference Include="Hyperbee.Resources" />
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Scripting" />
     <PackageReference Update="Microsoft.SourceLink.GitHub" />
