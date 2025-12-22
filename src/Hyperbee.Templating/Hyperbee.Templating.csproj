@@ -37,5 +37,7 @@
     <None Include="..\..\LICENSE" Pack="true" Visible="false" PackagePath="/" />
     <PackageReference Include="Hyperbee.Resources"  />
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Scripting"  />
+    <PackageReference Update="Microsoft.SourceLink.GitHub" />
+    <PackageReference Update="Nerdbank.GitVersioning" />
   </ItemGroup>
 </Project>
