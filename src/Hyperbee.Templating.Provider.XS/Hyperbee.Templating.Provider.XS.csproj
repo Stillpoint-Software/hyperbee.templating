@@ -45,6 +45,7 @@
     <PackageReference Update="Nerdbank.GitVersioning" />
   </ItemGroup>
   <ItemGroup>
+    <PackageReference Include="Hyperbee.Collections" VersionOverride="2.7.2" />
     <ProjectReference Include="..\Hyperbee.Templating\Hyperbee.Templating.csproj" />
   </ItemGroup>
 </Project>
