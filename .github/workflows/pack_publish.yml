@@ -1,5 +1,4 @@
 ﻿﻿name: Pack and Publish
-
 on:
   release:
     types: [published]
