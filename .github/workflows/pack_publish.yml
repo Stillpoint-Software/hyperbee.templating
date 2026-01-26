@@ -1,4 +1,4 @@
-﻿name: Pack and Publish
+﻿﻿name: Pack and Publish
 
 on:
   release:
@@ -8,20 +8,36 @@ permissions:
   contents: write
   pull-requests: write
   packages: write
+  statuses: write
 
 jobs:
-  set-config:
+  set_config:
     uses: Stillpoint-Software/shared-workflows/.github/workflows/determine_build_configuration.yml@main
     with:
       trigger: release
       target_branch: ${{ github.event.release.target_commitish }}
       override_build_configuration: ''                 
       prerelease: ${{ github.event.release.prerelease }} # true/false from the release
+  
+  tests:
+    needs: set_config
+    uses: Stillpoint-Software/shared-workflows/.github/workflows/run_tests.yml@main
+    with:
+      branch: ${{ github.event.release.target_commitish }}
+      solution_name: ${{ vars.SOLUTION_NAME }}
 
   publish:
-    needs: set-config
+    needs: [set_config, tests]
     uses: Stillpoint-Software/shared-workflows/.github/workflows/pack_and_publish.yml@main
     with:
-      build_configuration: ${{ needs.set-config.outputs.build_configuration }}
+      build_configuration: ${{ needs.set_config.outputs.build_configuration }}
     secrets:
       NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
+
+  result:
+    needs: [publish, tests]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+       - run: echo "Tests result = ${{ needs.tests.result }}"
+       - run: echo "Pack & Publish result = ${{ needs.publish.result }}"

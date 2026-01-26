@@ -41,10 +41,11 @@
           PackagePath="\"
           Link="LICENSE" />
   </ItemGroup>
-  <!-- Global project properies -->
+  <!-- Global project properties - .NET 10 LTS First Strategy -->
   <PropertyGroup>
     <ImplicitUsings>enable</ImplicitUsings>
-    <TargetFrameworks>net8.0;net10.0</TargetFrameworks>
+    <!-- Primary target: .NET 10 (next LTS), with .NET 9 for current support, .NET 8 for compatibility -->
+    <TargetFrameworks>net10.0;net9.0;net8.0</TargetFrameworks>
   </PropertyGroup>
 </Project>
 

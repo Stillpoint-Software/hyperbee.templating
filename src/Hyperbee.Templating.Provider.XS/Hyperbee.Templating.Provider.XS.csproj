@@ -41,7 +41,10 @@
     <PackageReference Include="Hyperbee.Resources" />
     <PackageReference Include="Hyperbee.XS" />
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Scripting" />
-    <PackageReference Update="Microsoft.SourceLink.GitHub" />
+    <PackageReference Update="Microsoft.SourceLink.GitHub">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
     <PackageReference Update="Nerdbank.GitVersioning" />
   </ItemGroup>
   <ItemGroup>

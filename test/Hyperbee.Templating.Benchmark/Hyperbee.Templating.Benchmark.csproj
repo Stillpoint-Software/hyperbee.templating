@@ -9,13 +9,20 @@
 
   <ItemGroup>
     <PackageReference Include="BenchmarkDotNet" />
-    <PackageReference Include="Hyperbee.XS"  />
+    <PackageReference Include="Hyperbee.XS" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\Hyperbee.Templating.Provider.XS\Hyperbee.Templating.Provider.XS.csproj" />
     <ProjectReference Include="..\..\src\Hyperbee.Templating\Hyperbee.Templating.csproj" />
     <ProjectReference Include="..\Hyperbee.Templating.Tests\Hyperbee.Templating.Tests.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Update="Microsoft.SourceLink.GitHub">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
   </ItemGroup>
 
 </Project>
