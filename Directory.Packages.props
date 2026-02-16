@@ -18,7 +18,7 @@
     <PackageVersion Include="Hyperbee.Resources" Version="2.1.1" />
     <PackageVersion Include="Hyperbee.XS" Version="1.6.2" />
     <PackageVersion Include="Hyperbee.XS.Extensions" Version="1.6.2" />
-    <PackageVersion Include="Microsoft.Extensions.Hosting" Version="10.0.2" />
+    <PackageVersion Include="Microsoft.Extensions.Hosting" Version="10.0.3" />
     <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.0.1" />
     <PackageVersion Include="MSTest.TestFramework" Version="4.0.2" />
     <PackageVersion Include="MSTest.TestAdapter" Version="4.0.2" />
