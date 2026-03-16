@@ -1,4 +1,4 @@
-
+﻿
 namespace Hyperbee.Templating.Compiler;
 
 /// <summary>Defines a method that can be invoked from within template expressions.</summary>

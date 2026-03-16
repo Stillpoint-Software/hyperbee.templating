@@ -1,4 +1,4 @@
-namespace Hyperbee.Templating.Text;
+﻿namespace Hyperbee.Templating.Text;
 
 /// <summary>Provides data for the token handler callback during template rendering.</summary>
 public sealed class TemplateEventArgs : EventArgs

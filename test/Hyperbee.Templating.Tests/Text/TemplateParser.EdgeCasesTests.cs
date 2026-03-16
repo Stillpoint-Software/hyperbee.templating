@@ -128,7 +128,7 @@ namespace Hyperbee.Templating.Tests.Text
             var result = Template.Render( template, default );
 
             // assert - produces error token output
-            Assert.IsTrue( result.Contains( "Error" ), $"Expected error output, got: {result}" );
+            Assert.Contains( "Error", result, $"Expected error output, got: {result}" );
         }
 
         [TestMethod]
@@ -141,7 +141,7 @@ namespace Hyperbee.Templating.Tests.Text
             var result = Template.Render( template, default );
 
             // assert - produces error token output
-            Assert.IsTrue( result.Contains( "Error" ), $"Expected error output, got: {result}" );
+            Assert.Contains( "Error", result, $"Expected error output, got: {result}" );
         }
     }
 }
