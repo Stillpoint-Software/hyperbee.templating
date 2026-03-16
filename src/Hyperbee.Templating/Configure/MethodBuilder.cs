@@ -2,6 +2,7 @@
 
 namespace Hyperbee.Templating.Configure;
 
+/// <summary>Provides a fluent API for registering typed method delegates with template options.</summary>
 public class MethodBuilder( string name, TemplateOptions options )
 {
     public TemplateOptions Expression<TOutput>( Func<TOutput> func )

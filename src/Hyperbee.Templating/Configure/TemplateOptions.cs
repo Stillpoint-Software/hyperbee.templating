@@ -7,8 +7,11 @@ using Hyperbee.Templating.Text.Runtime;
 
 namespace Hyperbee.Templating.Configure;
 
+/// <summary>Configuration options for template rendering, including variables, methods, and expression providers.</summary>
 public class TemplateOptions
 {
+    /// <summary>Creates a new <see cref="TemplateOptions"/> instance.</summary>
+    /// <returns>A new default options instance.</returns>
     public static TemplateOptions Create() => new();
 
     public IDictionary<string, IMethodInvoker> Methods { get; }

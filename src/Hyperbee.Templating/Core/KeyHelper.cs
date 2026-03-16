@@ -1,5 +1,8 @@
 ﻿namespace Hyperbee.Templating.Core;
 
+/// <summary>A delegate that validates whether a token identifier is well-formed.</summary>
+/// <param name="key">The token identifier to validate.</param>
+/// <returns><c>true</c> if the identifier is valid; otherwise, <c>false</c>.</returns>
 public delegate bool KeyValidator( ReadOnlySpan<char> key );
 
 internal static class KeyHelper

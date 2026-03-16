@@ -62,13 +62,13 @@ internal class TokenProcessor
                 return ProcessElseToken( frames, token );
 
             case TokenType.Endif:
-                return ProcessEndIfToken( frames );
+                return ProcessEndIfToken( frames, token );
 
             case TokenType.EndWhile:
-                return ProcessEndWhileToken( frames );
+                return ProcessEndWhileToken( frames, token );
 
             case TokenType.EndEach:
-                return ProcessEndEachToken( frames );
+                return ProcessEndEachToken( frames, token );
 
             case TokenType.Define:
                 return ProcessDefineToken( token );
@@ -149,16 +149,16 @@ internal class TokenProcessor
     private static TokenAction ProcessElseToken( FrameStack frames, TokenDefinition token )
     {
         if ( !frames.IsTokenType( TokenType.If ) )
-            throw new TemplateException( "Syntax error. Invalid `else` without matching `if`." );
+            throw new TemplateException( "Syntax error. Invalid `else` without matching `if`.", token.Id );
 
         frames.Push( token, !frames.IsTruthy );
         return TokenAction.Ignore;
     }
 
-    private static TokenAction ProcessEndIfToken( FrameStack frames )
+    private static TokenAction ProcessEndIfToken( FrameStack frames, TokenDefinition token )
     {
         if ( frames.Depth == 0 || !frames.IsTokenType( TokenType.If ) && !frames.IsTokenType( TokenType.Else ) )
-            throw new TemplateException( "Syntax error. Invalid `/if` without matching `if`." );
+            throw new TemplateException( "Syntax error. Invalid `/if` without matching `if`.", token.Id );
 
         if ( frames.IsTokenType( TokenType.Else ) )
             frames.Pop(); // pop the else
@@ -174,10 +174,10 @@ internal class TokenProcessor
         return TokenAction.Ignore;
     }
 
-    private TokenAction ProcessEndWhileToken( FrameStack frames )
+    private TokenAction ProcessEndWhileToken( FrameStack frames, TokenDefinition token )
     {
         if ( frames.Depth == 0 || !frames.IsTokenType( TokenType.While ) )
-            throw new TemplateException( "Syntax error. Invalid `/while` without matching `while`." );
+            throw new TemplateException( "Syntax error. Invalid `/while` without matching `while`.", token.Id );
 
         var whileToken = frames.Peek().Token;
 
@@ -217,10 +217,10 @@ internal class TokenProcessor
         return TokenAction.Ignore;
     }
 
-    private TokenAction ProcessEndEachToken( FrameStack frames )
+    private TokenAction ProcessEndEachToken( FrameStack frames, TokenDefinition token )
     {
         if ( frames.Depth == 0 || !frames.IsTokenType( TokenType.Each ) )
-            throw new TemplateException( "Syntax error. Invalid /each without matching each." );
+            throw new TemplateException( "Syntax error. Invalid /each without matching each.", token.Id );
 
         var frame = frames.Peek();
         var (currentName, enumerator) = frame.EnumeratorDefinition;

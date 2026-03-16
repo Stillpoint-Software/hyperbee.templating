@@ -4,12 +4,23 @@ using Hyperbee.Templating.Core;
 
 namespace Hyperbee.Templating.Text;
 
+/// <summary>A read-only view of template variables and methods available during expression evaluation.</summary>
 public interface IReadOnlyMemberDictionary : IReadOnlyDictionary<string, string>
 {
+    /// <summary>Gets a variable value converted to the specified type.</summary>
+    /// <typeparam name="TType">The target type to convert to.</typeparam>
+    /// <param name="name">The variable name.</param>
+    /// <returns>The converted value.</returns>
     public TType GetValueAs<TType>( string name ) where TType : IConvertible;
+
+    /// <summary>Invokes a registered method by name.</summary>
+    /// <param name="methodName">The method name.</param>
+    /// <param name="args">The arguments to pass to the method.</param>
+    /// <returns>The result of the method invocation.</returns>
     public object Invoke( string methodName, params object[] args );
 }
 
+/// <summary>Stores template variables and methods, providing dictionary-style access for token resolution.</summary>
 public class MemberDictionary : IReadOnlyMemberDictionary
 {
     protected internal IDictionary<string, string> Variables { get; }

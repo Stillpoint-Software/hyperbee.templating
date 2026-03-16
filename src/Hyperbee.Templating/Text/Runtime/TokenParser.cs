@@ -93,39 +93,7 @@ internal class TokenParser
         if ( span.Length != 2 && !char.IsWhiteSpace( span[2] ) )
             return TokenType.Undefined;
 
-        // Remove the "if" prefix
-        span = span[2..].Trim();
-
-        if ( span.IsEmpty )
-            throw new TemplateException( "Invalid `if` statement. Missing identifier." );
-
-        var bang = false;
-
-        if ( span[0] == '!' )
-        {
-            bang = true;
-            span = span[1..].Trim();
-        }
-
-        var isFatArrow = span.IndexOfIgnoreDelimitedRanges( "=>", "\"" ) != -1;
-
-        if ( !isFatArrow && !_validateKey( span ) )
-            throw new TemplateException( "Invalid `if` statement. Invalid identifier in truthy expression." );
-
-        if ( bang && isFatArrow )
-            throw new TemplateException( "Invalid `if` statement. The '!' operator is not supported for token expressions." );
-
-        if ( isFatArrow )
-        {
-            tokenEvaluation = TokenEvaluation.Expression;
-            tokenExpression = span;
-        }
-        else
-        {
-            tokenEvaluation = bang ? TokenEvaluation.Falsy : TokenEvaluation.Truthy;
-            name = span;
-        }
-
+        ParseConditionalToken( span, 2, "if", ref tokenEvaluation, ref tokenExpression, ref name );
         return TokenType.If;
     }
 
@@ -153,11 +121,25 @@ internal class TokenParser
         if ( span.Length != 5 && !char.IsWhiteSpace( span[5] ) )
             return TokenType.Undefined;
 
-        // Remove the "while" prefix
-        span = span[5..].Trim();
+        ParseConditionalToken( span, 5, "while", ref tokenEvaluation, ref tokenExpression, ref name );
+        return TokenType.While;
+    }
+
+    private static TokenType ParseEndWhileToken( ReadOnlySpan<char> span )
+    {
+        if ( span.Length != 6 )
+            throw new TemplateException( "Invalid `/while` statement. Invalid characters." );
+
+        return TokenType.EndWhile;
+    }
+
+    private void ParseConditionalToken( ReadOnlySpan<char> span, int keywordLength, string keywordName,
+        ref TokenEvaluation tokenEvaluation, ref ReadOnlySpan<char> tokenExpression, ref ReadOnlySpan<char> name )
+    {
+        span = span[keywordLength..].Trim();
 
         if ( span.IsEmpty )
-            throw new TemplateException( "Invalid `while` statement. Missing identifier." );
+            throw new TemplateException( $"Invalid `{keywordName}` statement. Missing identifier." );
 
         var bang = false;
 
@@ -170,10 +152,10 @@ internal class TokenParser
         var isFatArrow = span.IndexOfIgnoreDelimitedRanges( "=>", "\"" ) != -1;
 
         if ( !isFatArrow && !_validateKey( span ) )
-            throw new TemplateException( "Invalid `while` statement. Invalid identifier in truthy expression." );
+            throw new TemplateException( $"Invalid `{keywordName}` statement. Invalid identifier in truthy expression." );
 
         if ( bang && isFatArrow )
-            throw new TemplateException( "Invalid `while` statement. The '!' operator is not supported for token expressions." );
+            throw new TemplateException( $"Invalid `{keywordName}` statement. The '!' operator is not supported for token expressions." );
 
         if ( isFatArrow )
         {
@@ -185,16 +167,6 @@ internal class TokenParser
             tokenEvaluation = bang ? TokenEvaluation.Falsy : TokenEvaluation.Truthy;
             name = span;
         }
-
-        return TokenType.While;
-    }
-
-    private static TokenType ParseEndWhileToken( ReadOnlySpan<char> span )
-    {
-        if ( span.Length != 6 )
-            throw new TemplateException( "Invalid `/while` statement. Invalid characters." );
-
-        return TokenType.EndWhile;
     }
 
     private TokenType ParseEachToken( ReadOnlySpan<char> span, ref TokenEvaluation tokenEvaluation, ref ReadOnlySpan<char> tokenExpression, ref ReadOnlySpan<char> name )

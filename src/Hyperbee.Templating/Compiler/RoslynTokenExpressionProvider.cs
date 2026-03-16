@@ -34,7 +34,7 @@ internal sealed class RoslynTokenExpressionProvider : ITokenExpressionProvider
         public DynamicAssemblyLoadContext AssemblyLoadContext { get; } = new( metadataReferences );
     }
 
-    private static RuntimeContext __runtimeContext = new( MetadataReferences );
+    private static volatile RuntimeContext __runtimeContext = new( MetadataReferences );
     private static int __counter;
 
     private static readonly CSharpCompilationOptions CompilationOptions =
@@ -43,15 +43,16 @@ internal sealed class RoslynTokenExpressionProvider : ITokenExpressionProvider
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public TokenExpression GetTokenExpression( string codeExpression, MemberDictionary members )
     {
-        return __runtimeContext.TokenExpressions.GetOrAdd( codeExpression, Compile( codeExpression, members ) );
+        var context = __runtimeContext;
+        return context.TokenExpressions.GetOrAdd( codeExpression, _ => Compile( codeExpression, members, context ) );
     }
 
     public static void Reset()
     {
-        __runtimeContext = new RuntimeContext( MetadataReferences );
+        Interlocked.Exchange( ref __runtimeContext, new RuntimeContext( MetadataReferences ) );
     }
 
-    private static TokenExpression Compile( string codeExpression, MemberDictionary members )
+    private static TokenExpression Compile( string codeExpression, MemberDictionary members, RuntimeContext context )
     {
         // Create a shim to compile the expression
 
@@ -126,7 +127,7 @@ internal sealed class RoslynTokenExpressionProvider : ITokenExpressionProvider
         }
 
         peStream.Seek( 0, SeekOrigin.Begin );
-        var assembly = __runtimeContext.AssemblyLoadContext.LoadFromStream( peStream );
+        var assembly = context.AssemblyLoadContext.LoadFromStream( peStream );
 
         var methodDelegate = assembly!
             .GetType( "TokenExpressionInvoker" )!

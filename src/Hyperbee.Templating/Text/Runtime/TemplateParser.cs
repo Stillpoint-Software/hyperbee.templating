@@ -198,9 +198,13 @@ public class TemplateParser
             if ( state.Frames.Depth != 0 )
                 throw new TemplateException( "Missing end if, or end while." );
         }
+        catch ( TemplateException )
+        {
+            throw;
+        }
         catch ( Exception ex )
         {
-            throw new TemplateException( "Error processing template.", ex );
+            throw new TemplateException( $"Error processing template at token {state.NextTokenId}.", ex );
         }
         finally
         {
