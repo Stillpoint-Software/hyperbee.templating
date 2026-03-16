@@ -1,4 +1,4 @@
-namespace Hyperbee.Templating.Text;
+﻿namespace Hyperbee.Templating.Text;
 
 /// <summary>Specifies the action to take when processing a template token.</summary>
 public enum TokenAction

@@ -1,4 +1,4 @@
-using Hyperbee.Templating.Configure;
+﻿using Hyperbee.Templating.Configure;
 using Hyperbee.Templating.Text;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 

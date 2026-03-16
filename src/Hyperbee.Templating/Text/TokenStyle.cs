@@ -1,4 +1,4 @@
-namespace Hyperbee.Templating.Text;
+﻿namespace Hyperbee.Templating.Text;
 
 /// <summary>Specifies the delimiter style used to identify tokens in templates.</summary>
 public enum TokenStyle
