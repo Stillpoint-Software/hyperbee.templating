@@ -86,7 +86,7 @@ Console.WriteLine(result); // Output: hello Hari Seldon.
 You can use conditional tokens to control the flow based on conditions.
 
 ```csharp
-var template = "{{#if condition}}hello {{name}}.{{/if}}";
+var template = "{{if condition}}hello {{name}}.{{/if}}";
 
 var result = Template.Render(template, new()
 {
@@ -101,7 +101,7 @@ Console.WriteLine(result); // Output: hello me.
 ```
 
 ```csharp
-var template = "hello {{#if condition}}{{name1}}{{else}}{{name2}}{{/if}}.";
+var template = "hello {{if condition}}{{name1}}{{else}}{{name2}}{{/if}}.";
 
 var result = Template.Render(template, new()
 {
