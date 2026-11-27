@@ -35,15 +35,34 @@
     <None Update="$(MSBuildProjectName).csproj.DotSettings" Visible="false" />
   </ItemGroup>
   <ItemGroup>
-	  <None Include="..\..\assets\icon.png" Pack="true" Visible="false" PackagePath="/" />
-    <None Include="..\..\LICENSE" Pack="true" Visible="true" PackagePath="/" />
-    <None Include="..\..\README.md" Pack="true" Visible="true" PackagePath="/" />
     <PackageReference Include="Hyperbee.Resources" />
-    <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Scripting" />
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" />
     <PackageReference Update="Microsoft.SourceLink.GitHub">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
     <PackageReference Update="Nerdbank.GitVersioning" />
+    <PackageReference Include="PolySharp" PrivateAssets="all" />
+  </ItemGroup>
+
+  <!--
+    AssemblyLoadContext is not in the netstandard2.1 contract, so the collectible
+    load context is compiled only into the net10.0 and net11.0 builds. The
+    netstandard2.1 build loads compiled token expressions with Assembly.Load;
+    see the note at the load site in RoslynTokenExpressionProvider.
+  -->
+  <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.1'">
+    <Compile Remove="Compiler\DynamicAssemblyLoadContext.cs" />
+  </ItemGroup>
+
+  <!--
+    Microsoft.CSharp is in the shared framework on net10.0 and net11.0 but is a
+    package on netstandard. RoslynTokenExpressionProvider references its assembly
+    so that compiled token expressions can use dynamic. 4.7.0 is the last release
+    and the version Hyperbee.Collections already depends on for its own
+    netstandard2.1 asset.
+  -->
+  <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.1'">
+    <PackageReference Include="Microsoft.CSharp" />
   </ItemGroup>
 </Project>

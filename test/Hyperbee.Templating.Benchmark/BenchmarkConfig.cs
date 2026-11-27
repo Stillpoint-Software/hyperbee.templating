@@ -16,14 +16,8 @@ public class BenchmarkConfig
     {
         public Config()
         {
-            AddJob( Job.ShortRun
-              .WithRuntime( CoreRuntime.Core80 )
-              .WithId( ".NET 8" ) );
-
-            AddJob( Job.ShortRun
-            .WithRuntime( CoreRuntime.Core90 )
-            .WithId( ".NET 9" ) );
-
+            // net8.0 and net9.0 are no longer built, and BenchmarkDotNet 0.15.8 has no
+            // .NET 11 moniker, so benchmarks run on .NET 10 alone.
             AddJob( Job.ShortRun
                 .WithRuntime( CoreRuntime.Core10_0 )
                 .WithId( ".NET 10" ) );

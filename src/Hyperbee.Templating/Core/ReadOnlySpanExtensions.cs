@@ -96,7 +96,7 @@ internal static class ReadOnlySpanExtensions
 
                 escape = c == '\\' && !escape;
             }
-            else if ( delimiters.Contains( c ) )
+            else if ( delimiters.IndexOf( c ) >= 0 ) // ReadOnlySpan<T>.Contains is .NET 5+; IndexOf is in netstandard2.1
             {
                 terminalChar = c;
                 ignoring = true;

@@ -1,5 +1,6 @@
 ﻿using System.Buffers;
 using System.Runtime.CompilerServices;
+using Hyperbee.Templating.Internal;
 
 namespace Hyperbee.Templating.Core;
 
@@ -110,7 +111,7 @@ internal ref struct BufferManager
 
     public void Position( int position )
     {
-        ArgumentOutOfRangeException.ThrowIfNegative( position, nameof( position ) );
+        ThrowIf.Negative( position, nameof( position ) );
 
         if ( IsFixed )
         {

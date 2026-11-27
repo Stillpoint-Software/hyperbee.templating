@@ -34,18 +34,13 @@
     <None Update="$(MSBuildProjectName).csproj.DotSettings" Visible="false" />
   </ItemGroup>
   <ItemGroup>
-	  <None Include="..\..\assets\icon.png" Pack="true" Visible="false" PackagePath="/" />
-    <None Include="..\..\LICENSE" Pack="true" Visible="true" PackagePath="/" />
-    <None Include="..\..\README.md" Pack="true" Visible="true" PackagePath="/" />
-	  <PackageReference Include="FastExpressionCompiler" />
-    <PackageReference Include="Hyperbee.Resources" />
     <PackageReference Include="Hyperbee.XS" />
-    <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Scripting" />
     <PackageReference Update="Microsoft.SourceLink.GitHub">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
     <PackageReference Update="Nerdbank.GitVersioning" />
+    <PackageReference Include="PolySharp" PrivateAssets="all" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Hyperbee.Templating\Hyperbee.Templating.csproj" />

@@ -25,6 +25,27 @@ Install via NuGet:
 dotnet add package Hyperbee.Templating
 ```
 
+## Target frameworks
+
+| Package                         | Targets                          | Oldest consumer
+|:--------------------------------|:---------------------------------|:----------------
+| Hyperbee.Templating             | `net11.0;net10.0;netstandard2.1` | net8.0
+| Hyperbee.Templating.Provider.XS | `net11.0;net10.0;netstandard2.1` | net8.0
+
+`net8.0` and `net9.0` both reached end of support on 2026-11-10 and are no longer built
+directly. Both packages add `netstandard2.1` in their place, so a `net8.0` or `net9.0`
+project resolves that asset and keeps working.
+
+The `netstandard2.1` assets differ from the `net10.0` and `net11.0` assets in two ways:
+
+* `Hyperbee.Templating` loads compiled token expressions with `Assembly.Load` instead of a
+  collectible `AssemblyLoadContext`, which `netstandard2.1` does not include.
+* `Hyperbee.Templating.Provider.XS` runs on the `netstandard2.1` asset of `Hyperbee.XS`,
+  which leaves out the `package` directive. Every other XS extension is available.
+
+Building this repository requires the .NET 11 SDK; the older targeting packs come from
+NuGet, so one SDK covers every target.
+
 ## Basic Usage
 
 ### Variable Substitution

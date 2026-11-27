@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using Hyperbee.Templating.Compiler;
 using Hyperbee.Templating.Core;
+using Hyperbee.Templating.Internal;
 
 namespace Hyperbee.Templating.Text;
 
@@ -80,7 +81,7 @@ public class MemberDictionary : IReadOnlyMemberDictionary
 
     public void Add( string name, string value )
     {
-        ArgumentNullException.ThrowIfNull( name );
+        ThrowIf.Null( name );
 
         if ( !Validator( name ) )
             throw new ArgumentException( $"Invalid token identifier `{name}`.", nameof( name ) );
@@ -90,14 +91,14 @@ public class MemberDictionary : IReadOnlyMemberDictionary
 
     public bool ContainsKey( string name )
     {
-        ArgumentNullException.ThrowIfNull( name );
+        ThrowIf.Null( name );
 
         return Variables.ContainsKey( name );
     }
 
     public bool Remove( string name )
     {
-        ArgumentNullException.ThrowIfNull( name );
+        ThrowIf.Null( name );
 
         return Variables.Remove( name );
     }

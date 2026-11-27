@@ -25,13 +25,24 @@ internal sealed class RoslynTokenExpressionProvider : ITokenExpressionProvider
         MetadataReference.CreateFromFile( typeof( System.Linq.Expressions.Expression ).Assembly.Location ),
 
         MetadataReference.CreateFromFile( typeof( object ).Assembly.Location.Replace( "System.Private.CoreLib", "System.Runtime" ) ),
+#if NETSTANDARD
+        // The netstandard2.1 build of this assembly is compiled against netstandard.dll, so
+        // the types it exposes to the expression (IReadOnlyDictionary<,> under
+        // IReadOnlyMemberDictionary, for one) resolve through the runtime's netstandard facade.
+        MetadataReference.CreateFromFile( typeof( object ).Assembly.Location.Replace( "System.Private.CoreLib", "netstandard" ) ),
+#endif
         MetadataReference.CreateFromFile( typeof( IList ).Assembly.Location.Replace( "System.Private.CoreLib", "System.Collections" ) )
     ];
 
     private sealed class RuntimeContext( ImmutableArray<MetadataReference> metadataReferences )
     {
         public ConcurrentDictionary<string, TokenExpression> TokenExpressions { get; } = new();
+#if NETSTANDARD
+        // Unused on netstandard2.1, which has no AssemblyLoadContext; see Compile.
+        public ImmutableArray<MetadataReference> MetadataReferences { get; } = metadataReferences;
+#else
         public DynamicAssemblyLoadContext AssemblyLoadContext { get; } = new( metadataReferences );
+#endif
     }
 
     private static RuntimeContext __runtimeContext = new( MetadataReferences );
@@ -125,13 +136,24 @@ internal sealed class RoslynTokenExpressionProvider : ITokenExpressionProvider
             throw new TokenExpressionProviderException( "Compilation failed: " + failures[0]?.GetMessage(), failures );
         }
 
+#if NETSTANDARD
+        // AssemblyLoadContext is not in the netstandard2.1 contract. Assembly.Load(byte[])
+        // gives each compiled expression its own non-collectible context on .NET, whose
+        // references resolve through the default context, which is what
+        // DynamicAssemblyLoadContext.Load does on the other targets. The one difference is
+        // that Reset cannot unload these assemblies. Nothing calls Reset today, so the
+        // collectible context is never unloaded on any target either.
+        var assembly = Assembly.Load( peStream.ToArray() );
+#else
         peStream.Seek( 0, SeekOrigin.Begin );
         var assembly = __runtimeContext.AssemblyLoadContext.LoadFromStream( peStream );
+#endif
 
-        var methodDelegate = assembly!
+        // The non-generic overload: CreateDelegate<T>() is .NET 5+ and absent from netstandard2.1.
+        var methodDelegate = (TokenExpression) assembly!
             .GetType( "TokenExpressionInvoker" )!
             .GetMethod( "Invoke", BindingFlags.Public | BindingFlags.Static )!
-            .CreateDelegate<TokenExpression>();
+            .CreateDelegate( typeof( TokenExpression ) );
 
         return methodDelegate;
     }

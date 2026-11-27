@@ -2,6 +2,7 @@
 using System.Reflection;
 using Hyperbee.Templating.Compiler;
 using Hyperbee.Templating.Core;
+using Hyperbee.Templating.Internal;
 using Hyperbee.Templating.Text;
 using Hyperbee.Templating.Text.Runtime;
 
@@ -58,7 +59,7 @@ public class TemplateOptions
     {
         const BindingFlags bindingFlags = BindingFlags.Public | BindingFlags.Instance | BindingFlags.InvokeMethod | BindingFlags.IgnoreCase;
 
-        ArgumentNullException.ThrowIfNull( variableObject );
+        ThrowIf.Null( variableObject );
 
         var type = variableObject.GetType();
 
