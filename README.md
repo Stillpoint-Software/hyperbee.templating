@@ -219,6 +219,3 @@ We welcome contributions! Please see our [Contributing Guide](https://github.com
 | Branch     | Action                                                                                                                                                                                                                      |
 |------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `main`     | [![Build status](https://github.com/Stillpoint-Software/Hyperbee.Templating/actions/workflows/pack_publish.yml/badge.svg)](https://github.com/Stillpoint-Software/Hyperbee.Templating/actions/workflows/pack_publish.yml)                 |
-
-# Help
- See [Todo](https://github.com/Stillpoint-Software/Hyperbee.Templating/blob/main/docs/todo.md)
